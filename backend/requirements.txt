@@ -1,0 +1,35 @@
+# Smart Wardrobe AI — Backend Dependencies
+# Python 3.11+ required
+
+# --- Web Framework ---
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+
+# --- Data Validation & Settings ---
+pydantic==2.10.4
+pydantic-settings==2.7.1
+
+# --- Database (Phase 2+) ---
+sqlalchemy==2.0.36
+asyncpg==0.30.0
+alembic==1.14.1
+greenlet==3.1.1
+
+# --- Authentication (Phase 2+) ---
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.2.1
+
+# --- AWS S3 (Phase 2+) ---
+boto3==1.36.2
+
+# --- HTTP Client ---
+httpx==0.28.1
+
+# --- Google OAuth (Phase 2+) ---
+google-auth==2.37.0
+google-auth-oauthlib==1.2.1
+
+# --- Utilities ---
+python-dotenv==1.0.1

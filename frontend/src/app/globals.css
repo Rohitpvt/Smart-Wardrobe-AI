@@ -1,0 +1,215 @@
+@import "tailwindcss";
+
+/* ============================================================
+   Smart Wardrobe AI — Design System
+   Theme: Midnight Terminal Glow
+   Reference: DESIGN.md
+   ============================================================ */
+
+@theme inline {
+  /* --- Colors --- */
+  --color-carbon: #000000;
+  --color-inkwell: #0f0f10;
+  --color-charcoal: #27272a;
+  --color-porcelain: #ffffff;
+  --color-starlight: #e5e7eb;
+  --color-cloudburst: #abafb4;
+  --color-muted: #6e727a;
+  --color-skyline-gray: #99a1af;
+  --color-lunar-dust: #cad5e2;
+  --color-code-orange: #ffb86a;
+  --color-cyber-cyan: #52e1fe;
+  --color-code-blue-light: #364153;
+  --color-electric-blue-glow: #2563eb;
+
+  /* --- Surfaces (semantic aliases) --- */
+  --color-surface-base: #27272a;
+  --color-surface-card: #0f0f10;
+  --color-surface-elevated: #000000;
+
+  /* --- Typography — Font Families --- */
+  --font-inter: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /* --- Typography — Scale --- */
+  --text-caption: 12px;
+  --leading-caption: 1.5;
+  --text-body: 14px;
+  --leading-body: 1.4;
+  --text-body-lg: 16px;
+  --leading-body-lg: 1.4;
+  --text-subheading: 18px;
+  --leading-subheading: 1.56;
+  --text-heading: 20px;
+  --leading-heading: 1.43;
+  --tracking-heading: -0.008em;
+  --text-heading-lg: 24px;
+  --leading-heading-lg: 1.33;
+  --tracking-heading-lg: -0.01em;
+  --text-display: 35px;
+  --leading-display: 1.2;
+  --tracking-display: -0.025em;
+  --text-display-xl: 68px;
+  --leading-display-xl: 0.94;
+  --tracking-display-xl: -0.05em;
+
+  /* --- Spacing --- */
+  --spacing-4: 4px;
+  --spacing-8: 8px;
+  --spacing-12: 12px;
+  --spacing-16: 16px;
+  --spacing-20: 20px;
+  --spacing-24: 24px;
+  --spacing-32: 32px;
+  --spacing-40: 40px;
+  --spacing-48: 48px;
+  --spacing-56: 56px;
+  --spacing-64: 64px;
+  --spacing-80: 80px;
+  --spacing-96: 96px;
+  --spacing-104: 104px;
+  --spacing-160: 160px;
+  --spacing-216: 216px;
+
+  /* --- Border Radius --- */
+  --radius-xs: 2px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+
+  /* --- Shadows --- */
+  --shadow-subtle: rgba(255, 255, 255, 0.1) 0px 0px 0px 1px inset,
+    rgba(255, 255, 255, 0.15) 0px 1px 0px 0px inset;
+  --shadow-subtle-2: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
+  --shadow-md: rgba(37, 174, 186, 0.1) 0px 0px 9px 4px;
+  --shadow-cyan-glow: rgba(82, 225, 254, 0.08) 0px 0px 20px 4px;
+}
+
+/* --- Base Styles --- */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-charcoal);
+  color: var(--color-porcelain);
+  font-family: var(--font-inter);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* --- Selection --- */
+::selection {
+  background-color: rgba(82, 225, 254, 0.2);
+  color: var(--color-porcelain);
+}
+
+/* --- Scrollbar (dark theme) --- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-muted);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-skyline-gray);
+}
+
+/* --- Utility Animations --- */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: rgba(82, 225, 254, 0.05) 0px 0px 20px 4px;
+  }
+  50% {
+    box-shadow: rgba(82, 225, 254, 0.15) 0px 0px 30px 8px;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out forwards;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s ease-out forwards;
+}
+
+.animate-fade-in-delay-1 {
+  animation: fade-in-up 0.8s ease-out 0.1s forwards;
+  opacity: 0;
+}
+
+.animate-fade-in-delay-2 {
+  animation: fade-in-up 0.8s ease-out 0.2s forwards;
+  opacity: 0;
+}
+
+.animate-fade-in-delay-3 {
+  animation: fade-in-up 0.8s ease-out 0.3s forwards;
+  opacity: 0;
+}
+
+.animate-fade-in-delay-4 {
+  animation: fade-in-up 0.8s ease-out 0.4s forwards;
+  opacity: 0;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* --- Gradient Backgrounds --- */
+.bg-glow-blue {
+  background: radial-gradient(
+    ellipse at 50% 0%,
+    rgba(37, 99, 235, 0.08) 0%,
+    rgba(0, 0, 0, 0) 70%
+  );
+}
+
+.bg-glow-cyan {
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(82, 225, 254, 0.04) 0%,
+    rgba(0, 0, 0, 0) 70%
+  );
+}
