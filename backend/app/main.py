@@ -10,7 +10,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.api.health import health_router
-from app.api.v1.router import api_v1_router
+from app.api.v1.auth import auth_router
+from app.api.v1.clothing import clothing_router
+from app.api.v1.uploads import uploads_router
 
 
 def create_app() -> FastAPI:
@@ -39,7 +41,9 @@ def create_app() -> FastAPI:
 
     # --- Routers ---
     app.include_router(health_router)
-    app.include_router(api_v1_router, prefix="/api/v1")
+    app.include_router(auth_router, prefix="/api/v1/auth", tags=["Auth"])
+    app.include_router(clothing_router, prefix="/api/v1/clothing", tags=["Clothing"])
+    app.include_router(uploads_router, prefix="/api/v1/uploads", tags=["Uploads"])
 
     return app
 

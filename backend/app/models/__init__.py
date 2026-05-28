@@ -1,1 +1,3 @@
-"""Smart Wardrobe AI — Database Models Package"""
+from app.db.base import Base
+from app.models.user import User
+from app.models.clothing import ClothingItem

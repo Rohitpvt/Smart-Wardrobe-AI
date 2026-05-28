@@ -63,10 +63,30 @@ export const api = {
     googleCallback: (code: string) => request<{ access_token: string }>(`/auth/google/callback?code=${code}`),
   },
 
-  // Future Clothing endpoints
-  // clothing: {
-  //   list: () => request("/clothing"),
-  // },
+  uploads: {
+    presign: (data: { file_name: string; file_type: string; upload_context: string; temp_id: string }) => 
+      request<{ upload_url: string; fields: Record<string, string>; s3_key: string }>("/uploads/presign", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+  },
+
+  clothing: {
+    create: (data: any) => request("/clothing", { method: "POST", body: JSON.stringify(data) }),
+    list: (query?: Record<string, string>) => {
+      const searchParams = new URLSearchParams();
+      if (query) {
+        Object.entries(query).forEach(([k, v]) => {
+          if (v) searchParams.append(k, v);
+        });
+      }
+      const qs = searchParams.toString();
+      return request(`/clothing${qs ? `?${qs}` : ''}`);
+    },
+    get: (id: string) => request(`/clothing/${id}`),
+    update: (id: string, data: any) => request(`/clothing/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    delete: (id: string) => request(`/clothing/${id}`, { method: "DELETE" }),
+  },
 };
 
 export default api;

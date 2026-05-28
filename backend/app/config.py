@@ -31,7 +31,8 @@ class Settings(BaseSettings):
     AWS_ACCESS_KEY_ID: str = ""
     AWS_SECRET_ACCESS_KEY: str = ""
     AWS_REGION: str = "us-east-1"
-    AWS_S3_BUCKET: str = "smart-wardrobe-uploads"
+    AWS_S3_BUCKET_NAME: str = "smart-wardrobe-uploads"
+    AWS_S3_PRESIGNED_EXPIRE_SECONDS: int = 900
 
     # --- AI Provider ---
     AI_PROVIDER: str = "mock"  # Options: mock, gemini, nvidia, huggingface

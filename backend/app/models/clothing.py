@@ -1,38 +1,51 @@
-"""
-Smart Wardrobe AI — Clothing Item Model (Placeholder)
+from sqlalchemy import Column, String, Boolean, DateTime, Integer, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
+from app.db.base import Base
+import uuid
+from datetime import datetime, timezone
 
-This model will be implemented in Phase 2 when the database is connected.
-See PROJECT_MEMORY.md section 6 for the planned schema.
-"""
+class ClothingItem(Base):
+    __tablename__ = "clothing_items"
 
-# Phase 2: Uncomment and implement
-# from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, ARRAY
-# from sqlalchemy.dialects.postgresql import UUID, JSONB
-# from sqlalchemy.orm import relationship
-# from app.db.base import Base
-# import uuid
-# from datetime import datetime
-#
-# class ClothingItem(Base):
-#     __tablename__ = "clothing_items"
-#
-#     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-#     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-#     s3_key = Column(String(500), nullable=False)
-#     name = Column(String(100))
-#     category = Column(String(50))       # top, bottom, shoes, accessory
-#     sub_category = Column(String(50))   # t-shirt, jeans, sneakers
-#     color_primary = Column(String(30))
-#     color_secondary = Column(String(30))
-#     pattern = Column(String(30))        # solid, striped, plaid
-#     material = Column(String(30))
-#     season = Column(ARRAY(String(20)))  # [spring, summer, fall, winter]
-#     occasion = Column(ARRAY(String(30))) # [casual, formal, sport]
-#     brand = Column(String(50))
-#     times_worn = Column(Integer, default=0)
-#     last_worn_at = Column(DateTime, nullable=True)
-#     ai_tags = Column(JSONB, nullable=True)
-#     created_at = Column(DateTime, default=datetime.utcnow)
-#     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-#
-#     user = relationship("User", back_populates="clothing_items")
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    
+    # S3 Storage Keys
+    front_image_key = Column(String(500), nullable=False)
+    back_image_key = Column(String(500), nullable=True)
+    label_image_key = Column(String(500), nullable=True)
+    thumbnail_key = Column(String(500), nullable=True)
+    
+    # Basic Details
+    type = Column(String(50), nullable=False)
+    category = Column(String(50), nullable=False)
+    brand = Column(String(100), nullable=True)
+    primary_color = Column(String(50), nullable=False)
+    secondary_color = Column(String(50), nullable=True)
+    size = Column(String(20), nullable=True)
+    
+    # Style Details
+    gender_fit = Column(String(50), nullable=True)
+    material = Column(String(50), nullable=True)
+    season = Column(String(50), nullable=True)
+    occasion = Column(String(50), nullable=True)
+    condition = Column(String(50), nullable=True)
+    
+    # Usage Details
+    usage_frequency = Column(String(50), nullable=True)
+    purchase_date = Column(DateTime(timezone=True), nullable=True)
+    price_range = Column(String(50), nullable=True)
+    notes = Column(String(1000), nullable=True)
+    
+    # AI Metadata (Pending Phase 3/4)
+    ai_detected = Column(Boolean, default=False)
+    ai_confidence = Column(Integer, nullable=True) # 0-100
+    
+    # System
+    is_deleted = Column(Boolean, default=False, index=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+    # Relationships
+    user = relationship("User", back_populates="clothing_items")
