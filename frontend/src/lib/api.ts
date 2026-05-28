@@ -1,15 +1,10 @@
-/**
- * Smart Wardrobe AI — API Client
- *
- * Centralized API client for making requests to the FastAPI backend.
- * All API calls should go through this module.
- */
+import { LoginData, RegisterData } from "@/types";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
 /**
- * Generic fetch wrapper with error handling.
+ * Generic fetch wrapper with error handling and automatic Bearer token injection.
  */
 async function request<T>(
   endpoint: string,
@@ -17,27 +12,37 @@ async function request<T>(
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
 
-  const config: RequestInit = {
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-    ...options,
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
   };
 
-  // Phase 2: Add JWT token to Authorization header
-  // const token = getAccessToken();
-  // if (token) {
-  //   config.headers = { ...config.headers, Authorization: `Bearer ${token}` };
-  // }
+  // Only run localStorage on client-side
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("token");
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+  }
+
+  const config: RequestInit = {
+    ...options,
+    headers: {
+      ...headers,
+      ...options.headers,
+    },
+  };
 
   const response = await fetch(url, config);
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({
-      detail: "An unexpected error occurred",
-    }));
-    throw new Error(error.detail || `HTTP ${response.status}`);
+    let errorMessage = `HTTP ${response.status}`;
+    try {
+      const errorData = await response.json();
+      errorMessage = errorData.detail || errorMessage;
+    } catch {
+      // Ignore JSON parse errors for non-JSON responses
+    }
+    throw new Error(errorMessage);
   }
 
   return response.json();
@@ -47,22 +52,20 @@ async function request<T>(
  * API methods organized by resource.
  */
 export const api = {
-  /** Health check */
   health: () => request<{ status: string; version: string; service: string }>("/health"),
 
-  // Phase 2: Auth endpoints
-  // auth: {
-  //   login: (email: string, password: string) => request("/api/v1/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
-  //   register: (data: RegisterData) => request("/api/v1/auth/register", { method: "POST", body: JSON.stringify(data) }),
-  //   me: () => request("/api/v1/auth/me"),
-  // },
+  auth: {
+    login: (data: LoginData) => request<{ access_token: string }>("/auth/login", { method: "POST", body: JSON.stringify(data) }),
+    register: (data: RegisterData) => request("/auth/register", { method: "POST", body: JSON.stringify(data) }),
+    me: () => request("/auth/me"),
+    updateProfile: (data: any) => request("/auth/me", { method: "PUT", body: JSON.stringify(data) }),
+    googleUrl: () => request<{ url: string }>("/auth/google"),
+    googleCallback: (code: string) => request<{ access_token: string }>(`/auth/google/callback?code=${code}`),
+  },
 
-  // Phase 2: Clothing endpoints
+  // Future Clothing endpoints
   // clothing: {
-  //   list: () => request("/api/v1/clothing"),
-  //   get: (id: string) => request(`/api/v1/clothing/${id}`),
-  //   create: (data: CreateClothingData) => request("/api/v1/clothing", { method: "POST", body: JSON.stringify(data) }),
-  //   uploadUrl: () => request("/api/v1/clothing/upload-url", { method: "POST" }),
+  //   list: () => request("/clothing"),
   // },
 };
 
