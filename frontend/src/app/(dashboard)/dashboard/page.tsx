@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import Card from "@/components/ui/Card";
-import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
+import PageHeader from "@/components/ui/PageHeader";
+import StatCard from "@/components/ui/StatCard";
+import LoadingState from "@/components/ui/LoadingState";
 import api from "@/lib/api";
 
 export default function DashboardPage() {
-  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
   
   const [analytics, setAnalytics] = useState<any>(null);
@@ -37,221 +39,160 @@ export default function DashboardPage() {
     }
   }, [isAuthenticated]);
 
-  if (authLoading || !isAuthenticated) {
-    return <div className="min-h-screen flex items-center justify-center text-cloudburst">Loading...</div>;
-  }
+  if (authLoading || !isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen bg-charcoal p-8 pb-20">
-      <div className="max-w-6xl mx-auto space-y-8">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-medium text-porcelain">Dashboard</h1>
-            <p className="text-cloudburst mt-1">Welcome back, {user?.full_name}</p>
+    <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-10">
+      
+      <PageHeader 
+        title="Dashboard" 
+        description={`Welcome back, ${user?.full_name}`}
+        badge={{ text: "Pro", variant: "cyan" }}
+        actions={
+          <>
+            <Button variant="ghost" className="border border-starlight/20" onClick={() => router.push("/outfit-ai")}>
+              Generate Outfit
+            </Button>
+            <Button variant="filled" onClick={() => router.push("/upload")}>
+              Upload Cloth
+            </Button>
+          </>
+        }
+      />
+
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-sm">
+          {error}
+        </div>
+      )}
+
+      {loading && !error && <LoadingState message="Analyzing wardrobe data..." />}
+
+      {!loading && analytics && (
+        <div className="space-y-8 animate-fade-in-up">
+          
+          {/* Quick Actions & Insight */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card 
+              variant="translucent" 
+              className="p-6 border border-cyber-cyan/20 cursor-pointer hover:border-cyber-cyan/50 transition-all duration-300 md:col-span-2 relative overflow-hidden group" 
+              onClick={() => router.push("/weather-style")}
+            >
+              <div className="absolute top-0 right-0 w-48 h-48 bg-glow-cyan opacity-20 group-hover:opacity-40 transition-opacity pointer-events-none rounded-full blur-3xl -mr-10 -mt-10" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="w-2 h-2 rounded-full bg-cyber-cyan animate-pulse" />
+                    <span className="text-[10px] uppercase tracking-widest text-cyber-cyan font-[family-name:var(--font-mono)]">AI Insight</span>
+                  </div>
+                  <h2 className="text-xl md:text-2xl font-medium text-porcelain tracking-tight">What should I wear today?</h2>
+                  <p className="text-sm text-cloudburst mt-1">Get weather-based outfit suggestions.</p>
+                </div>
+                <div className="text-5xl md:text-6xl drop-shadow-lg">☀️</div>
+              </div>
+            </Card>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <Card variant="basic" hover className="p-4 flex flex-col items-center justify-center text-center cursor-pointer" onClick={() => router.push("/wardrobe")}>
+                <span className="text-xl mb-1 text-cyber-cyan">✦</span>
+                <p className="text-sm text-porcelain mb-0.5">Wardrobe</p>
+                <p className="text-[10px] text-cloudburst uppercase tracking-wider font-[family-name:var(--font-mono)]">View All</p>
+              </Card>
+              <Card variant="basic" hover className="p-4 flex flex-col items-center justify-center text-center cursor-pointer" onClick={() => router.push("/outfits/saved")}>
+                <span className="text-xl mb-1 text-code-orange">★</span>
+                <p className="text-sm text-porcelain mb-0.5">Saved</p>
+                <p className="text-[10px] text-cloudburst uppercase tracking-wider font-[family-name:var(--font-mono)]">Outfits</p>
+              </Card>
+            </div>
           </div>
-          <div className="flex gap-4">
-            <Button variant="ghost" onClick={logout}>Logout</Button>
-            <Button variant="filled" onClick={() => router.push("/upload")}>Upload Cloth</Button>
-            <Button variant="ghost" className="border border-cyber-cyan text-cyber-cyan" onClick={() => router.push("/outfit-ai")}>Generate Outfit</Button>
+
+          {/* Premium Analytics Grid */}
+          <div>
+            <h3 className="text-porcelain font-medium mb-4 flex items-center gap-2">
+              <span className="text-cyber-cyan text-sm">⊞</span> Overview
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <StatCard label="Total Clothes" value={analytics.total_clothes} badgeVariant="cyan" />
+              <StatCard 
+                label="Combinations" 
+                value={analytics.possible_outfit_combinations_estimate > 0 ? analytics.possible_outfit_combinations_estimate : "0"} 
+                badgeVariant="cyan" 
+              />
+              <StatCard label="Saved Outfits" value={analytics.saved_outfits_count} badgeVariant="orange" />
+              <StatCard label="Worn Outfits" value={analytics.outfit_history_count} badgeVariant="success" />
+              
+              <StatCard label="Most Used Category" value={analytics.most_used_category || "N/A"} badgeVariant="default" />
+              <StatCard label="Most Common Color" value={analytics.most_common_color || "N/A"} badgeVariant="default" />
+              
+              <StatCard 
+                label="Rarely Used" 
+                value={analytics.rarely_used_count + analytics.never_used_count} 
+                badgeVariant="warning" 
+                className="border-yellow-500/20"
+              />
+              <StatCard 
+                label="Needs Attention" 
+                value={analytics.needs_repair_count + analytics.needs_washing_count} 
+                badgeVariant="warning" 
+                className="border-red-500/20"
+              />
+            </div>
+          </div>
+
+          {/* Breakdowns */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card variant="basic" className="p-6">
+              <h3 className="text-porcelain font-medium mb-5">Top Categories</h3>
+              {analytics.wardrobe_breakdown_by_category.length > 0 ? (
+                <div className="space-y-3">
+                  {analytics.wardrobe_breakdown_by_category.slice(0, 5).map((cat: any) => (
+                    <div key={cat.category} className="flex justify-between items-center text-sm">
+                      <span className="text-cloudburst">{cat.category}</span>
+                      <span className="text-porcelain bg-carbon px-2 py-1 rounded border border-starlight/10 font-[family-name:var(--font-mono)] text-xs">{cat.count}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-cloudburst">No category data yet.</p>
+              )}
+            </Card>
+
+            <Card variant="basic" className="p-6">
+              <h3 className="text-porcelain font-medium mb-5">Wardrobe Roles</h3>
+              <div className="space-y-3 text-sm">
+                {[
+                  { label: "Top Wear", count: analytics.top_wear_count },
+                  { label: "Bottom Wear", count: analytics.bottom_wear_count },
+                  { label: "Footwear", count: analytics.footwear_count },
+                  { label: "Accessories", count: analytics.accessory_count }
+                ].map((item) => (
+                  <div key={item.label} className="flex justify-between items-center">
+                    <span className="text-cloudburst">{item.label}</span>
+                    <span className="text-porcelain bg-carbon px-2 py-1 rounded border border-starlight/10 font-[family-name:var(--font-mono)] text-xs">{item.count}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+            
+            <Card variant="basic" className="p-6">
+              <h3 className="text-porcelain font-medium mb-5">Seasons</h3>
+              <div className="space-y-3 text-sm">
+                {[
+                  { label: "Summer", count: analytics.summer_clothes_count },
+                  { label: "Winter", count: analytics.winter_clothes_count },
+                  { label: "Monsoon", count: analytics.monsoon_clothes_count },
+                  { label: "All Season", count: analytics.all_season_clothes_count }
+                ].map((item) => (
+                  <div key={item.label} className="flex justify-between items-center">
+                    <span className="text-cloudburst">{item.label}</span>
+                    <span className="text-porcelain bg-carbon px-2 py-1 rounded border border-starlight/10 font-[family-name:var(--font-mono)] text-xs">{item.count}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
           </div>
         </div>
-
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl">
-            {error}
-          </div>
-        )}
-
-        {loading && !error && (
-          <div className="text-center py-10 text-cloudburst animate-pulse">Loading analytics...</div>
-        )}
-
-        {!loading && analytics && (
-          <>
-            {/* Quick Actions & Insight */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card variant="translucent" className="p-6 border border-cyber-cyan/10 cursor-pointer hover:border-cyber-cyan/30 transition-all duration-200" onClick={() => router.push("/weather-style")}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Badge variant="cyan" className="mb-2">AI Insight</Badge>
-                    <h2 className="text-xl font-medium text-porcelain">What should I wear today?</h2>
-                    <p className="text-sm text-cloudburst mt-1">Weather-based outfit suggestions.</p>
-                  </div>
-                  <div className="text-4xl">☀️</div>
-                </div>
-              </Card>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <Card variant="basic" className="p-4 cursor-pointer hover:bg-charcoal transition-colors flex flex-col items-center justify-center text-center" onClick={() => router.push("/wardrobe")}>
-                  <p className="text-sm text-porcelain mb-1">View Wardrobe</p>
-                  <p className="text-xs text-cloudburst">Manage your items</p>
-                </Card>
-                <Card variant="basic" className="p-4 cursor-pointer hover:bg-charcoal transition-colors flex flex-col items-center justify-center text-center" onClick={() => router.push("/outfits/saved")}>
-                  <p className="text-sm text-porcelain mb-1">Saved Outfits</p>
-                  <p className="text-xs text-cloudburst">Your favorite combos</p>
-                </Card>
-                <Card variant="basic" className="p-4 cursor-pointer hover:bg-charcoal transition-colors flex flex-col items-center justify-center text-center" onClick={() => router.push("/outfits/history")}>
-                  <p className="text-sm text-porcelain mb-1">Outfit History</p>
-                  <p className="text-xs text-cloudburst">Previously worn</p>
-                </Card>
-                <Card variant="basic" className="p-4 cursor-pointer hover:bg-charcoal transition-colors flex flex-col items-center justify-center text-center" onClick={() => router.push("/profile")}>
-                  <p className="text-sm text-porcelain mb-1">Style Profile</p>
-                  <p className="text-xs text-cloudburst">Preferences</p>
-                </Card>
-              </div>
-            </div>
-
-            {/* Premium Analytics Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Card variant="translucent" className="p-5 flex flex-col justify-between h-32">
-                <Badge variant="cyan" className="self-start">Total Clothes</Badge>
-                <div className="mt-auto">
-                  <p className="text-3xl font-medium text-porcelain">{analytics.total_clothes}</p>
-                </div>
-              </Card>
-
-              <Card variant="translucent" className="p-5 flex flex-col justify-between h-32">
-                <Badge variant="cyan" className="self-start">Possible Outfits</Badge>
-                <div className="mt-auto">
-                  <p className="text-3xl font-medium text-porcelain">
-                    {analytics.possible_outfit_combinations_estimate > 0 
-                      ? analytics.possible_outfit_combinations_estimate 
-                      : "0"}
-                  </p>
-                </div>
-              </Card>
-
-              <Card variant="translucent" className="p-5 flex flex-col justify-between h-32">
-                <Badge variant="orange" className="self-start">Saved Outfits</Badge>
-                <div className="mt-auto">
-                  <p className="text-3xl font-medium text-porcelain">{analytics.saved_outfits_count}</p>
-                </div>
-              </Card>
-
-              <Card variant="translucent" className="p-5 flex flex-col justify-between h-32">
-                <Badge variant="success" className="self-start">Worn Outfits</Badge>
-                <div className="mt-auto">
-                  <p className="text-3xl font-medium text-porcelain">{analytics.outfit_history_count}</p>
-                </div>
-              </Card>
-
-              <Card variant="translucent" className="p-5 flex flex-col justify-between h-32">
-                <Badge variant="default" className="self-start">Most Used Category</Badge>
-                <div className="mt-auto">
-                  <p className="text-xl font-medium text-porcelain truncate">{analytics.most_used_category || "N/A"}</p>
-                </div>
-              </Card>
-
-              <Card variant="translucent" className="p-5 flex flex-col justify-between h-32">
-                <Badge variant="default" className="self-start">Most Common Color</Badge>
-                <div className="mt-auto">
-                  <p className="text-xl font-medium text-porcelain truncate">{analytics.most_common_color || "N/A"}</p>
-                </div>
-              </Card>
-
-              <Card variant="translucent" className="p-5 flex flex-col justify-between h-32 border-yellow-500/20">
-                <Badge variant="warning" className="self-start">Rarely Used</Badge>
-                <div className="mt-auto">
-                  <p className="text-3xl font-medium text-porcelain">{analytics.rarely_used_count + analytics.never_used_count}</p>
-                </div>
-              </Card>
-
-              <Card variant="translucent" className="p-5 flex flex-col justify-between h-32 border-red-500/20">
-                <Badge variant="warning" className="self-start text-red-400 border-red-500/30">Needs Repair/Wash</Badge>
-                <div className="mt-auto">
-                  <p className="text-3xl font-medium text-porcelain">{analytics.needs_repair_count + analytics.needs_washing_count}</p>
-                </div>
-              </Card>
-            </div>
-
-            {/* Breakdowns */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Category Breakdown */}
-              <Card variant="basic" className="p-6">
-                <h3 className="text-porcelain font-medium mb-4">Top Categories</h3>
-                {analytics.wardrobe_breakdown_by_category.length > 0 ? (
-                  <div className="space-y-3">
-                    {analytics.wardrobe_breakdown_by_category.map((cat: any) => (
-                      <div key={cat.category} className="flex justify-between items-center text-sm">
-                        <span className="text-cloudburst">{cat.category}</span>
-                        <span className="text-porcelain bg-carbon px-2 py-1 rounded-md border border-starlight/10">{cat.count}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-cloudburst">No category data yet.</p>
-                )}
-              </Card>
-
-              {/* Roles Breakdown */}
-              <Card variant="basic" className="p-6">
-                <h3 className="text-porcelain font-medium mb-4">Wardrobe Roles</h3>
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between items-center">
-                    <span className="text-cloudburst">Top Wear</span>
-                    <span className="text-porcelain bg-carbon px-2 py-1 rounded-md border border-starlight/10">{analytics.top_wear_count}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-cloudburst">Bottom Wear</span>
-                    <span className="text-porcelain bg-carbon px-2 py-1 rounded-md border border-starlight/10">{analytics.bottom_wear_count}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-cloudburst">Footwear</span>
-                    <span className="text-porcelain bg-carbon px-2 py-1 rounded-md border border-starlight/10">{analytics.footwear_count}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-cloudburst">Accessories</span>
-                    <span className="text-porcelain bg-carbon px-2 py-1 rounded-md border border-starlight/10">{analytics.accessory_count}</span>
-                  </div>
-                </div>
-              </Card>
-              
-              {/* Season Breakdown */}
-              <Card variant="basic" className="p-6">
-                <h3 className="text-porcelain font-medium mb-4">Season Distribution</h3>
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between items-center">
-                    <span className="text-cloudburst">Summer</span>
-                    <span className="text-porcelain bg-carbon px-2 py-1 rounded-md border border-starlight/10">{analytics.summer_clothes_count}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-cloudburst">Winter</span>
-                    <span className="text-porcelain bg-carbon px-2 py-1 rounded-md border border-starlight/10">{analytics.winter_clothes_count}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-cloudburst">Monsoon/Rainy</span>
-                    <span className="text-porcelain bg-carbon px-2 py-1 rounded-md border border-starlight/10">{analytics.monsoon_clothes_count}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-cloudburst">All Season</span>
-                    <span className="text-porcelain bg-carbon px-2 py-1 rounded-md border border-starlight/10">{analytics.all_season_clothes_count}</span>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Color Breakdown */}
-              <Card variant="basic" className="p-6">
-                <h3 className="text-porcelain font-medium mb-4">Top Colors</h3>
-                {analytics.wardrobe_breakdown_by_color.length > 0 ? (
-                  <div className="space-y-3 text-sm">
-                    {analytics.wardrobe_breakdown_by_color.map((col: any) => (
-                      <div key={col.color} className="flex justify-between items-center">
-                        <span className="text-cloudburst">{col.color}</span>
-                        <span className="text-porcelain bg-carbon px-2 py-1 rounded-md border border-starlight/10">{col.count}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-cloudburst">No color data yet.</p>
-                )}
-              </Card>
-            </div>
-          </>
-        )}
-
-      </div>
+      )}
     </div>
   );
 }

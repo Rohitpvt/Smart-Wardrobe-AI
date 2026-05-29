@@ -1,167 +1,162 @@
 # Smart Wardrobe AI
 
-> AI-powered clothing analyzer and smart wardrobe management application.
-
-A full-stack web application where users can upload clothing images, manage their wardrobe, and receive intelligent outfit recommendations based on weather, season, occasion, color coordination, and personal style preferences.
+**Smart Wardrobe AI** is a full-stack, AI-powered clothing analyzer and digital wardrobe manager. It allows users to digitize their closet, receive intelligent outfit recommendations, and track their clothing usage using a sleek, premium dark-mode interface.
 
 ---
 
-## Tech Stack
+## 🌟 Key Features
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Next.js 15, React 19, TypeScript, Tailwind CSS v4 |
-| Backend | FastAPI, Python 3.11+, SQLAlchemy 2, Alembic |
-| Database | PostgreSQL 15+ |
-| Storage | AWS S3 (private bucket, presigned URLs) |
-| Auth | JWT + Google OAuth |
-| AI | Pluggable provider abstraction (Mock → Gemini / NVIDIA NIM / HuggingFace) |
-
----
-
-## Prerequisites
-
-- **Node.js** 18+ and npm
-- **Python** 3.11+
-- **PostgreSQL** 15+ (Phase 2+)
-- **AWS Account** with S3 access (Phase 2+)
+*   **Digital Wardrobe Management**: Upload, categorize, and track clothing items.
+*   **AI Image Analysis**: Automatic tagging of clothing type, color, and pattern via AI (Mock, Gemini, or NVIDIA).
+*   **Smart Outfit Engine**: Rule-based recommendation engine considering weather, occasion, color harmony, and gender-specific styling.
+*   **Weather-Aware Styling**: Outfits customized to your current local weather conditions.
+*   **Outfit Tracking**: Save favorite combinations and log worn outfits to track clothing usage statistics.
+*   **Advanced Analytics**: Dashboard showing wardrobe breakdowns, rarely used items, and condition reports.
+*   **Secure & Private**: Robust JWT authentication, Google OAuth, and secure S3 presigned URLs ensure your wardrobe data is strictly private.
 
 ---
 
-## Getting Started
+## 💻 Tech Stack
 
-### 1. Clone the Repository
+### Frontend
+*   **Framework**: Next.js 15 (App Router)
+*   **Library**: React 19
+*   **Language**: TypeScript 5
+*   **Styling**: Tailwind CSS v4 (CSS-first config)
+*   **Design System**: Custom "Midnight Terminal Glow" UI
 
+### Backend
+*   **Framework**: FastAPI 0.115+
+*   **Language**: Python 3.11+
+*   **Database**: PostgreSQL 15+ (asyncpg)
+*   **ORM**: SQLAlchemy 2.0+ & Alembic
+*   **Auth**: JWT (JSON Web Tokens) + Google OAuth
+*   **Storage**: AWS S3 (Presigned URLs)
+
+---
+
+## 🚀 Setup & Installation
+
+### Prerequisites
+*   Node.js (v20+)
+*   Python (3.11+)
+*   PostgreSQL (v15+) or Docker
+
+### 1. Database Setup
+Start a PostgreSQL database. You can use Docker:
 ```bash
-git clone <repo-url>
-cd "Wardrobe AI"
+docker run --name smart-wardrobe-db -e POSTGRES_USER=smartwardrobe -e POSTGRES_PASSWORD=smartwardrobe123 -e POSTGRES_DB=smart_wardrobe_ai -p 5432:5432 -d postgres:15
 ```
 
 ### 2. Backend Setup
-
+Navigate to the backend directory and set up the Python environment:
 ```bash
 cd backend
-
-# Create virtual environment
 python -m venv venv
+# Windows: venv\Scripts\activate
+# macOS/Linux: source venv/bin/activate
 
-# Activate virtual environment
-# Windows:
-venv\Scripts\activate
-# macOS/Linux:
-source venv/bin/activate
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Create .env from example
-cp .env.example .env
-# Edit .env with your actual values
-
-# Run the development server
-uvicorn app.main:app --reload --port 8000
 ```
 
-The API will be available at `http://localhost:8000`.
+Create your `.env` file:
+```bash
+cp .env.example .env
+# Edit .env with your specific secrets
+```
 
-**Health Check:** `GET http://localhost:8000/health`
+Run database migrations:
+```bash
+alembic upgrade head
+```
+*(If `alembic upgrade head` fails due to local env issues, check `migrations/versions/` or create a manual migration script based on `app/models/`)*
 
-**API Docs (Swagger):** `http://localhost:8000/docs`
+Start the development server:
+```bash
+uvicorn app.main:app --reload
+```
+The backend API will be available at `http://localhost:8000/api/v1`.
 
 ### 3. Frontend Setup
-
+Navigate to the frontend directory:
 ```bash
 cd frontend
-
-# Install dependencies
 npm install
+```
 
-# Create .env.local from example
+Create your `.env.local` file:
+```bash
 cp .env.example .env.local
-# Edit .env.local with your actual values
+# Edit .env.local if your backend URL differs
+```
 
-# Run the development server
+Start the frontend development server:
+```bash
 npm run dev
 ```
-
-The app will be available at `http://localhost:3000`.
+The application will be available at `http://localhost:3000`.
 
 ---
 
-## Environment Variables
+## 🔑 Environment Variables Guide
 
 ### Backend (`backend/.env`)
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `DATABASE_URL` | PostgreSQL connection string | Phase 2+ |
-| `SECRET_KEY` | JWT signing secret | Phase 2+ |
-| `ALGORITHM` | JWT algorithm (default: HS256) | Phase 2+ |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Token TTL | Phase 2+ |
-| `AWS_ACCESS_KEY_ID` | AWS credentials | Phase 2+ |
-| `AWS_SECRET_ACCESS_KEY` | AWS credentials | Phase 2+ |
-| `AWS_REGION` | AWS region | Phase 2+ |
-| `AWS_S3_BUCKET` | S3 bucket name | Phase 2+ |
-| `AI_PROVIDER` | AI provider name (mock/gemini/nvidia/huggingface) | Yes |
-| `GOOGLE_CLIENT_ID` | Google OAuth client ID | Phase 2+ |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | Phase 2+ |
-| `CORS_ORIGINS` | Allowed CORS origins | Yes |
+*   `DATABASE_URL`: Connection string to your PostgreSQL instance.
+*   `SECRET_KEY`: A strong, random string for JWT signing.
+*   `GOOGLE_CLIENT_ID` / `SECRET`: Credentials for Google OAuth login.
+*   `AWS_*`: Your AWS credentials and bucket name for image storage.
+*   `AI_PROVIDER`: Choose between `mock`, `gemini`, or `nvidia`. Provide respective API keys.
+*   `CORS_ORIGINS`: Comma-separated list of allowed frontend origins (e.g., `http://localhost:3000`).
 
 ### Frontend (`frontend/.env.local`)
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `NEXT_PUBLIC_API_URL` | Backend API URL | Yes |
-| `NEXT_PUBLIC_APP_NAME` | Application display name | Yes |
+*   `NEXT_PUBLIC_API_URL`: The URL of your backend API (e.g., `http://localhost:8000`).
 
 ---
 
-## Project Structure
+## ☁️ AWS S3 Setup
 
-```
-Wardrobe AI/
-├── DESIGN.md               # UI design system reference
-├── PROJECT_MEMORY.md        # Permanent project memory (always read/update)
-├── README.md                # This file
-├── frontend/                # Next.js frontend
-│   ├── src/app/             # App Router pages
-│   ├── src/components/      # Reusable components
-│   ├── src/lib/             # Utilities and API client
-│   └── src/types/           # TypeScript type definitions
-└── backend/                 # FastAPI backend
-    ├── app/api/             # API endpoints
-    ├── app/models/          # SQLAlchemy models
-    ├── app/schemas/         # Pydantic schemas
-    ├── app/services/        # Business logic & AI providers
-    └── migrations/          # Alembic migrations
+1.  Create a **Private** S3 Bucket. Do not enable public access.
+2.  Create an IAM User with programmatic access and attach a policy allowing `s3:PutObject` and `s3:GetObject` on `arn:aws:s3:::YOUR_BUCKET_NAME/*`.
+3.  Configure the CORS policy on your S3 bucket to allow direct uploads from your frontend domain:
+```json
+[
+    {
+        "AllowedHeaders": ["*"],
+        "AllowedMethods": ["PUT", "POST", "GET"],
+        "AllowedOrigins": ["http://localhost:3000", "https://your-production-domain.com"],
+        "ExposeHeaders": []
+    }
+]
 ```
 
 ---
 
-## Development Phases
+## 🤖 AI Provider Setup
 
-| Phase | Status | Description |
-|-------|--------|-------------|
-| Phase 1 | ✅ Complete | Project scaffolding, landing page, health check |
-| Phase 2 | 🔲 Pending | Auth, database, S3 upload, clothing CRUD |
-| Phase 3 | 🔲 Pending | AI analysis, recommendations, wardrobe gallery, dashboard |
-| Phase 4 | 🔲 Pending | Usage tracking, feedback loop, advanced features |
+By default, the application runs using a `mock` AI provider, which simulates responses without requiring an API key. 
 
----
-
-## Design System
-
-The UI follows the **Midnight Terminal Glow** design system defined in `DESIGN.md`:
-
-- Dark charcoal backgrounds (`#27272a`)
-- Carbon black cards (`#000000`)
-- Cyber cyan accents (`#52e1fe`)
-- Inter font for UI, monospace for technical labels
-- Translucent borders and subtle glows
-- Premium, developer-tool-inspired aesthetic
+To use real AI vision analysis:
+1.  Set `AI_PROVIDER=gemini` or `AI_PROVIDER=nvidia` in your backend `.env`.
+2.  Provide the corresponding `GEMINI_API_KEY` or `NVIDIA_API_KEY`.
+3.  Ensure your AWS S3 URLs are accessible to the AI provider, or that the provider supports analyzing presigned URLs.
 
 ---
 
-## License
+## 🚢 Deployment
 
-MIT
+*   **Frontend**: Recommended deployment via [Vercel](https://vercel.com). Set `NEXT_PUBLIC_API_URL` in the Vercel dashboard.
+*   **Backend**: Recommended deployment via Render, Railway, or AWS EC2. Ensure you set the `CORS_ORIGINS` environment variable to match your Vercel frontend domain.
+*   **Database**: Use a managed PostgreSQL service like Neon, Supabase, or AWS RDS.
+
+See `DEPLOYMENT.md` for more detailed instructions.
+
+---
+
+## 🧪 Testing & Code Quality
+The project enforces strict TypeScript checking and ESLint rules. 
+To verify frontend stability before deployment:
+```bash
+cd frontend
+npm run lint
+npm run build
+```

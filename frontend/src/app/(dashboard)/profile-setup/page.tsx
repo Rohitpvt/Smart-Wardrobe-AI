@@ -38,10 +38,8 @@ export default function ProfileSetupPage() {
         common_occasions: occasionsInput.split(",").map(s => s.trim()).filter(Boolean),
       };
       
-      // Update profile endpoint call
       await api.auth.updateProfile(dataToSubmit);
       
-      // Force reload to get updated user state and redirect
       window.location.href = "/dashboard";
     } catch (err: any) {
       setError(err.message || "Failed to save profile. Try again.");
@@ -49,26 +47,33 @@ export default function ProfileSetupPage() {
     }
   };
 
-  if (isLoading || !isAuthenticated) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (isLoading || !isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 relative">
-      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,rgba(82,225,254,0.05)_0%,transparent_50%)] pointer-events-none" />
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 relative overflow-hidden">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-[radial-gradient(circle,rgba(82,225,254,0.03)_0%,transparent_70%)] pointer-events-none" />
 
-      <Card variant="translucent" className="w-full max-w-2xl p-8 z-10">
-        <h2 className="text-2xl font-medium text-porcelain mb-2">Set up your profile</h2>
-        <p className="text-cloudburst text-sm mb-8">Tell us about your style to get better AI recommendations.</p>
+      <Card variant="translucent" className="w-full max-w-2xl p-8 md:p-12 z-10 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyber-cyan to-transparent opacity-50" />
+        
+        <div className="text-center mb-8">
+          <div className="w-12 h-12 mx-auto rounded-xl bg-carbon flex items-center justify-center shadow-subtle-2 mb-4 border border-cyber-cyan/20">
+            <span className="text-xl">✨</span>
+          </div>
+          <h2 className="text-2xl font-medium text-porcelain tracking-tight mb-2">Set up your profile</h2>
+          <p className="text-cloudburst text-sm">Tell us about your style to get better AI recommendations.</p>
+        </div>
 
-        {error && <div className="mb-4 text-red-400 text-sm">{error}</div>}
+        {error && <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">{error}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-[13px] font-medium text-cloudburst mb-1.5 uppercase tracking-wider">Gender Preference</label>
+              <label className="block text-[11px] font-medium text-cloudburst mb-1.5 uppercase tracking-wider">Gender Preference</label>
               <select
                 value={formData.gender_preference}
                 onChange={e => setFormData({ ...formData, gender_preference: e.target.value })}
-                className="w-full bg-inkwell border border-starlight/10 rounded-[8px] px-4 py-2.5 text-porcelain text-sm focus:outline-none focus:border-cyber-cyan/50"
+                className="w-full bg-inkwell border border-starlight/10 rounded-xl px-4 py-3 text-porcelain text-sm focus:outline-none focus:border-cyber-cyan/50 focus:ring-1 focus:ring-cyber-cyan/50 transition-colors"
               >
                 <option value="">Select...</option>
                 <option value="menswear">Menswear</option>
@@ -77,11 +82,11 @@ export default function ProfileSetupPage() {
               </select>
             </div>
             <div>
-              <label className="block text-[13px] font-medium text-cloudburst mb-1.5 uppercase tracking-wider">Style Preference</label>
+              <label className="block text-[11px] font-medium text-cloudburst mb-1.5 uppercase tracking-wider">Style Preference</label>
               <select
                 value={formData.style_preference}
                 onChange={e => setFormData({ ...formData, style_preference: e.target.value })}
-                className="w-full bg-inkwell border border-starlight/10 rounded-[8px] px-4 py-2.5 text-porcelain text-sm focus:outline-none focus:border-cyber-cyan/50"
+                className="w-full bg-inkwell border border-starlight/10 rounded-xl px-4 py-3 text-porcelain text-sm focus:outline-none focus:border-cyber-cyan/50 focus:ring-1 focus:ring-cyber-cyan/50 transition-colors"
               >
                 <option value="">Select...</option>
                 <option value="minimalist">Minimalist</option>
@@ -94,41 +99,41 @@ export default function ProfileSetupPage() {
           </div>
 
           <div>
-            <label className="block text-[13px] font-medium text-cloudburst mb-1.5 uppercase tracking-wider">Location (for weather)</label>
+            <label className="block text-[11px] font-medium text-cloudburst mb-1.5 uppercase tracking-wider">Location <span className="text-cyber-cyan/60 lowercase tracking-normal">(for weather)</span></label>
             <input
               type="text"
               placeholder="e.g. New York, London, Tokyo"
               value={formData.location}
               onChange={e => setFormData({ ...formData, location: e.target.value })}
-              className="w-full bg-inkwell border border-starlight/10 rounded-[8px] px-4 py-2.5 text-porcelain text-sm focus:outline-none focus:border-cyber-cyan/50"
+              className="w-full bg-inkwell border border-starlight/10 rounded-xl px-4 py-3 text-porcelain text-sm focus:outline-none focus:border-cyber-cyan/50 focus:ring-1 focus:ring-cyber-cyan/50 transition-colors placeholder:text-cloudburst/30"
             />
           </div>
 
           <div>
-            <label className="block text-[13px] font-medium text-cloudburst mb-1.5 uppercase tracking-wider">Favorite Colors (comma separated)</label>
+            <label className="block text-[11px] font-medium text-cloudburst mb-1.5 uppercase tracking-wider">Favorite Colors <span className="text-cloudburst/60 lowercase tracking-normal">(comma separated)</span></label>
             <input
               type="text"
               placeholder="e.g. Black, Navy, Olive"
               value={colorsInput}
               onChange={e => setColorsInput(e.target.value)}
-              className="w-full bg-inkwell border border-starlight/10 rounded-[8px] px-4 py-2.5 text-porcelain text-sm focus:outline-none focus:border-cyber-cyan/50"
+              className="w-full bg-inkwell border border-starlight/10 rounded-xl px-4 py-3 text-porcelain text-sm focus:outline-none focus:border-cyber-cyan/50 focus:ring-1 focus:ring-cyber-cyan/50 transition-colors placeholder:text-cloudburst/30"
             />
           </div>
 
           <div>
-            <label className="block text-[13px] font-medium text-cloudburst mb-1.5 uppercase tracking-wider">Common Occasions (comma separated)</label>
+            <label className="block text-[11px] font-medium text-cloudburst mb-1.5 uppercase tracking-wider">Common Occasions <span className="text-cloudburst/60 lowercase tracking-normal">(comma separated)</span></label>
             <input
               type="text"
               placeholder="e.g. Office, Casual Outings, Gym"
               value={occasionsInput}
               onChange={e => setOccasionsInput(e.target.value)}
-              className="w-full bg-inkwell border border-starlight/10 rounded-[8px] px-4 py-2.5 text-porcelain text-sm focus:outline-none focus:border-cyber-cyan/50"
+              className="w-full bg-inkwell border border-starlight/10 rounded-xl px-4 py-3 text-porcelain text-sm focus:outline-none focus:border-cyber-cyan/50 focus:ring-1 focus:ring-cyber-cyan/50 transition-colors placeholder:text-cloudburst/30"
             />
           </div>
 
-          <div className="pt-4 border-t border-starlight/10 flex justify-end">
-            <Button type="submit" variant="filled" disabled={isSaving}>
-              {isSaving ? "Saving..." : "Save and Continue"}
+          <div className="pt-8 flex justify-end">
+            <Button type="submit" variant="filled" size="lg" disabled={isSaving} className="w-full sm:w-auto min-w-[200px]">
+              {isSaving ? "Saving Profile..." : "Save and Continue"}
             </Button>
           </div>
         </form>

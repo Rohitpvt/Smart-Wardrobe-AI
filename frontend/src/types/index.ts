@@ -9,12 +9,13 @@
 export interface User {
   id: string;
   email: string;
-  fullName: string;
-  gender?: string;
-  stylePreference?: string;
-  avatarUrl?: string;
-  isActive: boolean;
-  createdAt: string;
+  full_name: string;
+  gender_preference?: string;
+  style_preference?: string;
+  profile_image_url?: string;
+  is_active: boolean;
+  is_profile_complete: boolean;
+  created_at: string;
 }
 
 // --- Clothing Item ---
@@ -94,4 +95,18 @@ export interface HealthStatus {
   status: string;
   version: string;
   service: string;
+}
+
+// --- Auth Data ---
+export interface LoginData {
+  email?: string;
+  password?: string;
+  [key: string]: any;
+}
+
+export interface RegisterData {
+  email?: string;
+  password?: string;
+  full_name?: string;
+  [key: string]: any;
 }

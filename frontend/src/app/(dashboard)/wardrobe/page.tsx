@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import Link from "next/link";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
-import Badge from "@/components/ui/Badge";
+import PageHeader from "@/components/ui/PageHeader";
+import WardrobeCard from "@/components/wardrobe/WardrobeCard";
+import EmptyState from "@/components/ui/EmptyState";
+import LoadingState from "@/components/ui/LoadingState";
 import * as Constants from "@/lib/constants";
 
 export default function WardrobePage() {
@@ -42,77 +44,64 @@ export default function WardrobePage() {
   }, [search, category, type, season]);
 
   return (
-    <div className="min-h-screen bg-charcoal p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <h1 className="text-3xl font-medium text-porcelain">My Wardrobe</h1>
-          <Button variant="filled" onClick={() => router.push("/upload")} className="bg-cyber-cyan text-inkwell">
-            + Upload Cloth
+    <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8">
+      
+      <PageHeader 
+        title="My Wardrobe" 
+        description="View and manage your digitized clothing collection."
+        actions={
+          <Button variant="filled" onClick={() => router.push("/upload")} className="bg-cyber-cyan text-carbon hover:bg-white">
+            + Upload Item
           </Button>
+        }
+      />
+
+      {/* Filters Toolbar */}
+      <Card variant="translucent" className="p-4 flex flex-wrap gap-4 items-center animate-fade-in-up border border-starlight/10 z-20 relative">
+        <div className="flex-1 min-w-[200px]">
+          <input 
+            type="text" 
+            placeholder="Search brand, color, notes..." 
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full bg-inkwell border border-starlight/10 rounded-xl px-4 py-2.5 text-porcelain text-sm focus:outline-none focus:border-cyber-cyan/50 focus:ring-1 focus:ring-cyber-cyan/50 transition-colors"
+          />
         </div>
+        <select value={category} onChange={e => setCategory(e.target.value)} className="bg-inkwell border border-starlight/10 rounded-xl px-4 py-2.5 text-porcelain text-sm focus:outline-none focus:border-cyber-cyan/50 focus:ring-1 focus:ring-cyber-cyan/50 transition-colors">
+          <option value="">All Categories</option>
+          {Constants.CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <select value={type} onChange={e => setType(e.target.value)} className="bg-inkwell border border-starlight/10 rounded-xl px-4 py-2.5 text-porcelain text-sm focus:outline-none focus:border-cyber-cyan/50 focus:ring-1 focus:ring-cyber-cyan/50 transition-colors">
+          <option value="">All Types</option>
+          {Constants.CLOTHING_TYPES.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <select value={season} onChange={e => setSeason(e.target.value)} className="bg-inkwell border border-starlight/10 rounded-xl px-4 py-2.5 text-porcelain text-sm focus:outline-none focus:border-cyber-cyan/50 focus:ring-1 focus:ring-cyber-cyan/50 transition-colors">
+          <option value="">All Seasons</option>
+          {Constants.SEASONS.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+      </Card>
 
-        {/* Filters Toolbar */}
-        <Card variant="translucent" className="p-4 flex flex-wrap gap-4 items-center">
-          <div className="flex-1 min-w-[200px]">
-            <input 
-              type="text" 
-              placeholder="Search brand, color, notes..." 
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="w-full bg-inkwell border border-starlight/10 rounded-[8px] px-4 py-2 text-porcelain text-sm focus:outline-none focus:border-cyber-cyan/50"
-            />
-          </div>
-          <select value={category} onChange={e => setCategory(e.target.value)} className="bg-inkwell border border-starlight/10 rounded-[8px] px-4 py-2 text-porcelain text-sm focus:outline-none focus:border-cyber-cyan/50">
-            <option value="">All Categories</option>
-            {Constants.CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <select value={type} onChange={e => setType(e.target.value)} className="bg-inkwell border border-starlight/10 rounded-[8px] px-4 py-2 text-porcelain text-sm focus:outline-none focus:border-cyber-cyan/50">
-            <option value="">All Types</option>
-            {Constants.CLOTHING_TYPES.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <select value={season} onChange={e => setSeason(e.target.value)} className="bg-inkwell border border-starlight/10 rounded-[8px] px-4 py-2 text-porcelain text-sm focus:outline-none focus:border-cyber-cyan/50">
-            <option value="">All Seasons</option>
-            {Constants.SEASONS.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </Card>
-
-        {/* Grid */}
+      {/* Grid */}
+      <div className="relative z-10 animate-fade-in">
         {isLoading ? (
-          <div className="py-20 text-center text-cloudburst">Loading your wardrobe...</div>
+          <LoadingState message="Loading your wardrobe..." />
         ) : items.length === 0 ? (
-          <div className="py-20 text-center border border-dashed border-starlight/20 rounded-[16px]">
-            <p className="text-cloudburst mb-4">No clothing items found.</p>
-            <Button variant="ghost" onClick={() => router.push("/upload")}>Upload your first item</Button>
-          </div>
+          <EmptyState 
+            title={search || category || type || season ? "No matches found" : "Your wardrobe is empty"}
+            description={search || category || type || season ? "Try adjusting your filters to find what you're looking for." : "Upload your first clothing item to start building your digital closet and get AI outfit recommendations."}
+            actionLabel={search || category || type || season ? "Clear Filters" : "Upload Item"}
+            onAction={() => {
+              if (search || category || type || season) {
+                setSearch(""); setCategory(""); setType(""); setSeason("");
+              } else {
+                router.push("/upload");
+              }
+            }}
+          />
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {items.map(item => (
-              <Link href={`/wardrobe/${item.id}`} key={item.id}>
-                <Card variant="translucent" className="h-full hover:border-cyber-cyan/30 transition-colors overflow-hidden group flex flex-col">
-                  <div className="aspect-square bg-carbon relative overflow-hidden">
-                    {item.front_image_url ? (
-                      <img src={item.front_image_url} alt={item.type} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-cloudburst text-xs">No Image</div>
-                    )}
-                  </div>
-                  <div className="p-4 flex-1 flex flex-col justify-between">
-                    <div>
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="text-sm font-medium text-porcelain truncate" title={item.brand ? `${item.brand} ${item.type}` : item.type}>
-                          {item.brand ? <span className="text-cloudburst mr-1">{item.brand}</span> : null}
-                          {item.type}
-                        </h3>
-                      </div>
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        <Badge variant="cyan">{item.category}</Badge>
-                        <Badge variant="orange">{item.primary_color}</Badge>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              </Link>
+              <WardrobeCard key={item.id} item={item} />
             ))}
           </div>
         )}

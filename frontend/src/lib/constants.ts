@@ -50,3 +50,11 @@ export const CONDITIONS = [
 export const PRICE_RANGES = [
   "Budget", "Mid-range", "Premium", "Luxury", "Unknown"
 ];
+
+export const APP_NAME = "Midnight Fashion Intelligence";
+export const NAVIGATION_LINKS = [
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/wardrobe", label: "Wardrobe" },
+  { href: "/outfit-ai", label: "Outfit AI" },
+  { href: "/weather-style", label: "Weather Style" },
+];
