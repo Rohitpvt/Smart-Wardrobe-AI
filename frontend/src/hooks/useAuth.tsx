@@ -1,72 +1,58 @@
 "use client";
 
-import { useState, useEffect, createContext, useContext, ReactNode } from "react";
-import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
-import { User, LoginData, RegisterData } from "@/types";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import api from "@/lib/api";
+import { User } from "@/lib/types";
 
 interface AuthContextType {
-  isAuthenticated: boolean;
   user: User | null;
-  isLoading: boolean;
-  login: (data: LoginData) => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
+  loading: boolean;
+  login: (token: string) => void;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const initAuth = async () => {
-      const token = localStorage.getItem("token");
-      if (token) {
-        try {
-          const userData = await api.auth.me();
-          setUser(userData as User);
-        } catch (error) {
-          console.error("Failed to fetch user:", error);
-          localStorage.removeItem("token");
-        }
-      }
-      setIsLoading(false);
-    };
-
-    initAuth();
-  }, []);
-
-  const login = async (data: LoginData) => {
-    const response = await api.auth.login(data);
-    localStorage.setItem("token", response.access_token);
-    const userData = await api.auth.me();
-    setUser(userData as User);
-    
-    // Redirect based on profile completion
-    if (!(userData as User).is_profile_complete) {
-      router.push("/profile-setup");
-    } else {
-      router.push("/dashboard");
+  const fetchUser = async () => {
+    try {
+      const response = await api.get("/auth/me");
+      setUser(response.data);
+    } catch (error) {
+      console.error("Failed to fetch user", error);
+      localStorage.removeItem("token");
+      setUser(null);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const register = async (data: RegisterData) => {
-    await api.auth.register(data);
-    // After registration, log them in automatically
-    await login({ email: data.email, password: data.password });
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      fetchUser();
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  const login = (token: string) => {
+    localStorage.setItem("token", token);
+    fetchUser();
   };
 
   const logout = () => {
     localStorage.removeItem("token");
     setUser(null);
-    router.push("/login");
+    window.location.href = "/";
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated: !!user, user, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser: fetchUser }}>
       {children}
     </AuthContext.Provider>
   );

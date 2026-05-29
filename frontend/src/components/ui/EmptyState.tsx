@@ -1,27 +1,23 @@
-import Card from "./Card";
-import Button from "./Button";
+import { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 interface EmptyStateProps {
+  icon: ReactNode;
   title: string;
   description: string;
-  actionLabel?: string;
-  onAction?: () => void;
-  icon?: string;
+  action?: ReactNode;
+  className?: string;
 }
 
-export default function EmptyState({ title, description, actionLabel, onAction, icon = "✦" }: EmptyStateProps) {
+export function EmptyState({ icon, title, description, action, className }: EmptyStateProps) {
   return (
-    <Card variant="basic" className="p-12 text-center border-dashed border-starlight/20 flex flex-col items-center justify-center min-h-[300px]">
-      <div className="w-12 h-12 rounded-full bg-inkwell border border-starlight/10 flex items-center justify-center text-xl text-cyber-cyan mb-4 shadow-subtle-2">
+    <div className={cn("flex flex-col items-center justify-center py-16 text-center", className)}>
+      <div className="bg-charcoal/50 p-4 rounded-full mb-4 border border-white/5 text-cloudburst">
         {icon}
       </div>
-      <h3 className="text-xl font-medium text-porcelain mb-2">{title}</h3>
-      <p className="text-cloudburst text-sm max-w-md mx-auto mb-6">{description}</p>
-      {actionLabel && onAction && (
-        <Button variant="ghost-cyan" className="border border-cyber-cyan/30" onClick={onAction}>
-          {actionLabel}
-        </Button>
-      )}
-    </Card>
+      <h3 className="text-xl font-semibold text-porcelain mb-2">{title}</h3>
+      <p className="text-cloudburst max-w-sm mb-6">{description}</p>
+      {action}
+    </div>
   );
 }

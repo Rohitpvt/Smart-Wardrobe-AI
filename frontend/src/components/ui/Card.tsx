@@ -1,55 +1,39 @@
-/**
- * Smart Wardrobe AI — Card Component
- *
- * Variants based on DESIGN.md:
- * - basic: Carbon bg, 8px radius, 16px padding
- * - rounded: Carbon bg, 24px radius
- * - translucent: Translucent bg with inset border shadow
- * - subtle: Inkwell bg with subtle shadow
- */
+import { HTMLAttributes, forwardRef } from "react";
+import { cn } from "@/lib/utils";
 
-import { cn } from "@/utils/cn";
-import { HTMLAttributes, ReactNode } from "react";
+const Card = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn("glass-card overflow-hidden", className)} {...props} />
+  )
+);
+Card.displayName = "Card";
 
-type CardVariant = "basic" | "rounded" | "translucent" | "subtle";
+const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn("px-6 py-4 border-b border-white/5", className)} {...props} />
+  )
+);
+CardHeader.displayName = "CardHeader";
 
-interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  variant?: CardVariant;
-  children: ReactNode;
-  hover?: boolean;
-  glow?: boolean;
-}
+const CardTitle = forwardRef<HTMLHeadingElement, HTMLAttributes<HTMLHeadingElement>>(
+  ({ className, ...props }, ref) => (
+    <h3 ref={ref} className={cn("text-lg font-semibold leading-none tracking-tight text-porcelain", className)} {...props} />
+  )
+);
+CardTitle.displayName = "CardTitle";
 
-const variantStyles: Record<CardVariant, string> = {
-  basic: "bg-carbon rounded-[8px] p-4",
-  rounded: "bg-carbon rounded-[24px] p-4",
-  translucent: [
-    "bg-[rgba(23,23,23,0.6)] rounded-[20px]",
-    "shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1),inset_0_1px_0_0_rgba(255,255,255,0.15)]",
-  ].join(" "),
-  subtle: "bg-inkwell rounded-[6px] shadow-subtle-2 px-6 py-4",
-};
+const CardContent = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn("p-6", className)} {...props} />
+  )
+);
+CardContent.displayName = "CardContent";
 
-export default function Card({
-  variant = "basic",
-  children,
-  hover = false,
-  glow = false,
-  className,
-  ...props
-}: CardProps) {
-  return (
-    <div
-      className={cn(
-        variantStyles[variant],
-        hover &&
-          "transition-all duration-300 hover:translate-y-[-2px] hover:shadow-[inset_0_0_0_1px_rgba(82,225,254,0.15)]",
-        glow && "animate-pulse-glow",
-        className
-      )}
-      {...props}
-    >
-      {children}
-    </div>
-  );
-}
+const CardFooter = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn("px-6 py-4 bg-black/20 border-t border-white/5 flex items-center", className)} {...props} />
+  )
+);
+CardFooter.displayName = "CardFooter";
+
+export { Card, CardHeader, CardTitle, CardContent, CardFooter };
