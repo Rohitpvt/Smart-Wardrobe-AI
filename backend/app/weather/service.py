@@ -29,6 +29,7 @@ def get_current_weather(location: Optional[str] = None) -> dict:
     if provider == "openweather":
         api_key = getattr(settings, "OPENWEATHER_API_KEY", "")
         return get_openweather_data(location=location, api_key=api_key)
-    else:
-        # Default: mock
+    elif provider == "mock":
         return get_mock_weather(location=location)
+    else:
+        raise ValueError(f"Unknown WEATHER_PROVIDER: {provider}")

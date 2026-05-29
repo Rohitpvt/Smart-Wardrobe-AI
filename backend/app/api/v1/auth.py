@@ -10,12 +10,17 @@ from app.schemas.user import UserCreate, UserLogin, UserResponse
 from app.schemas.token import Token
 from app.core.security import get_password_hash, verify_password, create_access_token
 from app.core.dependencies import get_current_user
+from app.core.rate_limit import limiter
 from app.config import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 auth_router = APIRouter()
 
 @auth_router.post("/register", response_model=UserResponse)
-async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)) -> Any:
+@limiter.limit("5/minute")
+async def register(request: Request, user_in: UserCreate, db: AsyncSession = Depends(get_db)) -> Any:
     """
     Register a new user with email and password.
     """
@@ -24,6 +29,7 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)) -> A
         
     result = await db.execute(select(User).where(User.email == user_in.email))
     if result.scalars().first() is not None:
+        logger.warning(f"Registration failed: email {user_in.email} already exists.")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="A user with this email already exists.",
@@ -44,7 +50,8 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)) -> A
     return user
 
 @auth_router.post("/login", response_model=Token)
-async def login(user_in: UserLogin, db: AsyncSession = Depends(get_db)) -> Any:
+@limiter.limit("10/minute")
+async def login(request: Request, user_in: UserLogin, db: AsyncSession = Depends(get_db)) -> Any:
     """
     Login with email and password to get a JWT access token.
     """
@@ -52,9 +59,11 @@ async def login(user_in: UserLogin, db: AsyncSession = Depends(get_db)) -> Any:
     user = result.scalars().first()
     
     if user is None or user.hashed_password is None:
+        logger.warning(f"Failed login attempt for email: {user_in.email}")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
         
     if not verify_password(user_in.password, user.hashed_password):
+        logger.warning(f"Failed login attempt for email: {user_in.email}")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
         
     access_token = create_access_token(subject=user.email)

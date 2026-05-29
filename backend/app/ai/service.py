@@ -19,6 +19,9 @@ def get_ai_provider() -> BaseAIProvider:
     elif provider_name == "nvidia":
         logger.info("Initializing NVIDIA AI Provider")
         return NvidiaProvider()
-    else:
-        logger.info("Initializing Mock AI Provider (Default)")
+    elif provider_name == "mock":
+        logger.info("Initializing Mock AI Provider")
         return MockProvider()
+    else:
+        logger.error(f"Unknown AI_PROVIDER: {provider_name}")
+        raise ValueError(f"Unknown AI_PROVIDER: {provider_name}. Use 'gemini', 'nvidia', or 'mock'.")

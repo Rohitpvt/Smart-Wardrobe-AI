@@ -7,6 +7,33 @@ configures middleware, and includes all API routers.
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+
+from app.core.rate_limit import limiter
+from app.core.middleware import ContentSizeLimitMiddleware
+
+import logging
+import json
+
+class JSONFormatter(logging.Formatter):
+    def format(self, record):
+        log_record = {
+            "time": self.formatTime(record, self.datefmt),
+            "level": record.levelname,
+            "name": record.name,
+            "message": record.getMessage(),
+        }
+        if record.exc_info:
+            log_record["exception"] = self.formatException(record.exc_info)
+        return json.dumps(log_record)
+
+def setup_logging():
+    handler = logging.StreamHandler()
+    handler.setFormatter(JSONFormatter())
+    logging.basicConfig(level=logging.INFO, handlers=[handler], force=True)
+
+setup_logging()
 
 from app.config import settings
 from app.api.health import health_router
@@ -43,6 +70,13 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # --- Size Limit Middleware (10MB limit) ---
+    app.add_middleware(ContentSizeLimitMiddleware, max_upload_size=10 * 1024 * 1024)
+
+    # --- Rate Limiter Setup ---
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
     # --- Routers ---
     app.include_router(health_router)

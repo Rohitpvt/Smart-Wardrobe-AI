@@ -1,192 +1,125 @@
-# Smart Wardrobe AI
+# Smart Wardrobe AI | Midnight Fashion Intelligence
+![Production Ready](https://img.shields.io/badge/Status-Production%20Ready-brightgreen?style=flat-square) ![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js) ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=flat-square&logo=fastapi)
 
-**Smart Wardrobe AI** is a full-stack, AI-powered clothing analyzer and digital wardrobe manager. It allows users to digitize their closet, receive intelligent outfit recommendations, and track their clothing usage using a sleek, premium dark-mode interface.
+An AI-powered digital wardrobe and personal stylist built with Next.js and FastAPI. It analyzes clothing images, organizes your closet, and generates weather-aware outfit recommendations.
+
+## 📖 Problem Statement
+Managing a physical wardrobe is often chaotic, leading to decision fatigue and forgotten clothing. Existing apps require tedious manual data entry and lack intelligent, context-aware styling advice.
+
+## 💡 Solution Summary
+Smart Wardrobe AI leverages Google's Gemini Vision models to automatically categorize clothing uploads and extract visual metadata (color, pattern, material). The integrated recommendation engine then pairs items based on real-time weather data and occasion context, removing the friction of manual outfit planning.
 
 ---
 
 ## 🌟 Key Features
+- **Automated Categorization**: AI vision analysis via Gemini extracts type, color, and patterns automatically.
+- **Direct-to-S3 Uploads**: Secure image uploading bypassing backend limits via temporary presigned URLs.
+- **Real-Time Weather Styling**: Outfit generation adapted to current local temperatures and conditions.
+- **Interactive Dashboard**: Filter your wardrobe, track worn items, and view usage analytics.
+- **Secure Authentication**: Robust Google OAuth and encrypted JWT token flows.
 
-*   **Digital Wardrobe Management**: Upload, categorize, and track clothing items.
-*   **AI Image Analysis**: Automatic tagging of clothing type, color, and pattern via AI (Mock, Gemini, or NVIDIA).
-*   **Smart Outfit Engine**: Rule-based recommendation engine considering weather, occasion, color harmony, and gender-specific styling.
-*   **Weather-Aware Styling**: Outfits customized to your current local weather conditions.
-*   **Outfit Tracking**: Save favorite combinations and log worn outfits to track clothing usage statistics.
-*   **Advanced Analytics**: Dashboard showing wardrobe breakdowns, rarely used items, and condition reports.
-*   **Secure & Private**: Robust JWT authentication, Google OAuth, and secure S3 presigned URLs ensure your wardrobe data is strictly private.
+---
+
+## 📸 Screenshots
+
+*(To be added after deployment - replace with actual screenshots)*
+- `![Dashboard view](docs/dashboard.png)`
+- `![Wardrobe gallery](docs/wardrobe.png)`
+- `![Outfit recommender](docs/recommender.png)`
 
 ---
 
 ## 💻 Tech Stack
-
-### Frontend
-*   **Framework**: Next.js 15 (App Router)
-*   **Library**: React 19
-*   **Language**: TypeScript 5
-*   **Styling**: Tailwind CSS v4 (CSS-first config)
-*   **Design System**: Custom "Midnight Terminal Glow" UI
-
-### Backend
-*   **Framework**: FastAPI 0.115+
-*   **Language**: Python 3.11+
-*   **Database**: PostgreSQL 15+ (asyncpg)
-*   **ORM**: SQLAlchemy 2.0+ & Alembic
-*   **Auth**: JWT (JSON Web Tokens) + Google OAuth
-*   **Storage**: AWS S3 (Presigned URLs)
+- **Frontend:** Next.js 15, React 19, TailwindCSS, TypeScript.
+- **Backend:** FastAPI, Python 3.11, SQLAlchemy (Async), PostgreSQL.
+- **Infrastructure:** AWS S3, Render, Vercel.
+- **External APIs:** Google Gemini 2.0 Flash, OpenWeatherMap.
 
 ---
 
-## 🚀 Setup & Installation
+## 🔒 Security Highlights
+- **Private S3 Architecture**: The AWS S3 bucket is completely locked down. Images are uploaded via expiring `POST` presigned URLs and viewed via short-lived `GET` presigned URLs. Raw S3 links are never exposed.
+- **Strong Hashing**: Passwords use `passlib[bcrypt]` with a minimum cost factor of 12.
+- **Rate Limiting**: Critical endpoints (`/login`, `/register`, `/presign`) are protected by `slowapi` to prevent brute force attacks.
+- **Payload Limits**: FastAPI middleware strictly blocks large payloads (>10MB).
+- **IDOR Protections**: All database queries strictly scope down to the authenticated `user_id`.
+
+## 🤖 AI & Integration Highlights
+- Utilizes the official `google-genai` SDK for multimodal vision analysis, strictly enforcing structured JSON schema outputs.
+- Fallback strategies built-in: Mock providers exist for both AI and Weather allowing seamless local development without needing active API keys.
+
+## 🚀 Architecture & Deployment Highlights
+- Cloud-ready FastAPI backend with automated Alembic migrations.
+- Configured for seamless deployment across Render (Backend) and Vercel (Frontend).
+- Secure CORS policies locked strictly to the live Vercel domain.
+
+---
+
+## 🚀 Quick Start (Local Development)
 
 ### Prerequisites
-*   Node.js (v20+)
-*   Python (3.11+)
-*   PostgreSQL (v15+) or Docker
+- Node.js (v20+)
+- Python (3.11+)
+- PostgreSQL (v15+)
 
 ### 1. Database Setup
-Start a PostgreSQL database. You can use Docker:
+Ensure PostgreSQL is running locally or via Docker:
 ```bash
 docker run --name smart-wardrobe-db -e POSTGRES_USER=smartwardrobe -e POSTGRES_PASSWORD=smartwardrobe123 -e POSTGRES_DB=smart_wardrobe_ai -p 5432:5432 -d postgres:15
 ```
 
 ### 2. Backend Setup
-Navigate to the backend directory and set up the Python environment:
 ```bash
 cd backend
 python -m venv venv
 # Windows: venv\Scripts\activate
 # macOS/Linux: source venv/bin/activate
-
 pip install -r requirements.txt
-```
-
-Create your `.env` file:
-```bash
 cp .env.example .env
-# Edit .env with your specific secrets
-```
-
-Run database migrations:
-```bash
 alembic upgrade head
-```
-*(If `alembic upgrade head` fails due to local env issues, check `migrations/versions/` or create a manual migration script based on `app/models/`)*
-
-Start the development server:
-```bash
 uvicorn app.main:app --reload
 ```
-The backend API will be available at `http://localhost:8000/api/v1`.
 
 ### 3. Frontend Setup
-Navigate to the frontend directory:
 ```bash
 cd frontend
 npm install
-```
-
-Create your `.env.local` file:
-```bash
 cp .env.example .env.local
-# Edit .env.local if your backend URL differs
-```
-
-Start the frontend development server:
-```bash
 npm run dev
 ```
-The application will be available at `http://localhost:3000`.
+Access the application at `http://localhost:3000`.
 
 ---
 
-## 🔑 Environment Variables Guide
+## 🧪 Final Smoke Test (Demo Instructions)
+If you are reviewing this project locally or via the live demo, follow this safe flow:
+1. Navigate to the landing page.
+2. Register a new account (Use a mock email, do not use your real passwords).
+3. Click "Upload" and submit a clear photo of a clothing item.
+4. Click "Analyze with AI" and verify the item is successfully tagged.
+5. Click "Save Item" and navigate to your Wardrobe to view it.
+6. Navigate to the Weather page and enter your current city.
+7. Navigate to the Outfit Recommender to generate an outfit based on local weather.
+8. Save the recommended outfit and mark it as "Worn".
+9. View the Analytics dashboard to see updated usage metrics.
 
-### Backend (`backend/.env`)
-*   `DATABASE_URL`: Connection string to your PostgreSQL instance.
-*   `SECRET_KEY`: A strong, random string for JWT signing.
-*   `GOOGLE_CLIENT_ID` / `SECRET`: Credentials for Google OAuth login.
-*   `AWS_*`: Your AWS credentials and bucket name for image storage.
-*   `AI_PROVIDER`: Choose between `mock`, `gemini`, or `nvidia`.
-*   `GEMINI_API_KEY` / `GEMINI_MODEL`: API Key and Model (e.g. `gemini-2.0-flash`) for Google Gemini AI.
-*   `WEATHER_PROVIDER`: Choose between `mock` or `openweather`.
-*   `OPENWEATHER_API_KEY`: API Key from OpenWeatherMap (if using `openweather`).
-*   `CORS_ORIGINS`: Comma-separated list of allowed frontend origins (e.g., `http://localhost:3000`).
-
-### Frontend (`frontend/.env.local`)
-*   `NEXT_PUBLIC_API_URL`: The URL of your backend API (e.g., `http://localhost:8000`).
+> **Note on Fallbacks**: If you are running locally without API keys, set `AI_PROVIDER=mock` and `WEATHER_PROVIDER=mock` in your backend `.env` file to simulate external service responses.
 
 ---
 
-## ☁️ AWS S3 Setup
-
-1.  Create a **Private** S3 Bucket. Do not enable public access.
-2.  Create an IAM User with programmatic access and attach a policy allowing `s3:PutObject` and `s3:GetObject` on `arn:aws:s3:::YOUR_BUCKET_NAME/*`.
-3.  Configure the CORS policy on your S3 bucket to allow direct uploads from your frontend domain.
-
----
-
-## 🤖 AI Provider Setup
-
-By default, the application runs using a `mock` AI provider, which simulates responses without requiring an API key. 
-
-To use real Google Gemini AI vision analysis:
-1.  Get an API key from [Google AI Studio](https://aistudio.google.com/).
-2.  Set `AI_PROVIDER=gemini` and `GEMINI_API_KEY=your_key_here` in your backend `.env`.
-3.  (Optional) Set `GEMINI_MODEL=gemini-2.0-flash`.
-4.  Ensure your AWS S3 URLs are valid, as the backend will download them temporarily to send to Gemini.
+## ⚠️ Known Limitations
+While positioned as production-ready, this project retains the following known limitations:
+- **Rate Limiting**: Currently utilizes memory-based tracking via `slowapi`; scaling to multiple load-balanced instances requires swapping to a Redis backend.
+- **S3 Temp Files**: Unused temporary uploads (images uploaded but not saved) require an automated AWS Lifecycle rule for 24-hour cleanup to prevent storage bloat.
+- **Provider Quotas**: Heavy usage of the free tiers for OpenWeatherMap and Gemini may occasionally hit rate limits.
+- **AI Variability**: Gemini vision analysis accuracy depends heavily on the image lighting, angle, and quality.
+- **Security**: Upload malware scanning (e.g., via AWS Macie or Lambda triggers) is not yet implemented.
 
 ---
 
-## 🌤️ Weather Provider Setup
-
-By default, the application runs using a `mock` Weather provider.
-
-To use live real-world weather data:
-1.  Get a free API key from [OpenWeatherMap](https://openweathermap.org/).
-2.  Set `WEATHER_PROVIDER=openweather` and `OPENWEATHER_API_KEY=your_key_here` in your backend `.env`.
-3.  The frontend will automatically fetch real-time temperature, humidity, condition, and wind speed.
-
----
-
-## ✅ Production Checklist
-
-Before deploying, ensure you have configured the following:
-
-- [ ] Set `DATABASE_URL` (Production PostgreSQL instance)
-- [ ] Set `SECRET_KEY` (Strong, random string for JWT)
-- [ ] Set `GOOGLE_CLIENT_ID`
-- [ ] Set `GOOGLE_CLIENT_SECRET`
-- [ ] Set `GOOGLE_REDIRECT_URI` (Must match your production domain, e.g., `https://my-frontend.com/login`)
-- [ ] Set `AWS_ACCESS_KEY_ID`
-- [ ] Set `AWS_SECRET_ACCESS_KEY`
-- [ ] Set `AWS_REGION`
-- [ ] Set `AWS_S3_BUCKET_NAME`
-- [ ] Set `CORS_ORIGINS` in backend (Your frontend production URL, e.g., `https://my-frontend.com`)
-- [ ] Set `NEXT_PUBLIC_API_URL` in frontend (Your backend production URL, e.g., `https://api.my-backend.com`)
-- [ ] Configure CORS policy on your S3 bucket
-- [ ] Keep S3 bucket private (Block all public access)
-- [ ] Never commit `.env` or `.env.local` files to version control
-
----
-
-## 🚢 Deployment
-
-*   **Frontend**: Recommended deployment via [Vercel](https://vercel.com). Set `NEXT_PUBLIC_API_URL` in the Vercel dashboard.
-    *   **Build Command**: `npm run build`
-    *   **Start Command**: `npm run start` (if not using Vercel's automatic serverless deployment)
-*   **Backend**: Recommended deployment via Render, Railway, or AWS EC2. Ensure you set the `CORS_ORIGINS` environment variable to match your Vercel frontend domain.
-    *   **Migration Command**: `alembic upgrade head` (run this before starting the app)
-    *   **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port 8000`
-*   **Database**: Use a managed PostgreSQL service like Neon, Supabase, or AWS RDS.
-
-See `DEPLOYMENT.md` for more detailed instructions.
-
----
-
-## 🧪 Testing & Code Quality
-The project enforces strict TypeScript checking and ESLint rules. 
-To verify frontend stability before deployment:
-```bash
-cd frontend
-npm run lint
-npm run build
-```
+## 📚 Documentation
+For more detailed instructions, please refer to the following guides:
+- [Environment Variables](ENVIRONMENT_VARIABLES.md)
+- [Deployment Checklist & Runbook](DEPLOYMENT.md)
+- [Troubleshooting](TROUBLESHOOTING.md)
+- [Security Policy](SECURITY.md)
