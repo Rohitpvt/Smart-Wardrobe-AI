@@ -109,6 +109,33 @@ export const api = {
         body: JSON.stringify(data),
       }),
   },
+
+  weather: {
+    current: (location?: string) => {
+      const params = location ? `?location=${encodeURIComponent(location)}` : "";
+      return request<any>(`/weather/current${params}`);
+    },
+    outfit: (data: {
+      location?: string;
+      occasion?: string;
+      gender_style?: string;
+    }) =>
+      request<any>("/weather/outfit", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+  },
+
+  outfits: {
+    save: (data: any) => request<any>("/outfits/save", { method: "POST", body: JSON.stringify(data) }),
+    getSaved: () => request<any[]>("/outfits/saved"),
+    getHistory: () => request<any[]>("/outfits/history"),
+    markWorn: (data: any) => request<any>("/outfits/mark-worn", { method: "POST", body: JSON.stringify(data) }),
+  },
+
+  analytics: {
+    dashboard: () => request<any>("/analytics/dashboard"),
+  },
 };
 
 export default api;

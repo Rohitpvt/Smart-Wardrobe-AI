@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     NVIDIA_BASE_URL: str = "https://integrate.api.nvidia.com/v1"
     NVIDIA_MODEL: str = "meta/llama-3.3-70b-instruct"
 
+    # --- Weather Provider ---
+    WEATHER_PROVIDER: str = "mock"  # Options: mock, openweather
+    OPENWEATHER_API_KEY: str = ""
+
     # --- Google OAuth (Phase 2+) ---
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
@@ -57,6 +61,7 @@ class Settings(BaseSettings):
         "env_file": ".env",
         "env_file_encoding": "utf-8",
         "case_sensitive": True,
+        "extra": "ignore",
     }
 
 

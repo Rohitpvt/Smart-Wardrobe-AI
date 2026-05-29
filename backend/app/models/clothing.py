@@ -34,6 +34,8 @@ class ClothingItem(Base):
     
     # Usage Details
     usage_frequency = Column(String(50), nullable=True)
+    wear_count = Column(Integer, default=0, nullable=False)
+    last_worn_at = Column(DateTime(timezone=True), nullable=True)
     purchase_date = Column(DateTime(timezone=True), nullable=True)
     price_range = Column(String(50), nullable=True)
     notes = Column(String(1000), nullable=True)
