@@ -35,12 +35,13 @@ class Settings(BaseSettings):
     AWS_S3_PRESIGNED_EXPIRE_SECONDS: int = 900
 
     # --- AI Provider ---
-    AI_PROVIDER: str = "mock"  # Options: mock, gemini, nvidia
-    GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-2.0-flash"
+    AI_PROVIDER: str = "nvidia"  # Options: nvidia, mock (gemini is deprecated)
     NVIDIA_API_KEY: str = ""
     NVIDIA_BASE_URL: str = "https://integrate.api.nvidia.com/v1"
-    NVIDIA_MODEL: str = "meta/llama-3.3-70b-instruct"
+    NVIDIA_MODEL: str = "meta/llama-3.2-11b-vision-instruct"
+    # Deprecated — Gemini provider is no longer used
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-2.0-flash"
 
     # --- Weather Provider ---
     WEATHER_PROVIDER: str = "mock"  # Options: mock, openweather

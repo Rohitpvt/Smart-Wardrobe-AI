@@ -11,7 +11,8 @@ from app.config import settings
 from app.db.base import Base
 # Make sure to import all models here so Alembic can discover them
 from app.models.user import User
-
+from app.models.clothing import ClothingItem
+from app.models.outfit import SavedOutfit, OutfitHistory
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

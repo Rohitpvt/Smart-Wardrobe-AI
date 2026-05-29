@@ -49,7 +49,7 @@ export default function LandingPage() {
           <FeatureCard 
             icon={<Sparkles className="w-6 h-6 text-cyber-cyan" />}
             title="AI Clothing Analysis"
-            description="Automatically extracts type, color, and patterns from your uploads using Gemini Vision."
+            description="Automatically extracts type, color, and patterns from your uploads using NVIDIA Vision AI."
           />
           <FeatureCard 
             icon={<CloudRain className="w-6 h-6 text-cyber-cyan" />}

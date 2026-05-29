@@ -19,8 +19,8 @@ uploads_router = APIRouter()
 @uploads_router.post("/presign", response_model=PresignResponse)
 @limiter.limit("10/minute")
 async def generate_upload_url(
-    request_obj: Request,
-    request: PresignRequest,
+    request: Request,
+    payload: PresignRequest,
     current_user: User = Depends(get_current_user)
 ) -> Any:
     """
@@ -34,17 +34,17 @@ async def generate_upload_url(
         
     # Validate content type
     allowed_types = ["image/jpeg", "image/png", "image/webp"]
-    if request.file_type not in allowed_types:
-        logger.warning(f"Invalid file type attempted: {request.file_type}")
+    if payload.file_type not in allowed_types:
+        logger.warning(f"Invalid file type attempted: {payload.file_type}")
         raise HTTPException(status_code=400, detail="Only JPEG, PNG, and WebP images are allowed.")
         
     # Extract extension from file_name safely
-    ext = request.file_name.split(".")[-1].lower() if "." in request.file_name else "jpg"
+    ext = payload.file_name.split(".")[-1].lower() if "." in payload.file_name else "jpg"
     if ext == "jpeg":
         ext = "jpg"
     
     # Sanitize file_name
-    safe_file_name = re.sub(r'[^a-zA-Z0-9_\-\.]', '', request.file_name)
+    safe_file_name = re.sub(r'[^a-zA-Z0-9_\-\.]', '', payload.file_name)
     if not safe_file_name:
         safe_file_name = "upload"
         
@@ -52,10 +52,10 @@ async def generate_upload_url(
     
     # Enforce path structure: users/{user_id}/clothes/{temp_id}/{image_type}-{timestamp}.{ext}
     # This ensures users cannot overwrite other users' files and prevents traversal.
-    s3_key = f"users/{current_user.id}/clothes/{request.temp_id}/{request.upload_context}-{timestamp}.{ext}"
+    s3_key = f"users/{current_user.id}/clothes/{payload.temp_id}/{payload.upload_context}-{timestamp}.{ext}"
     
     try:
-        presigned_data = generate_presigned_post(s3_key, request.file_type, max_mb=10)
+        presigned_data = generate_presigned_post(s3_key, payload.file_type, max_mb=10)
         return PresignResponse(
             upload_url=presigned_data["url"],
             fields=presigned_data["fields"],

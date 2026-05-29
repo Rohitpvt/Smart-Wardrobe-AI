@@ -18,7 +18,20 @@ export default function AnalyticsPage() {
   const fetchStats = async () => {
     try {
       const res = await api.get("/analytics/dashboard");
-      setStats(res.data);
+      const data = res.data;
+      const category_distribution: Record<string, number> = {};
+      if (data.wardrobe_breakdown_by_category) {
+        data.wardrobe_breakdown_by_category.forEach((item: any) => {
+          category_distribution[item.category] = item.count;
+        });
+      }
+      setStats({
+        ...data,
+        total_items: data.total_clothes || 0,
+        total_outfits_saved: data.saved_outfits_count || 0,
+        total_outfits_worn: data.outfit_history_count || 0,
+        category_distribution
+      });
     } catch (error) {
       showToast("Failed to fetch analytics data.", "error");
     } finally {
@@ -27,6 +40,7 @@ export default function AnalyticsPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line
     fetchStats();
   }, []);
 

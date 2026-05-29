@@ -1,1 +1,1 @@
-from app.recommendations.engine import RecommendationEngine
+# Recommendations package

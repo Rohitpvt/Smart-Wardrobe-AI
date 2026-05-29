@@ -34,9 +34,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
+      // eslint-disable-next-line
       fetchUser();
     } else {
-      setLoading(false);
+      setTimeout(() => setLoading(false), 0);
     }
   }, []);
 

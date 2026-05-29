@@ -21,7 +21,7 @@ export default function SavedOutfitsPage() {
 
   const fetchOutfits = async () => {
     try {
-      const res = await api.get("/outfits/");
+      const res = await api.get("/outfits/saved");
       setOutfits(res.data);
     } catch (error) {
       showToast("Failed to fetch saved outfits.", "error");
@@ -31,6 +31,7 @@ export default function SavedOutfitsPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line
     fetchOutfits();
   }, []);
 

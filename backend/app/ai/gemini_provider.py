@@ -132,7 +132,17 @@ class GeminiProvider(BaseAIProvider):
                 detail="AI response did not match the expected schema."
             )
         except Exception as e:
-            logger.error(f"Gemini API call failed: {e}")
+            error_str = str(e)
+            logger.error(f"Gemini API call failed: {error_str}")
+
+            # Surface quota exhaustion clearly instead of generic 502
+            if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
+                raise HTTPException(
+                    status_code=429,
+                    detail="Gemini API quota exhausted. The free-tier daily limit has been reached. "
+                           "Please wait, upgrade your billing plan, or switch AI_PROVIDER to 'mock'."
+                )
+
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail="Failed to analyze image using Gemini AI."

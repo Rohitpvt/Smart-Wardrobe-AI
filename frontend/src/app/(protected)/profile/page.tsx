@@ -69,7 +69,7 @@ export default function ProfilePage() {
                 </div>
                 <p className="text-sm text-cloudburst leading-relaxed">
                   The frontend is successfully connected to the backend APIs. S3 Image Storage, 
-                  Google Gemini AI Analysis, and OpenWeatherMap services are actively managed 
+                  NVIDIA Vision AI Analysis, and OpenWeatherMap services are actively managed 
                   by the backend infrastructure.
                 </p>
               </div>

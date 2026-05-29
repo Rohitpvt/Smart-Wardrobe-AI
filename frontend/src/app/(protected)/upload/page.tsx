@@ -90,7 +90,7 @@ export default function UploadPage() {
         headers: { "Content-Type": "multipart/form-data" }
       });
 
-      // 3. Analyze with Gemini
+      // 3. Analyze with AI
       setStep("analyzing");
       const analyzeRes = await api.post("/ai/analyze-clothing", {
         s3_key: s3_key,
@@ -118,7 +118,14 @@ export default function UploadPage() {
 
     } catch (error: any) {
       console.error(error);
-      showToast(error.response?.data?.detail || "Processing failed. Please try again.", "error");
+      const status = error.response?.status;
+      const detail = error.response?.data?.detail;
+
+      if (status === 429) {
+        showToast("AI provider quota exhausted. Try again later or switch AI_PROVIDER to mock.", "error");
+      } else {
+        showToast(detail || "Processing failed. Please try again.", "error");
+      }
       setStep("select");
     }
   };
@@ -203,7 +210,7 @@ export default function UploadPage() {
             {step === "analyzing" && (
               <div className="w-full py-4 flex flex-col items-center text-cloudburst">
                 <Sparkles className="h-8 w-8 animate-pulse mb-2 text-cyber-cyan" />
-                <p>Gemini AI is analyzing your clothing...</p>
+                <p>AI is analyzing your clothing...</p>
               </div>
             )}
             

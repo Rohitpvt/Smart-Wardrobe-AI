@@ -1,3 +1,4 @@
+from uuid import UUID
 from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import datetime
@@ -47,8 +48,8 @@ class ClothingItemUpdate(BaseModel):
     notes: Optional[str] = None
 
 class ClothingItemResponse(ClothingItemBase):
-    id: str
-    user_id: str
+    id: UUID
+    user_id: UUID
     ai_detected: bool
     ai_confidence: Optional[int]
     is_deleted: bool

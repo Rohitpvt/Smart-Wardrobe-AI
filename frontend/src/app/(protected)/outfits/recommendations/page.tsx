@@ -42,7 +42,7 @@ export default function RecommendationsPage() {
     if (!recommendation || !outfitName) return;
     setSaving(true);
     try {
-      await api.post("/outfits/", {
+      await api.post("/outfits/save", {
         name: outfitName,
         occasion: occasion || null,
         top_item_id: recommendation.best_top_matches[0]?.id || null,
@@ -64,7 +64,7 @@ export default function RecommendationsPage() {
     <div>
       <PageHeader 
         title="AI Outfit Recommender" 
-        description="Let Gemini AI build the perfect outfit from your wardrobe based on current conditions."
+        description="Let AI build the perfect outfit from your wardrobe based on current conditions."
       />
 
       <Card className="mb-8">

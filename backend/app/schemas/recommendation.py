@@ -1,3 +1,4 @@
+from uuid import UUID
 """
 Pydantic schemas for outfit recommendation requests and responses.
 """
@@ -15,7 +16,7 @@ class OutfitRequest(BaseModel):
 
 
 class RecommendedItem(BaseModel):
-    id: str
+    id: UUID
     type: str
     category: str
     primary_color: str

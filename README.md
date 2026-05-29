@@ -7,12 +7,12 @@ An AI-powered digital wardrobe and personal stylist built with Next.js and FastA
 Managing a physical wardrobe is often chaotic, leading to decision fatigue and forgotten clothing. Existing apps require tedious manual data entry and lack intelligent, context-aware styling advice.
 
 ## 💡 Solution Summary
-Smart Wardrobe AI leverages Google's Gemini Vision models to automatically categorize clothing uploads and extract visual metadata (color, pattern, material). The integrated recommendation engine then pairs items based on real-time weather data and occasion context, removing the friction of manual outfit planning.
+Smart Wardrobe AI leverages NVIDIA's Vision AI models (via NIM API) to automatically categorize clothing uploads and extract visual metadata (color, pattern, material). The integrated recommendation engine then pairs items based on real-time weather data and occasion context, removing the friction of manual outfit planning.
 
 ---
 
 ## 🌟 Key Features
-- **Automated Categorization**: AI vision analysis via Gemini extracts type, color, and patterns automatically.
+- **Automated Categorization**: AI vision analysis via NVIDIA NIM extracts type, color, and patterns automatically.
 - **Direct-to-S3 Uploads**: Secure image uploading bypassing backend limits via temporary presigned URLs.
 - **Real-Time Weather Styling**: Outfit generation adapted to current local temperatures and conditions.
 - **Interactive Dashboard**: Filter your wardrobe, track worn items, and view usage analytics.
@@ -33,7 +33,7 @@ Smart Wardrobe AI leverages Google's Gemini Vision models to automatically categ
 - **Frontend:** Next.js 15, React 19, TailwindCSS, TypeScript.
 - **Backend:** FastAPI, Python 3.11, SQLAlchemy (Async), PostgreSQL.
 - **Infrastructure:** AWS S3, Render, Vercel.
-- **External APIs:** Google Gemini 2.0 Flash, OpenWeatherMap.
+- **External APIs:** NVIDIA NIM (Llama 3.2 Vision), OpenWeatherMap.
 
 ---
 
@@ -45,7 +45,7 @@ Smart Wardrobe AI leverages Google's Gemini Vision models to automatically categ
 - **IDOR Protections**: All database queries strictly scope down to the authenticated `user_id`.
 
 ## 🤖 AI & Integration Highlights
-- Utilizes the official `google-genai` SDK for multimodal vision analysis, strictly enforcing structured JSON schema outputs.
+- Utilizes NVIDIA NIM API with OpenAI-compatible chat/completions format for multimodal vision analysis, strictly enforcing structured JSON schema outputs.
 - Fallback strategies built-in: Mock providers exist for both AI and Weather allowing seamless local development without needing active API keys.
 
 ## 🚀 Architecture & Deployment Highlights
@@ -111,8 +111,8 @@ If you are reviewing this project locally or via the live demo, follow this safe
 While positioned as production-ready, this project retains the following known limitations:
 - **Rate Limiting**: Currently utilizes memory-based tracking via `slowapi`; scaling to multiple load-balanced instances requires swapping to a Redis backend.
 - **S3 Temp Files**: Unused temporary uploads (images uploaded but not saved) require an automated AWS Lifecycle rule for 24-hour cleanup to prevent storage bloat.
-- **Provider Quotas**: Heavy usage of the free tiers for OpenWeatherMap and Gemini may occasionally hit rate limits.
-- **AI Variability**: Gemini vision analysis accuracy depends heavily on the image lighting, angle, and quality.
+- **Provider Quotas**: Heavy usage of the free tiers for OpenWeatherMap and NVIDIA NIM may occasionally hit rate limits.
+- **AI Variability**: NVIDIA vision analysis accuracy depends heavily on the image lighting, angle, and quality.
 - **Security**: Upload malware scanning (e.g., via AWS Macie or Lambda triggers) is not yet implemented.
 
 ---

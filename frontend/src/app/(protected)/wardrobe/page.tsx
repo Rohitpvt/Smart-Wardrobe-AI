@@ -33,6 +33,7 @@ export default function WardrobePage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line
     fetchWardrobe();
   }, []);
 

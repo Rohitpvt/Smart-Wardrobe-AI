@@ -1,3 +1,4 @@
+from uuid import UUID
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime
@@ -25,7 +26,7 @@ class UserProfileUpdate(BaseModel):
     common_occasions: Optional[List[str]] = None
 
 class UserResponse(UserBase):
-    id: str
+    id: UUID
     auth_provider: str
     profile_image_url: Optional[str] = None
     gender_preference: Optional[str] = None
