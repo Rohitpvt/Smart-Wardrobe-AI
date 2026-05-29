@@ -5,6 +5,8 @@ interface WeatherCardProps {
   location?: string;
   temperature?: number;
   condition?: string;
+  humidity?: number;
+  windSpeed?: number;
   seasonHint?: string;
   advice?: string;
   isLoading?: boolean;
@@ -14,6 +16,8 @@ export default function WeatherCard({
   location = "Unknown", 
   temperature, 
   condition = "Unknown", 
+  humidity,
+  windSpeed,
   seasonHint,
   advice,
   isLoading 
@@ -59,6 +63,19 @@ export default function WeatherCard({
           <Badge variant="cyan" className="bg-cyber-cyan/10 border border-cyber-cyan/20">
             {seasonHint} Season
           </Badge>
+        )}
+      </div>
+
+      <div className="flex items-center gap-6 mb-4 text-xs font-medium text-cloudburst uppercase tracking-wider relative z-10">
+        {humidity !== undefined && (
+          <div className="flex items-center gap-1.5">
+            <span className="text-cyber-cyan">💧</span> {humidity}% Humidity
+          </div>
+        )}
+        {windSpeed !== undefined && (
+          <div className="flex items-center gap-1.5">
+            <span className="text-cyber-cyan">💨</span> {windSpeed} km/h Wind
+          </div>
         )}
       </div>
 

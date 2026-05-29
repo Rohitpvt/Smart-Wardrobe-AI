@@ -11,6 +11,7 @@ class WeatherResponse(BaseModel):
     temperature: int
     condition: str
     humidity: int
+    wind_speed: Optional[float] = 0.0
     season_hint: str
     weather_key: str  # hot, cold, rainy, mild, humid — maps to recommendation engine
     clothing_advice: str

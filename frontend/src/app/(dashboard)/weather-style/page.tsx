@@ -27,6 +27,7 @@ interface WeatherData {
   temperature: number;
   condition: string;
   humidity: number;
+  wind_speed?: number;
   season_hint: string;
   weather_key: string;
   clothing_advice: string;
@@ -153,6 +154,8 @@ export default function WeatherStylePage() {
                 location={weatherData?.location}
                 temperature={weatherData?.temperature}
                 condition={weatherData?.condition}
+                humidity={weatherData?.humidity}
+                windSpeed={weatherData?.wind_speed}
                 seasonHint={weatherData?.season_hint}
                 advice={weatherData?.clothing_advice}
               />

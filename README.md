@@ -105,7 +105,10 @@ The application will be available at `http://localhost:3000`.
 *   `SECRET_KEY`: A strong, random string for JWT signing.
 *   `GOOGLE_CLIENT_ID` / `SECRET`: Credentials for Google OAuth login.
 *   `AWS_*`: Your AWS credentials and bucket name for image storage.
-*   `AI_PROVIDER`: Choose between `mock`, `gemini`, or `nvidia`. Provide respective API keys.
+*   `AI_PROVIDER`: Choose between `mock`, `gemini`, or `nvidia`.
+*   `GEMINI_API_KEY` / `GEMINI_MODEL`: API Key and Model (e.g. `gemini-2.0-flash`) for Google Gemini AI.
+*   `WEATHER_PROVIDER`: Choose between `mock` or `openweather`.
+*   `OPENWEATHER_API_KEY`: API Key from OpenWeatherMap (if using `openweather`).
 *   `CORS_ORIGINS`: Comma-separated list of allowed frontend origins (e.g., `http://localhost:3000`).
 
 ### Frontend (`frontend/.env.local`)
@@ -117,17 +120,7 @@ The application will be available at `http://localhost:3000`.
 
 1.  Create a **Private** S3 Bucket. Do not enable public access.
 2.  Create an IAM User with programmatic access and attach a policy allowing `s3:PutObject` and `s3:GetObject` on `arn:aws:s3:::YOUR_BUCKET_NAME/*`.
-3.  Configure the CORS policy on your S3 bucket to allow direct uploads from your frontend domain:
-```json
-[
-    {
-        "AllowedHeaders": ["*"],
-        "AllowedMethods": ["PUT", "POST", "GET"],
-        "AllowedOrigins": ["http://localhost:3000", "https://your-production-domain.com"],
-        "ExposeHeaders": []
-    }
-]
-```
+3.  Configure the CORS policy on your S3 bucket to allow direct uploads from your frontend domain.
 
 ---
 
@@ -135,17 +128,54 @@ The application will be available at `http://localhost:3000`.
 
 By default, the application runs using a `mock` AI provider, which simulates responses without requiring an API key. 
 
-To use real AI vision analysis:
-1.  Set `AI_PROVIDER=gemini` or `AI_PROVIDER=nvidia` in your backend `.env`.
-2.  Provide the corresponding `GEMINI_API_KEY` or `NVIDIA_API_KEY`.
-3.  Ensure your AWS S3 URLs are accessible to the AI provider, or that the provider supports analyzing presigned URLs.
+To use real Google Gemini AI vision analysis:
+1.  Get an API key from [Google AI Studio](https://aistudio.google.com/).
+2.  Set `AI_PROVIDER=gemini` and `GEMINI_API_KEY=your_key_here` in your backend `.env`.
+3.  (Optional) Set `GEMINI_MODEL=gemini-2.0-flash`.
+4.  Ensure your AWS S3 URLs are valid, as the backend will download them temporarily to send to Gemini.
+
+---
+
+## 🌤️ Weather Provider Setup
+
+By default, the application runs using a `mock` Weather provider.
+
+To use live real-world weather data:
+1.  Get a free API key from [OpenWeatherMap](https://openweathermap.org/).
+2.  Set `WEATHER_PROVIDER=openweather` and `OPENWEATHER_API_KEY=your_key_here` in your backend `.env`.
+3.  The frontend will automatically fetch real-time temperature, humidity, condition, and wind speed.
+
+---
+
+## ✅ Production Checklist
+
+Before deploying, ensure you have configured the following:
+
+- [ ] Set `DATABASE_URL` (Production PostgreSQL instance)
+- [ ] Set `SECRET_KEY` (Strong, random string for JWT)
+- [ ] Set `GOOGLE_CLIENT_ID`
+- [ ] Set `GOOGLE_CLIENT_SECRET`
+- [ ] Set `GOOGLE_REDIRECT_URI` (Must match your production domain, e.g., `https://my-frontend.com/login`)
+- [ ] Set `AWS_ACCESS_KEY_ID`
+- [ ] Set `AWS_SECRET_ACCESS_KEY`
+- [ ] Set `AWS_REGION`
+- [ ] Set `AWS_S3_BUCKET_NAME`
+- [ ] Set `CORS_ORIGINS` in backend (Your frontend production URL, e.g., `https://my-frontend.com`)
+- [ ] Set `NEXT_PUBLIC_API_URL` in frontend (Your backend production URL, e.g., `https://api.my-backend.com`)
+- [ ] Configure CORS policy on your S3 bucket
+- [ ] Keep S3 bucket private (Block all public access)
+- [ ] Never commit `.env` or `.env.local` files to version control
 
 ---
 
 ## 🚢 Deployment
 
 *   **Frontend**: Recommended deployment via [Vercel](https://vercel.com). Set `NEXT_PUBLIC_API_URL` in the Vercel dashboard.
+    *   **Build Command**: `npm run build`
+    *   **Start Command**: `npm run start` (if not using Vercel's automatic serverless deployment)
 *   **Backend**: Recommended deployment via Render, Railway, or AWS EC2. Ensure you set the `CORS_ORIGINS` environment variable to match your Vercel frontend domain.
+    *   **Migration Command**: `alembic upgrade head` (run this before starting the app)
+    *   **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port 8000`
 *   **Database**: Use a managed PostgreSQL service like Neon, Supabase, or AWS RDS.
 
 See `DEPLOYMENT.md` for more detailed instructions.

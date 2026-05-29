@@ -69,6 +69,7 @@ def get_mock_weather(location: Optional[str] = None) -> dict:
         "temperature": profile["temperature"],
         "condition": profile["condition"],
         "humidity": profile["humidity"],
+        "wind_speed": round((hash_val % 15) + 2.5, 1),
         "season_hint": profile["season_hint"],
         "weather_key": profile["weather_key"],
         "clothing_advice": profile["clothing_advice"],
