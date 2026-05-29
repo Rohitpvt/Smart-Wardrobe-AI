@@ -35,10 +35,11 @@ class Settings(BaseSettings):
     AWS_S3_PRESIGNED_EXPIRE_SECONDS: int = 900
 
     # --- AI Provider ---
-    AI_PROVIDER: str = "mock"  # Options: mock, gemini, nvidia, huggingface
+    AI_PROVIDER: str = "mock"  # Options: mock, gemini, nvidia
     GEMINI_API_KEY: str = ""
     NVIDIA_API_KEY: str = ""
-    HF_API_KEY: str = ""
+    NVIDIA_BASE_URL: str = "https://integrate.api.nvidia.com/v1"
+    NVIDIA_MODEL: str = "meta/llama-3.3-70b-instruct"
 
     # --- Google OAuth (Phase 2+) ---
     GOOGLE_CLIENT_ID: str = ""

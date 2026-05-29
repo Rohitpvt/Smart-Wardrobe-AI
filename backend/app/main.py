@@ -13,6 +13,8 @@ from app.api.health import health_router
 from app.api.v1.auth import auth_router
 from app.api.v1.clothing import clothing_router
 from app.api.v1.uploads import uploads_router
+from app.api.v1.ai import ai_router
+from app.api.v1.recommendations import recommendations_router
 
 
 def create_app() -> FastAPI:
@@ -44,6 +46,8 @@ def create_app() -> FastAPI:
     app.include_router(auth_router, prefix="/api/v1/auth", tags=["Auth"])
     app.include_router(clothing_router, prefix="/api/v1/clothing", tags=["Clothing"])
     app.include_router(uploads_router, prefix="/api/v1/uploads", tags=["Uploads"])
+    app.include_router(ai_router, prefix="/api/v1/ai", tags=["AI"])
+    app.include_router(recommendations_router, prefix="/api/v1/recommendations", tags=["Recommendations"])
 
     return app
 

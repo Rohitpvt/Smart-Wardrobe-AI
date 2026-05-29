@@ -87,6 +87,28 @@ export const api = {
     update: (id: string, data: any) => request(`/clothing/${id}`, { method: "PUT", body: JSON.stringify(data) }),
     delete: (id: string) => request(`/clothing/${id}`, { method: "DELETE" }),
   },
+
+  ai: {
+    analyzeClothing: (data: { s3_key: string; user_hints?: string }) =>
+      request<any>("/ai/analyze-clothing", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+  },
+
+  recommendations: {
+    generateOutfit: (data: {
+      selected_item_id?: string;
+      preferred_type?: string;
+      occasion?: string;
+      weather?: string;
+      gender_style?: string;
+    }) =>
+      request<any>("/recommendations/outfit", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+  },
 };
 
 export default api;

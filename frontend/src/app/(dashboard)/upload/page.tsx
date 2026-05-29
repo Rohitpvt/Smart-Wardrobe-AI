@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import { v4 as uuidv4 } from "uuid";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import Badge from "@/components/ui/Badge";
 import * as Constants from "@/lib/constants";
 
 type Step = 1 | 2 | 3 | 4 | 5;
@@ -13,16 +14,25 @@ type Step = 1 | 2 | 3 | 4 | 5;
 export default function UploadPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>(1);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   
   // A temporary ID to group images for this upload session
   const [tempId] = useState(uuidv4());
 
-  // Files
+  // Files & their S3 keys if already uploaded
   const [frontImage, setFrontImage] = useState<File | null>(null);
+  const [frontImageKey, setFrontImageKey] = useState<string | null>(null);
+  
   const [backImage, setBackImage] = useState<File | null>(null);
+  const [backImageKey, setBackImageKey] = useState<string | null>(null);
+  
   const [labelImage, setLabelImage] = useState<File | null>(null);
+  const [labelImageKey, setLabelImageKey] = useState<string | null>(null);
+
+  // AI State
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [aiResult, setAiResult] = useState<any>(null);
 
   // Form Data
   const [formData, setFormData] = useState({
@@ -71,34 +81,80 @@ export default function UploadPage() {
     return s3_key;
   };
 
+  const handleAnalyzeAI = async () => {
+    if (!frontImage) return;
+    
+    try {
+      setIsAnalyzing(true);
+      setError("");
+      
+      // 1. Ensure front image is uploaded first
+      let key = frontImageKey;
+      if (!key) {
+        key = await uploadToS3(frontImage, "front");
+        setFrontImageKey(key);
+      }
+
+      // 2. Call AI analyze endpoint
+      const result = await api.ai.analyzeClothing({ s3_key: key });
+      setAiResult(result);
+
+    } catch (err: any) {
+      setError(err.message || "Failed to analyze image with AI.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const applyAISuggestions = () => {
+    if (!aiResult) return;
+    
+    setFormData(prev => ({
+      ...prev,
+      type: aiResult.type || prev.type,
+      category: aiResult.category || prev.category,
+      primary_color: aiResult.primary_color || prev.primary_color,
+      secondary_color: aiResult.secondary_color || prev.secondary_color,
+      material: aiResult.possible_material || prev.material,
+      season: aiResult.season_suggestion || prev.season,
+      occasion: aiResult.occasion_suggestion || prev.occasion,
+      condition: aiResult.visible_condition || prev.condition,
+    }));
+    
+    // Auto-advance to step 2 after applying
+    setStep(2);
+  };
+
   const handleSave = async () => {
     try {
-      setIsUploading(true);
+      setIsSaving(true);
       setError("");
 
-      if (!frontImage) {
+      if (!frontImage && !frontImageKey) {
         throw new Error("Front image is required.");
       }
 
-      // 1. Upload Images
-      const front_image_key = await uploadToS3(frontImage, "front");
-      const back_image_key = backImage ? await uploadToS3(backImage, "back") : undefined;
-      const label_image_key = labelImage ? await uploadToS3(labelImage, "label") : undefined;
+      // 1. Upload any pending images
+      const f_key = frontImageKey || await uploadToS3(frontImage!, "front");
+      const b_key = backImage && !backImageKey ? await uploadToS3(backImage, "back") : backImageKey;
+      const l_key = labelImage && !labelImageKey ? await uploadToS3(labelImage, "label") : labelImageKey;
 
       // 2. Save Item
       const payload = {
         ...formData,
-        front_image_key,
-        back_image_key,
-        label_image_key,
+        front_image_key: f_key,
+        back_image_key: b_key,
+        label_image_key: l_key,
         purchase_date: formData.purchase_date ? new Date(formData.purchase_date).toISOString() : null,
+        ai_detected: !!aiResult,
+        ai_confidence: aiResult?.confidence_score ? Math.round(aiResult.confidence_score * 100) : null
       };
 
       const newItem = await api.clothing.create(payload);
       router.push(`/wardrobe/${(newItem as any).id}`);
     } catch (err: any) {
-      setError(err.message || "An error occurred during upload.");
-      setIsUploading(false);
+      setError(err.message || "An error occurred during save.");
+      setIsSaving(false);
     }
   };
 
@@ -149,19 +205,71 @@ export default function UploadPage() {
             <div className="space-y-6">
               <h2 className="text-xl font-medium text-porcelain mb-4">1. Images</h2>
               
-              <div>
-                <label className="block text-[13px] font-medium text-cloudburst mb-1.5 uppercase tracking-wider">Front Image (Required)</label>
-                <input type="file" accept="image/jpeg, image/png, image/webp" onChange={e => setFrontImage(e.target.files?.[0] || null)} className="text-sm text-cloudburst file:mr-4 file:py-2 file:px-4 file:rounded-[8px] file:border-0 file:text-sm file:font-medium file:bg-cyber-cyan/10 file:text-cyber-cyan hover:file:bg-cyber-cyan/20 cursor-pointer" />
+              <div className="p-4 bg-inkwell rounded-[8px] border border-starlight/10">
+                <label className="block text-[13px] font-medium text-cloudburst mb-3 uppercase tracking-wider">Front Image (Required)</label>
+                <input 
+                  type="file" 
+                  accept="image/jpeg, image/png, image/webp" 
+                  onChange={e => {
+                    setFrontImage(e.target.files?.[0] || null);
+                    setFrontImageKey(null);
+                    setAiResult(null);
+                  }} 
+                  className="text-sm text-cloudburst file:mr-4 file:py-2 file:px-4 file:rounded-[8px] file:border-0 file:text-sm file:font-medium file:bg-cyber-cyan/10 file:text-cyber-cyan hover:file:bg-cyber-cyan/20 cursor-pointer mb-4" 
+                />
+
+                {frontImage && !aiResult && (
+                  <div className="mt-4 border-t border-starlight/10 pt-4">
+                    <Button 
+                      variant="filled" 
+                      onClick={handleAnalyzeAI} 
+                      disabled={isAnalyzing}
+                      className="bg-cyber-cyan text-inkwell w-full font-medium"
+                    >
+                      {isAnalyzing ? (
+                        <span className="flex items-center gap-2 justify-center">
+                          <span className="w-2 h-2 rounded-full bg-inkwell animate-pulse"></span>
+                          Analyzing clothing image...
+                        </span>
+                      ) : (
+                        "✨ Analyze with AI"
+                      )}
+                    </Button>
+                  </div>
+                )}
+                
+                {aiResult && (
+                  <div className="mt-6 border border-cyber-cyan/30 bg-cyber-cyan/5 rounded-[8px] p-4">
+                    <h3 className="text-sm text-cyber-cyan uppercase tracking-widest mb-3 flex items-center justify-between">
+                      <span>AI Suggestions</span>
+                      <span className="font-mono text-[11px] bg-cyber-cyan/10 px-2 py-1 rounded">
+                        CONFIDENCE: {Math.round(aiResult.confidence_score * 100)}%
+                      </span>
+                    </h3>
+                    <p className="text-sm text-porcelain mb-4 italic text-cloudburst">"{aiResult.explanation}"</p>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {aiResult.type && <Badge variant="cyan">{aiResult.type}</Badge>}
+                      {aiResult.category && <Badge variant="cyan">{aiResult.category}</Badge>}
+                      {aiResult.primary_color && <Badge variant="cyan">{aiResult.primary_color}</Badge>}
+                      {aiResult.season_suggestion && <Badge variant="cyan">{aiResult.season_suggestion}</Badge>}
+                      {aiResult.occasion_suggestion && <Badge variant="cyan">{aiResult.occasion_suggestion}</Badge>}
+                    </div>
+                    <div className="flex gap-3">
+                      <Button variant="filled" onClick={applyAISuggestions} className="bg-cyber-cyan text-inkwell text-xs flex-1">Apply Suggestions</Button>
+                      <Button variant="ghost" onClick={() => nextStep()} className="text-xs flex-1">Ignore</Button>
+                    </div>
+                  </div>
+                )}
               </div>
               
               <div>
                 <label className="block text-[13px] font-medium text-cloudburst mb-1.5 uppercase tracking-wider">Back Image (Optional)</label>
-                <input type="file" accept="image/jpeg, image/png, image/webp" onChange={e => setBackImage(e.target.files?.[0] || null)} className="text-sm text-cloudburst file:mr-4 file:py-2 file:px-4 file:rounded-[8px] file:border-0 file:text-sm file:font-medium file:bg-carbon file:text-porcelain hover:file:bg-starlight/10 cursor-pointer" />
+                <input type="file" accept="image/jpeg, image/png, image/webp" onChange={e => {setBackImage(e.target.files?.[0] || null); setBackImageKey(null);}} className="text-sm text-cloudburst file:mr-4 file:py-2 file:px-4 file:rounded-[8px] file:border-0 file:text-sm file:font-medium file:bg-carbon file:text-porcelain hover:file:bg-starlight/10 cursor-pointer" />
               </div>
 
               <div>
                 <label className="block text-[13px] font-medium text-cloudburst mb-1.5 uppercase tracking-wider">Label/Tag Image (Optional)</label>
-                <input type="file" accept="image/jpeg, image/png, image/webp" onChange={e => setLabelImage(e.target.files?.[0] || null)} className="text-sm text-cloudburst file:mr-4 file:py-2 file:px-4 file:rounded-[8px] file:border-0 file:text-sm file:font-medium file:bg-carbon file:text-porcelain hover:file:bg-starlight/10 cursor-pointer" />
+                <input type="file" accept="image/jpeg, image/png, image/webp" onChange={e => {setLabelImage(e.target.files?.[0] || null); setLabelImageKey(null);}} className="text-sm text-cloudburst file:mr-4 file:py-2 file:px-4 file:rounded-[8px] file:border-0 file:text-sm file:font-medium file:bg-carbon file:text-porcelain hover:file:bg-starlight/10 cursor-pointer" />
               </div>
             </div>
           )}
@@ -232,6 +340,7 @@ export default function UploadPage() {
                     <span className="px-2 py-1 text-xs bg-carbon rounded-[4px] border border-starlight/10">{formData.type || "No Type"}</span>
                     <span className="px-2 py-1 text-xs bg-carbon rounded-[4px] border border-starlight/10">{formData.category || "No Category"}</span>
                     <span className="px-2 py-1 text-xs bg-carbon rounded-[4px] border border-starlight/10">{formData.primary_color || "No Color"}</span>
+                    {aiResult && <span className="px-2 py-1 text-xs bg-cyber-cyan/10 text-cyber-cyan rounded-[4px] border border-cyber-cyan/30">✨ AI Assisted</span>}
                   </div>
                 </div>
               </div>
@@ -240,14 +349,21 @@ export default function UploadPage() {
 
           <div className="mt-8 pt-6 border-t border-starlight/10 flex justify-between items-center">
             {step > 1 ? (
-              <Button variant="ghost" onClick={prevStep} disabled={isUploading}>Back</Button>
+              <Button variant="ghost" onClick={prevStep} disabled={isSaving}>Back</Button>
             ) : <div />}
             
             {step < 5 ? (
-              <Button variant="filled" onClick={nextStep}>Next</Button>
+              // Hide the manual next button on step 1 if AI hasn't been engaged/ignored and an image is present, to encourage AI use
+              (!frontImage || step !== 1) ? (
+                <Button variant="filled" onClick={nextStep}>Next</Button>
+              ) : !aiResult ? (
+                 <Button variant="ghost" onClick={nextStep} className="text-sm text-cloudburst">Skip AI & Continue</Button>
+              ) : (
+                <Button variant="filled" onClick={nextStep}>Next</Button>
+              )
             ) : (
-              <Button variant="filled" onClick={handleSave} disabled={isUploading} className="bg-cyber-cyan text-inkwell font-semibold hover:bg-cyber-cyan/90">
-                {isUploading ? "Uploading & Saving..." : "Save to Wardrobe"}
+              <Button variant="filled" onClick={handleSave} disabled={isSaving} className="bg-cyber-cyan text-inkwell font-semibold hover:bg-cyber-cyan/90">
+                {isSaving ? "Saving..." : "Save to Wardrobe"}
               </Button>
             )}
           </div>
