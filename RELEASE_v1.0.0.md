@@ -24,13 +24,14 @@ git push origin main
 - [x] Verify mock providers (`AI_PROVIDER=mock`, `WEATHER_PROVIDER=mock`) still work
 
 ## 3. Final Deployment Verification
-- [ ] **Backend (Render)**: Setup completed with `Root Directory: backend` and DB connected
-- [ ] **Frontend (Vercel)**: Setup completed
-- [ ] **`DATABASE_URL`**: Configured on Render using `postgresql+asyncpg://`
-- [ ] **`NEXT_PUBLIC_API_URL`**: Configured on Vercel
-- [ ] **S3 CORS**: Configured to restrict `AllowedOrigins` to the live Vercel domain
-- [ ] **Google OAuth**: Redirect URIs updated in Google Cloud Console
-- [ ] **API Keys**: Gemini and OpenWeatherMap configured safely
+- [x] **Backend (Render)**: Deployed at `https://smart-wardrobe-aismart-wardrobe-backend.onrender.com`
+- [x] **Frontend (Vercel)**: Deployed at `https://smart-wardrobe-ai-tawny.vercel.app`
+- [x] **`DATABASE_URL`**: Configured on Render (Neon PostgreSQL)
+- [x] **`NEXT_PUBLIC_API_URL`**: Configured on Vercel with `/api/v1` suffix
+- [x] **S3 CORS**: Configured to restrict `AllowedOrigins` to `https://smart-wardrobe-ai-tawny.vercel.app`
+- [x] **Backend CORS**: Locked to `https://smart-wardrobe-ai-tawny.vercel.app`
+- [x] **API Keys**: NVIDIA NIM and OpenWeatherMap configured safely on Render
+- [x] **Production Chrome E2E**: All 9 steps passed (2026-05-31)
 
 ## 4. Final Screenshot Checklist
 Add screenshots to `docs/` and link them in the `README.md`:
@@ -51,7 +52,7 @@ Add screenshots to `docs/` and link them in the `README.md`:
 We are thrilled to announce the v1.0.0 release of Smart Wardrobe AI! This release transforms the project from a development prototype into a highly robust, production-ready digital wardrobe and personal stylist.
 
 ### 🌟 New Features
-- **Multimodal AI Analysis**: Fully integrated with Google's Gemini 2.0 Flash vision models to automatically extract clothing categories, colors, and patterns from user uploads.
+- **Multimodal AI Analysis**: Fully integrated with NVIDIA NIM's Llama 3.2 11B Vision Instruct model to automatically extract clothing categories, colors, and patterns from user uploads.
 - **Real-Time Weather Styling**: Integrated OpenWeatherMap to deliver highly contextual outfit recommendations based on live temperature, humidity, and local conditions.
 - **Secure Image Uploads**: Bypassed traditional backend bottlenecks by implementing a direct-to-S3 presigned `POST` upload architecture.
 - **Advanced Dashboard & Analytics**: Track your wardrobe statistics, wear frequencies, and favorite generated outfits in a sleek "Midnight Terminal Glow" UI.
@@ -85,10 +86,10 @@ We are thrilled to announce the v1.0.0 release of Smart Wardrobe AI! This releas
 
 **Project Title:** Smart Wardrobe AI | Midnight Fashion Intelligence
 **Role:** Full-Stack Developer / AI Engineer
-**Tech Stack:** Next.js 15, React, Tailwind CSS, FastAPI, Python, PostgreSQL, AWS S3, Google Gemini, OpenWeatherMap.
+**Tech Stack:** Next.js 15, React, Tailwind CSS, FastAPI, Python, PostgreSQL, AWS S3, NVIDIA NIM (Llama 3.2 Vision), OpenWeatherMap.
 
 **Description:**
-Engineered a production-ready, AI-powered digital wardrobe application. Leveraged Google's Gemini vision models and the OpenWeatherMap API to automatically categorize clothing uploads and generate intelligent, context-aware styling recommendations based on real-time weather data.
+Engineered a production-ready, AI-powered digital wardrobe application. Leveraged NVIDIA NIM's Llama 3.2 Vision model and the OpenWeatherMap API to automatically categorize clothing uploads and generate intelligent, context-aware styling recommendations based on real-time weather data.
 
 **Key Achievements:**
 - Architected a highly secure, scalable file upload system utilizing AWS S3 presigned URLs, eliminating backend bottlenecks.

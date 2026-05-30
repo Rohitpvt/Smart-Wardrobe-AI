@@ -1,7 +1,22 @@
 # Smart Wardrobe AI | Midnight Fashion Intelligence
-![Production Ready](https://img.shields.io/badge/Status-Production%20Ready-brightgreen?style=flat-square) ![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js) ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=flat-square&logo=fastapi)
+![Production Ready](https://img.shields.io/badge/Status-Production%20Ready-brightgreen?style=flat-square) ![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js) ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=flat-square&logo=fastapi) ![Deployed](https://img.shields.io/badge/Deployed-Live-00d4aa?style=flat-square)
 
 An AI-powered digital wardrobe and personal stylist built with Next.js and FastAPI. It analyzes clothing images, organizes your closet, and generates weather-aware outfit recommendations.
+
+## 🌐 Live Demo
+
+| Resource | URL |
+|----------|-----|
+| **Frontend Live Demo** | [https://smart-wardrobe-ai-tawny.vercel.app](https://smart-wardrobe-ai-tawny.vercel.app) |
+| **Backend Health Check** | [https://smart-wardrobe-aismart-wardrobe-backend.onrender.com/health](https://smart-wardrobe-aismart-wardrobe-backend.onrender.com/health) |
+| **Backend API Docs** | [https://smart-wardrobe-aismart-wardrobe-backend.onrender.com/docs](https://smart-wardrobe-aismart-wardrobe-backend.onrender.com/docs) |
+
+**Deployment Stack:** Vercel (Frontend) + Render (Backend) + Neon (PostgreSQL) + AWS S3 (Storage)
+**Production AI Provider:** NVIDIA NIM — `meta/llama-3.2-11b-vision-instruct`
+
+> **Note:** The Render free tier may spin down after inactivity. The first request after idle may take ~30 seconds while the service cold-starts.
+
+---
 
 ## 📖 Problem Statement
 Managing a physical wardrobe is often chaotic, leading to decision fatigue and forgotten clothing. Existing apps require tedious manual data entry and lack intelligent, context-aware styling advice.
@@ -17,15 +32,6 @@ Smart Wardrobe AI leverages NVIDIA's Vision AI models (via NIM API) to automatic
 - **Real-Time Weather Styling**: Outfit generation adapted to current local temperatures and conditions.
 - **Interactive Dashboard**: Filter your wardrobe, track worn items, and view usage analytics.
 - **Secure Authentication**: Robust Google OAuth and encrypted JWT token flows.
-
----
-
-## 📸 Screenshots
-
-*(To be added after deployment - replace with actual screenshots)*
-- `![Dashboard view](docs/dashboard.png)`
-- `![Wardrobe gallery](docs/wardrobe.png)`
-- `![Outfit recommender](docs/recommender.png)`
 
 ---
 
