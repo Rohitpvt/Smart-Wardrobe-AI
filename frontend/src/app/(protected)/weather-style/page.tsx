@@ -5,7 +5,6 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/hooks/useToast";
 import api from "@/lib/api";
 import { WeatherData } from "@/lib/types";
@@ -77,22 +76,22 @@ export default function WeatherStylePage() {
                 </div>
                 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <div className="bg-charcoal/80 p-4 rounded-xl border border-white/5">
+                  <div className="bg-white/5 backdrop-blur-sm p-4 rounded-xl border border-white/10 hover:bg-white/10 transition-colors">
                     <Thermometer className="h-5 w-5 text-cyber-cyan mb-2" />
                     <p className="text-sm text-cloudburst">Season Hint</p>
                     <p className="font-medium text-porcelain capitalize">{weather.season_hint}</p>
                   </div>
-                  <div className="bg-charcoal/80 p-4 rounded-xl border border-white/5">
+                  <div className="bg-white/5 backdrop-blur-sm p-4 rounded-xl border border-white/10 hover:bg-white/10 transition-colors">
                     <Droplets className="h-5 w-5 text-cyber-cyan mb-2" />
                     <p className="text-sm text-cloudburst">Humidity</p>
                     <p className="font-medium text-porcelain">{weather.humidity}%</p>
                   </div>
-                  <div className="bg-charcoal/80 p-4 rounded-xl border border-white/5">
+                  <div className="bg-white/5 backdrop-blur-sm p-4 rounded-xl border border-white/10 hover:bg-white/10 transition-colors">
                     <Wind className="h-5 w-5 text-cyber-cyan mb-2" />
                     <p className="text-sm text-cloudburst">Wind Speed</p>
                     <p className="font-medium text-porcelain">{weather.wind_speed} m/s</p>
                   </div>
-                  <div className="bg-charcoal/80 p-4 rounded-xl border border-white/5">
+                  <div className="bg-white/5 backdrop-blur-sm p-4 rounded-xl border border-white/10 hover:bg-white/10 transition-colors">
                     <CloudSun className="h-5 w-5 text-cyber-cyan mb-2" />
                     <p className="text-sm text-cloudburst">Key</p>
                     <p className="font-medium text-porcelain capitalize">{weather.weather_key}</p>

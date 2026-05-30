@@ -2,15 +2,15 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/Card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Spinner } from "@/components/ui/Spinner";
-import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/hooks/useToast";
 import api from "@/lib/api";
 import { OutfitRecommendationResponse, RecommendedItem } from "@/lib/types";
-import { Sparkles, Save, Info, TriangleAlert, Shirt } from "lucide-react";
+import { Sparkles, Save, TriangleAlert, Shirt } from "lucide-react";
+import Image from "next/image";
 
 export default function RecommendationsPage() {
   const [occasion, setOccasion] = useState("");
@@ -53,7 +53,7 @@ export default function RecommendationsPage() {
       });
       showToast("Outfit saved successfully!", "success");
       setOutfitName("");
-    } catch (error: any) {
+    } catch {
       showToast("Failed to save outfit.", "error");
     } finally {
       setSaving(false);
@@ -173,7 +173,7 @@ function OutfitSlot({ title, item }: { title: string, item?: RecommendedItem }) 
       <div className="aspect-[3/4] bg-charcoal/80 rounded-xl border border-white/5 overflow-hidden flex items-center justify-center relative">
         {item ? (
           item.front_image_url ? (
-            <img src={item.front_image_url} alt={item.type} className="w-full h-full object-cover" />
+            <Image src={item.front_image_url} alt={item.type} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
           ) : (
             <Shirt className="h-8 w-8 text-white/20" />
           )

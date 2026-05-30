@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/useToast";
 import api from "@/lib/api";
 import { AnalyticsDashboard } from "@/lib/types";
 import { BarChart3, Shirt, Flame, RotateCcw } from "lucide-react";
+import Image from "next/image";
 
 export default function AnalyticsPage() {
   const [stats, setStats] = useState<AnalyticsDashboard | null>(null);
@@ -32,7 +33,7 @@ export default function AnalyticsPage() {
         total_outfits_worn: data.outfit_history_count || 0,
         category_distribution
       });
-    } catch (error) {
+    } catch {
       showToast("Failed to fetch analytics data.", "error");
     } finally {
       setLoading(false);
@@ -68,7 +69,7 @@ export default function AnalyticsPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
+            <Card className="h-full">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5 text-cyber-cyan" /> Category Distribution
@@ -103,7 +104,7 @@ export default function AnalyticsPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="h-full">
               <CardHeader>
                 <CardTitle>Most Worn Items</CardTitle>
               </CardHeader>
@@ -112,9 +113,9 @@ export default function AnalyticsPage() {
                   {stats.most_worn_items?.length > 0 ? (
                     stats.most_worn_items.slice(0, 5).map((item, index) => (
                       <div key={item.id || index} className="flex items-center gap-4 p-3 bg-white/5 rounded-lg border border-white/5">
-                        <div className="w-12 h-12 bg-charcoal rounded-md overflow-hidden shrink-0">
+                        <div className="w-12 h-12 bg-charcoal rounded-md overflow-hidden shrink-0 relative border border-white/5">
                           {item.front_image_url ? (
-                            <img src={item.front_image_url} alt={item.type} className="w-full h-full object-cover" />
+                            <Image src={item.front_image_url} alt={item.type} fill sizes="48px" className="object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center"><Shirt className="w-6 h-6 text-white/20" /></div>
                           )}

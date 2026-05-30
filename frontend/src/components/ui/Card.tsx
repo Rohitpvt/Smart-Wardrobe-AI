@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 const Card = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn("glass-card overflow-hidden", className)} {...props} />
+    <div ref={ref} className={cn("glass-card overflow-hidden flex flex-col", className)} {...props} />
   )
 );
 Card.displayName = "Card";

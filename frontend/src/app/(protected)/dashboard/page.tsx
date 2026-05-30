@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
 import { Shirt, Sparkles, CloudSun, UploadCloud, Heart } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import api from "@/lib/api";
 import { AnalyticsDashboard } from "@/lib/types";
 
@@ -35,7 +36,7 @@ export default function DashboardPage() {
           total_outfits_worn: data.outfit_history_count || 0,
           category_distribution
         });
-      } catch (error) {
+      } catch {
       } finally {
         setLoading(false);
       }
@@ -79,7 +80,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
+            <Card className="h-full">
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
@@ -122,7 +123,7 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="h-full">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Wardrobe Highlights</CardTitle>
                 <Link href="/wardrobe">
@@ -135,7 +136,7 @@ export default function DashboardPage() {
                     {stats.most_worn_items.slice(0, 3).map((item, i) => (
                       <div key={i} className="aspect-square rounded-lg bg-charcoal/80 overflow-hidden relative border border-white/5">
                         {item.front_image_url ? (
-                          <img src={item.front_image_url} alt={item.type} className="object-cover w-full h-full" />
+                          <Image src={item.front_image_url} alt={item.type} fill sizes="(max-width: 768px) 33vw, 20vw" className="object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <Shirt className="h-8 w-8 text-white/20" />

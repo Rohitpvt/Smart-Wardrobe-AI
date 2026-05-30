@@ -11,6 +11,7 @@ import api from "@/lib/api";
 import axios from "axios";
 import { UploadCloud, Camera, CheckCircle2, RefreshCw, Sparkles } from "lucide-react";
 import { AIAnalysisResult } from "@/lib/types";
+import Image from "next/image";
 
 export default function UploadPage() {
   const router = useRouter();
@@ -23,7 +24,6 @@ export default function UploadPage() {
   
   // AI Results
   const [s3Key, setS3Key] = useState<string | null>(null);
-  const [tempId, setTempId] = useState<string>("");
   const [analysis, setAnalysis] = useState<AIAnalysisResult | null>(null);
 
   // Form editing
@@ -66,7 +66,6 @@ export default function UploadPage() {
     try {
       setStep("uploading");
       const currentTempId = crypto.randomUUID();
-      setTempId(currentTempId);
 
       // 1. Get Presigned URL
       const presignRes = await api.post("/uploads/presign", {
@@ -162,10 +161,10 @@ export default function UploadPage() {
           <CardHeader>
             <CardTitle>Clothing Image</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col items-center">
+          <CardContent className="flex flex-col items-center p-6 md:p-8">
             {preview ? (
               <div className="w-full relative aspect-[3/4] rounded-lg overflow-hidden border border-white/10 mb-6 bg-black/50">
-                <img src={preview} alt="Preview" className="object-cover w-full h-full" />
+                <Image src={preview} alt="Preview" fill unoptimized className="object-cover" />
                 {step === "select" && (
                   <button 
                     onClick={() => fileInputRef.current?.click()}
@@ -228,7 +227,7 @@ export default function UploadPage() {
           <CardHeader>
             <CardTitle>AI Extraction Details</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 p-6 md:p-8">
             <div className="grid grid-cols-2 gap-4">
               <Input 
                 label="Type" 

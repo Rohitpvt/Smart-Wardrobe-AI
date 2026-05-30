@@ -11,6 +11,7 @@ import { ClothingItem } from "@/lib/types";
 import api from "@/lib/api";
 import { Shirt, Search, Plus, Filter } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useToast } from "@/hooks/useToast";
 
 export default function WardrobePage() {
@@ -82,7 +83,7 @@ export default function WardrobePage() {
           ) : undefined}
         />
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {filteredItems.map(item => (
             <ClothingCard key={item.id} item={item} />
           ))}
@@ -97,10 +98,12 @@ function ClothingCard({ item }: { item: ClothingItem }) {
     <Card className="group cursor-pointer hover:border-cyber-cyan/50 transition-colors">
       <div className="aspect-[3/4] relative bg-charcoal/80 overflow-hidden border-b border-white/5">
         {item.front_image_url ? (
-          <img 
+          <Image 
             src={item.front_image_url} 
             alt={item.type} 
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-500" 
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
