@@ -145,12 +145,13 @@ async def google_auth_url():
         raise HTTPException(status_code=500, detail="Google Client ID not configured")
         
     scope = "openid email profile"
+    redirect_uri_encoded = urllib.parse.quote(settings.GOOGLE_REDIRECT_URI, safe='')
     auth_url = (
         f"https://accounts.google.com/o/oauth2/v2/auth?"
         f"response_type=code&"
         f"client_id={settings.GOOGLE_CLIENT_ID}&"
-        f"redirect_uri={settings.GOOGLE_REDIRECT_URI}&"
-        f"scope={scope}&"
+        f"redirect_uri={redirect_uri_encoded}&"
+        f"scope={urllib.parse.quote(scope, safe='')}&"
         f"access_type=offline"
     )
     return RedirectResponse(url=auth_url)
