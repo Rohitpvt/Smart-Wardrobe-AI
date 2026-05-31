@@ -173,7 +173,7 @@ function OutfitSlot({ title, item }: { title: string, item?: RecommendedItem }) 
       <div className="aspect-[3/4] bg-charcoal/80 rounded-xl border border-white/5 overflow-hidden flex items-center justify-center relative">
         {item ? (
           item.front_image_url ? (
-            <Image src={item.front_image_url} alt={item.type} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
+            <Image src={item.front_image_url} alt={item.type} fill unoptimized sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
           ) : (
             <Shirt className="h-8 w-8 text-white/20" />
           )

@@ -115,7 +115,7 @@ export default function AnalyticsPage() {
                       <div key={item.id || index} className="flex items-center gap-4 p-3 bg-white/5 rounded-lg border border-white/5">
                         <div className="w-12 h-12 bg-charcoal rounded-md overflow-hidden shrink-0 relative border border-white/5">
                           {item.front_image_url ? (
-                            <Image src={item.front_image_url} alt={item.type} fill sizes="48px" className="object-cover" />
+                            <Image src={item.front_image_url} alt={item.type} fill unoptimized sizes="48px" className="object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center"><Shirt className="w-6 h-6 text-white/20" /></div>
                           )}

@@ -136,7 +136,7 @@ export default function DashboardPage() {
                     {stats.most_worn_items.slice(0, 3).map((item, i) => (
                       <div key={i} className="aspect-square rounded-lg bg-charcoal/80 overflow-hidden relative border border-white/5">
                         {item.front_image_url ? (
-                          <Image src={item.front_image_url} alt={item.type} fill sizes="(max-width: 768px) 33vw, 20vw" className="object-cover" />
+                          <Image src={item.front_image_url} alt={item.type} fill unoptimized sizes="(max-width: 768px) 33vw, 20vw" className="object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <Shirt className="h-8 w-8 text-white/20" />

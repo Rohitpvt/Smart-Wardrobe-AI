@@ -128,7 +128,7 @@ function MiniSlot({ item }: { item?: ClothingItemSummary }) {
   return (
     <div className="aspect-[3/4] bg-charcoal rounded-lg overflow-hidden relative border border-white/5 group">
       {item.front_image_url && (
-        <Image src={item.front_image_url} alt={item.type} fill sizes="(max-width: 640px) 33vw, 15vw" className="object-cover" />
+        <Image src={item.front_image_url} alt={item.type} fill unoptimized sizes="(max-width: 640px) 33vw, 15vw" className="object-cover" />
       )}
       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity p-1">
         <p className="text-[10px] text-center font-medium leading-tight">{item.type}</p>

@@ -102,6 +102,7 @@ function ClothingCard({ item }: { item: ClothingItem }) {
             src={item.front_image_url} 
             alt={item.type} 
             fill
+            unoptimized
             sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
             className="object-cover group-hover:scale-105 transition-transform duration-500" 
           />
