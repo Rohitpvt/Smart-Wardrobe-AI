@@ -20,27 +20,6 @@ logger = logging.getLogger(__name__)
 
 auth_router = APIRouter()
 
-@auth_router.get("/debug-env")
-async def debug_env():
-    import os
-    masked_env = {}
-    for k, v in os.environ.items():
-        if not v:
-            masked_env[k] = "EMPTY"
-        else:
-            masked_env[k] = f"LEN={len(v)}|FIRST={v[0]}|LAST={v[-1]}"
-    
-    loaded_settings = {
-        "GOOGLE_CLIENT_ID": f"LEN={len(settings.GOOGLE_CLIENT_ID)}" if settings.GOOGLE_CLIENT_ID else "EMPTY",
-        "GOOGLE_REDIRECT_URI": settings.GOOGLE_REDIRECT_URI,
-        "FRONTEND_URL": settings.FRONTEND_URL
-    }
-    
-    return {
-        "os_env": masked_env,
-        "settings": loaded_settings
-    }
-
 @auth_router.post("/register", response_model=UserResponse)
 @limiter.limit("5/minute")
 async def register(request: Request, user_in: UserCreate, db: AsyncSession = Depends(get_db)) -> Any:
@@ -145,15 +124,14 @@ async def google_auth_url():
         raise HTTPException(status_code=500, detail="Google Client ID not configured")
         
     scope = "openid email profile"
-    redirect_uri_encoded = urllib.parse.quote(settings.GOOGLE_REDIRECT_URI, safe='')
-    auth_url = (
-        f"https://accounts.google.com/o/oauth2/v2/auth?"
-        f"response_type=code&"
-        f"client_id={settings.GOOGLE_CLIENT_ID}&"
-        f"redirect_uri={redirect_uri_encoded}&"
-        f"scope={urllib.parse.quote(scope, safe='')}&"
-        f"access_type=offline"
-    )
+    params = {
+        "response_type": "code",
+        "client_id": settings.GOOGLE_CLIENT_ID,
+        "redirect_uri": settings.GOOGLE_REDIRECT_URI,
+        "scope": scope,
+        "access_type": "offline",
+    }
+    auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
     return RedirectResponse(url=auth_url)
 
 @auth_router.get("/google/callback")
