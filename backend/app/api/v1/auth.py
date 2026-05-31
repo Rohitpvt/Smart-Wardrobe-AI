@@ -20,6 +20,27 @@ logger = logging.getLogger(__name__)
 
 auth_router = APIRouter()
 
+@auth_router.get("/debug-env")
+async def debug_env():
+    import os
+    masked_env = {}
+    for k, v in os.environ.items():
+        if not v:
+            masked_env[k] = "EMPTY"
+        else:
+            masked_env[k] = f"LEN={len(v)}|FIRST={v[0]}|LAST={v[-1]}"
+    
+    loaded_settings = {
+        "GOOGLE_CLIENT_ID": f"LEN={len(settings.GOOGLE_CLIENT_ID)}" if settings.GOOGLE_CLIENT_ID else "EMPTY",
+        "GOOGLE_REDIRECT_URI": settings.GOOGLE_REDIRECT_URI,
+        "FRONTEND_URL": settings.FRONTEND_URL
+    }
+    
+    return {
+        "os_env": masked_env,
+        "settings": loaded_settings
+    }
+
 @auth_router.post("/register", response_model=UserResponse)
 @limiter.limit("5/minute")
 async def register(request: Request, user_in: UserCreate, db: AsyncSession = Depends(get_db)) -> Any:
