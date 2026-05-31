@@ -34,8 +34,9 @@ export default function WardrobePage() {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchWardrobe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filteredItems = items.filter(item => 
@@ -56,9 +57,10 @@ export default function WardrobePage() {
         }
       />
 
-      <div className="flex gap-4 mb-6">
+      {/* Search + Filter */}
+      <div className="flex gap-3 mb-6">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-cloudburst" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-cloudburst" />
           <Input 
             className="pl-10" 
             placeholder="Search by type, color, or category..." 
@@ -95,8 +97,8 @@ export default function WardrobePage() {
 
 function ClothingCard({ item }: { item: ClothingItem }) {
   return (
-    <Card className="group cursor-pointer hover:border-cyber-cyan/50 transition-colors">
-      <div className="aspect-[3/4] relative bg-charcoal/80 overflow-hidden border-b border-white/5">
+    <Card className="group cursor-pointer hover:border-border-strong transition-all duration-200">
+      <div className="aspect-[3/4] relative bg-surface-raised overflow-hidden">
         {item.front_image_url ? (
           <Image 
             src={item.front_image_url} 
@@ -104,24 +106,24 @@ function ClothingCard({ item }: { item: ClothingItem }) {
             fill
             unoptimized
             sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
-            className="object-cover group-hover:scale-105 transition-transform duration-500" 
+            className="object-cover group-hover:scale-[1.03] transition-transform duration-500" 
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <Shirt className="h-12 w-12 text-white/10" />
+            <Shirt className="h-10 w-10 text-white/8" />
           </div>
         )}
-        <div className="absolute top-2 right-2 flex gap-1">
-          {item.ai_detected && (
-            <span className="bg-cyber-cyan text-inkwell text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
-              AI Tagged
+        {item.ai_detected && (
+          <div className="absolute top-2.5 right-2.5">
+            <span className="bg-cyber-cyan/90 text-inkwell text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
+              AI
             </span>
-          )}
-        </div>
+          </div>
+        )}
       </div>
-      <CardContent className="p-4">
-        <h3 className="font-semibold text-porcelain truncate">{item.type}</h3>
-        <p className="text-xs text-cloudburst mt-1 capitalize">{item.primary_color} • {item.category}</p>
+      <CardContent className="p-3.5">
+        <h3 className="text-sm font-semibold text-porcelain truncate">{item.type}</h3>
+        <p className="text-xs text-cloudburst mt-0.5 capitalize">{item.primary_color} · {item.category}</p>
       </CardContent>
     </Card>
   );

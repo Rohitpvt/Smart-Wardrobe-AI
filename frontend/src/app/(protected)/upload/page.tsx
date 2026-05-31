@@ -13,6 +13,13 @@ import { UploadCloud, Camera, CheckCircle2, RefreshCw, Sparkles } from "lucide-r
 import { AIAnalysisResult } from "@/lib/types";
 import Image from "next/image";
 
+const STEPS = [
+  { key: "select", label: "Select" },
+  { key: "uploading", label: "Upload" },
+  { key: "analyzing", label: "Analyze" },
+  { key: "review", label: "Review" },
+] as const;
+
 export default function UploadPage() {
   const router = useRouter();
   const { showToast } = useToast();
@@ -22,11 +29,9 @@ export default function UploadPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [step, setStep] = useState<"select" | "uploading" | "analyzing" | "review">("select");
   
-  // AI Results
   const [s3Key, setS3Key] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<AIAnalysisResult | null>(null);
 
-  // Form editing
   const [formData, setFormData] = useState({
     type: "",
     category: "",
@@ -44,7 +49,6 @@ export default function UploadPage() {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       
-      // Validate
       if (!["image/jpeg", "image/png", "image/webp"].includes(selectedFile.type)) {
         showToast("Invalid file type. Only JPEG, PNG, WEBP allowed.", "error");
         return;
@@ -67,7 +71,6 @@ export default function UploadPage() {
       setStep("uploading");
       const currentTempId = crypto.randomUUID();
 
-      // 1. Get Presigned URL
       const presignRes = await api.post("/uploads/presign", {
         file_name: file.name,
         file_type: file.type,
@@ -78,7 +81,6 @@ export default function UploadPage() {
       const { upload_url, fields, s3_key } = presignRes.data;
       setS3Key(s3_key);
 
-      // 2. Upload to S3
       const s3FormData = new FormData();
       Object.entries(fields).forEach(([key, value]) => {
         s3FormData.append(key, value as string);
@@ -89,7 +91,6 @@ export default function UploadPage() {
         headers: { "Content-Type": "multipart/form-data" }
       });
 
-      // 3. Analyze with AI
       setStep("analyzing");
       const analyzeRes = await api.post("/ai/analyze-clothing", {
         s3_key: s3_key,
@@ -99,7 +100,6 @@ export default function UploadPage() {
       const result = analyzeRes.data;
       setAnalysis(result);
       
-      // Map to form data
       setFormData({
         type: result.type || "",
         category: result.category || "",
@@ -148,27 +148,52 @@ export default function UploadPage() {
     }
   };
 
+  const currentStepIndex = STEPS.findIndex(s => s.key === step);
+
   return (
     <div>
       <PageHeader 
         title="Upload & Analyze" 
-        description="Add a new item to your wardrobe. Our AI will automatically categorize it for you."
+        description="Add a new item to your wardrobe. Our AI will automatically categorize it."
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left Column: Image Selection & Progress */}
+      {/* Step Indicator */}
+      <div className="flex items-center gap-1 mb-8 max-w-md">
+        {STEPS.map((s, i) => (
+          <div key={s.key} className="flex items-center flex-1">
+            <div className="flex items-center gap-2 flex-1">
+              <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${
+                i <= currentStepIndex 
+                  ? "bg-cyber-cyan text-inkwell" 
+                  : "bg-surface-raised border border-border-subtle text-cloudburst"
+              }`}>
+                {i + 1}
+              </div>
+              <span className={`text-xs font-medium hidden sm:inline ${i <= currentStepIndex ? "text-porcelain" : "text-cloudburst"}`}>
+                {s.label}
+              </span>
+            </div>
+            {i < STEPS.length - 1 && (
+              <div className={`h-px flex-1 mx-2 ${i < currentStepIndex ? "bg-cyber-cyan/40" : "bg-border-subtle"}`} />
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Column: Image Selection */}
         <Card className="h-fit">
           <CardHeader>
             <CardTitle>Clothing Image</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col items-center p-6 md:p-8">
+          <CardContent className="flex flex-col items-center">
             {preview ? (
-              <div className="w-full relative aspect-[3/4] rounded-lg overflow-hidden border border-white/10 mb-6 bg-black/50">
+              <div className="w-full relative aspect-[3/4] rounded-xl overflow-hidden border border-border-subtle mb-5 bg-surface">
                 <Image src={preview} alt="Preview" fill unoptimized className="object-cover" />
                 {step === "select" && (
                   <button 
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute top-2 right-2 p-2 bg-black/70 rounded-full text-white hover:bg-black"
+                    className="absolute top-3 right-3 p-2 bg-black/60 rounded-xl text-white hover:bg-black/80 transition-colors"
                   >
                     <RefreshCw className="h-4 w-4" />
                   </button>
@@ -177,11 +202,11 @@ export default function UploadPage() {
             ) : (
               <button 
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full aspect-[3/4] rounded-lg border-2 border-dashed border-white/20 hover:border-cyber-cyan hover:bg-cyber-cyan/5 transition-colors flex flex-col items-center justify-center mb-6"
+                className="w-full aspect-[3/4] rounded-xl border-2 border-dashed border-border-default hover:border-cyber-cyan/40 hover:bg-cyber-cyan/[0.02] transition-all duration-300 flex flex-col items-center justify-center mb-5"
               >
-                <Camera className="h-12 w-12 text-cloudburst mb-4" />
-                <p className="text-porcelain font-medium">Click to select an image</p>
-                <p className="text-cloudburst text-sm mt-1">JPEG, PNG, WEBP up to 10MB</p>
+                <Camera className="h-10 w-10 text-cloudburst/50 mb-4" />
+                <p className="text-sm font-medium text-porcelain">Click to select an image</p>
+                <p className="text-xs text-cloudburst mt-1">JPEG, PNG, WEBP up to 10MB</p>
               </button>
             )}
 
@@ -195,39 +220,39 @@ export default function UploadPage() {
 
             {step === "select" && file && (
               <Button onClick={processUploadAndAnalyze} className="w-full" size="lg">
-                <Sparkles className="mr-2 h-5 w-5" /> Analyze with AI
+                <Sparkles className="mr-2 h-4 w-4" /> Analyze with AI
               </Button>
             )}
 
             {step === "uploading" && (
-              <div className="w-full py-4 flex flex-col items-center text-cloudburst">
-                <UploadCloud className="h-8 w-8 animate-bounce mb-2 text-cyber-cyan" />
-                <p>Uploading securely to private vault...</p>
+              <div className="w-full py-6 flex flex-col items-center text-cloudburst">
+                <UploadCloud className="h-8 w-8 animate-bounce mb-3 text-cyber-cyan" />
+                <p className="text-sm">Uploading securely...</p>
               </div>
             )}
 
             {step === "analyzing" && (
-              <div className="w-full py-4 flex flex-col items-center text-cloudburst">
-                <Sparkles className="h-8 w-8 animate-pulse mb-2 text-cyber-cyan" />
-                <p>AI is analyzing your clothing...</p>
+              <div className="w-full py-6 flex flex-col items-center text-cloudburst">
+                <Sparkles className="h-8 w-8 animate-pulse mb-3 text-cyber-cyan" />
+                <p className="text-sm">AI is analyzing your clothing...</p>
               </div>
             )}
             
             {step === "review" && (
-              <div className="w-full py-4 flex flex-col items-center text-green-400">
-                <CheckCircle2 className="h-8 w-8 mb-2" />
-                <p>Analysis Complete</p>
+              <div className="w-full py-4 flex flex-col items-center text-emerald-400">
+                <CheckCircle2 className="h-7 w-7 mb-2" />
+                <p className="text-sm font-medium">Analysis Complete</p>
               </div>
             )}
           </CardContent>
         </Card>
 
         {/* Right Column: AI Results & Form */}
-        <Card className={step === "review" ? "opacity-100" : "opacity-50 pointer-events-none"}>
+        <Card className={step === "review" ? "opacity-100" : "opacity-40 pointer-events-none"}>
           <CardHeader>
-            <CardTitle>AI Extraction Details</CardTitle>
+            <CardTitle>AI Analysis Results</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 p-6 md:p-8">
+          <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <Input 
                 label="Type" 
@@ -239,7 +264,7 @@ export default function UploadPage() {
                 label="Category" 
                 value={formData.category} 
                 onChange={e => setFormData({...formData, category: e.target.value})} 
-                placeholder="e.g. Tops"
+                placeholder="e.g. Top Wear"
               />
             </div>
             

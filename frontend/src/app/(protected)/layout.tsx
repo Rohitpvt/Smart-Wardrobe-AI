@@ -42,9 +42,16 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
     }
   }, [user, loading, router]);
 
+
+
   if (loading || !user) return <div className="min-h-screen bg-inkwell" />;
 
-  const closeMenu = () => setMobileMenuOpen(false);
+  const initials = user.full_name
+    ?.split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "U";
 
   return (
     <div className="flex h-screen bg-inkwell text-porcelain overflow-hidden">
@@ -52,55 +59,66 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
       {mobileMenuOpen && (
         <div 
           className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm"
-          onClick={closeMenu}
+          onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-charcoal/80 backdrop-blur-xl border-r border-white/5 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 flex flex-col",
+          "fixed inset-y-0 left-0 z-50 w-60 bg-surface border-r border-border-subtle transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 flex flex-col",
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex items-center justify-between p-6">
-          <Link href="/dashboard" className="text-xl font-bold tracking-tight text-porcelain" onClick={closeMenu}>
+        {/* Logo */}
+        <div className="flex items-center justify-between px-5 h-16 border-b border-border-subtle shrink-0">
+          <Link href="/dashboard" className="text-lg font-bold tracking-tight text-porcelain" onClick={() => setMobileMenuOpen(false)}>
             Smart <span className="text-cyber-cyan">Wardrobe</span>
           </Link>
-          <button className="lg:hidden text-cloudburst" onClick={closeMenu}>
-            <X className="h-6 w-6" />
+          <button className="lg:hidden text-cloudburst hover:text-porcelain transition-colors" onClick={() => setMobileMenuOpen(false)}>
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <nav className="flex-1 px-4 space-y-1 overflow-y-auto mt-4">
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={closeMenu}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium text-sm",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-[13px] font-medium",
                   isActive 
-                    ? "bg-cyber-cyan/10 text-cyber-cyan" 
+                    ? "bg-white/8 text-porcelain" 
                     : "text-cloudburst hover:bg-white/5 hover:text-porcelain"
                 )}
               >
-                <item.icon className="h-5 w-5" />
+                <item.icon className={cn("h-[18px] w-[18px] shrink-0", isActive && "text-cyber-cyan")} />
                 {item.label}
               </Link>
             );
           })}
         </nav>
 
-        <div className="p-4 border-t border-white/5">
+        {/* User Footer */}
+        <div className="p-3 border-t border-border-subtle space-y-1">
+          <div className="flex items-center gap-3 px-3 py-2.5">
+            <div className="w-8 h-8 rounded-lg bg-cyber-cyan/10 border border-cyber-cyan/20 flex items-center justify-center text-cyber-cyan text-xs font-bold shrink-0">
+              {initials}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-porcelain truncate">{user.full_name}</p>
+              <p className="text-[11px] text-cloudburst truncate">{user.email}</p>
+            </div>
+          </div>
           <button
             onClick={() => logout()}
-            className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-cloudburst hover:bg-white/5 hover:text-red-400 transition-colors font-medium text-sm"
+            className="flex w-full items-center gap-3 px-3 py-2 rounded-xl text-cloudburst hover:bg-red-500/8 hover:text-red-400 transition-all duration-200 text-[13px] font-medium"
           >
-            <LogOut className="h-5 w-5" />
-            Logout
+            <LogOut className="h-[18px] w-[18px]" />
+            Log out
           </button>
         </div>
       </aside>
@@ -108,18 +126,18 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Topbar for mobile */}
-        <header className="lg:hidden flex items-center justify-between p-4 bg-charcoal/50 border-b border-white/5 backdrop-blur-md z-30">
-          <Link href="/dashboard" className="text-lg font-bold text-porcelain">
+        <header className="lg:hidden flex items-center justify-between px-4 h-14 bg-surface/90 border-b border-border-subtle backdrop-blur-xl z-30 shrink-0">
+          <Link href="/dashboard" className="text-base font-bold text-porcelain">
             Smart <span className="text-cyber-cyan">Wardrobe</span>
           </Link>
-          <button className="text-porcelain" onClick={() => setMobileMenuOpen(true)}>
-            <Menu className="h-6 w-6" />
+          <button className="p-1.5 rounded-lg hover:bg-white/5 text-porcelain transition-colors" onClick={() => setMobileMenuOpen(true)}>
+            <Menu className="h-5 w-5" />
           </button>
         </header>
 
         {/* Content Scrollable Area */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8">
-          <div className="max-w-6xl mx-auto">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-5 lg:p-8">
+          <div className="max-w-7xl mx-auto">
             {children}
           </div>
         </div>

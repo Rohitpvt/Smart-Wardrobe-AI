@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/hooks/useToast";
 import api from "@/lib/api";
 import { SavedOutfit, ClothingItemSummary } from "@/lib/types";
-import { Bookmark, CheckCircle2 } from "lucide-react";
+import { Bookmark, CheckCircle2, Shirt } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
@@ -32,8 +32,9 @@ export default function SavedOutfitsPage() {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchOutfits();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const markAsWorn = async (outfit: SavedOutfit) => {
@@ -79,16 +80,16 @@ export default function SavedOutfitsPage() {
           }
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {outfits.map(outfit => (
             <Card key={outfit.id}>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <div>
-                  <CardTitle>{outfit.name}</CardTitle>
-                  <p className="text-xs text-cloudburst mt-1">Saved on {formatDate(outfit.created_at)}</p>
+              <CardHeader className="flex flex-row items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <CardTitle className="truncate">{outfit.name}</CardTitle>
+                  <p className="text-[11px] text-cloudburst mt-1.5">{formatDate(outfit.created_at)}</p>
                 </div>
                 {outfit.occasion && (
-                  <span className="text-xs px-2 py-1 bg-white/5 border border-white/10 rounded-full text-cloudburst">
+                  <span className="text-[11px] px-2.5 py-1 bg-surface-raised border border-border-subtle rounded-lg text-cloudburst shrink-0 capitalize">
                     {outfit.occasion}
                   </span>
                 )}
@@ -101,17 +102,17 @@ export default function SavedOutfitsPage() {
                   <MiniSlot item={outfit.accessory_item} />
                 </div>
                 {outfit.notes && (
-                  <p className="text-sm text-cloudburst line-clamp-2 italic border-l-2 border-white/10 pl-3">"{outfit.notes}"</p>
+                  <p className="text-xs text-cloudburst line-clamp-2 italic border-l-2 border-border-default pl-3 leading-relaxed">&ldquo;{outfit.notes}&rdquo;</p>
                 )}
               </CardContent>
-              <CardFooter className="justify-end bg-transparent border-t-0 pt-0">
+              <CardFooter className="justify-end">
                 <Button 
                   variant="outline" 
                   size="sm"
                   onClick={() => markAsWorn(outfit)}
                   isLoading={markingWorn === outfit.id}
                 >
-                  <CheckCircle2 className="mr-2 h-4 w-4" /> Mark as Worn Today
+                  <CheckCircle2 className="mr-2 h-3.5 w-3.5" /> Mark as Worn
                 </Button>
               </CardFooter>
             </Card>
@@ -123,14 +124,19 @@ export default function SavedOutfitsPage() {
 }
 
 function MiniSlot({ item }: { item?: ClothingItemSummary }) {
-  if (!item) return <div className="aspect-[3/4] bg-charcoal/50 rounded-lg border border-white/5 border-dashed" />;
+  if (!item) return <div className="aspect-[3/4] bg-surface/50 rounded-lg border border-dashed border-border-default" />;
   
   return (
-    <div className="aspect-[3/4] bg-charcoal rounded-lg overflow-hidden relative border border-white/5 group">
+    <div className="aspect-[3/4] bg-surface-raised rounded-lg overflow-hidden relative border border-border-subtle group">
       {item.front_image_url && (
-        <Image src={item.front_image_url} alt={item.type} fill unoptimized sizes="(max-width: 640px) 33vw, 15vw" className="object-cover" />
+        <Image src={item.front_image_url} alt={item.type} fill unoptimized sizes="(max-width: 640px) 25vw, 15vw" className="object-cover" />
       )}
-      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity p-1">
+      {!item.front_image_url && (
+        <div className="w-full h-full flex items-center justify-center">
+          <Shirt className="h-5 w-5 text-white/10" />
+        </div>
+      )}
+      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity p-1">
         <p className="text-[10px] text-center font-medium leading-tight">{item.type}</p>
       </div>
     </div>
