@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
+from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import Any
@@ -203,4 +204,7 @@ async def google_callback(code: str, db: AsyncSession = Depends(get_db)) -> Any:
         
         # 4. Generate our JWT
         our_access_token = create_access_token(subject=user.email)
-        return {"access_token": our_access_token, "token_type": "bearer"}
+        
+        # 5. Redirect to frontend with token
+        frontend_url = settings.FRONTEND_URL.rstrip('/')
+        return RedirectResponse(url=f"{frontend_url}/auth/callback?token={our_access_token}")

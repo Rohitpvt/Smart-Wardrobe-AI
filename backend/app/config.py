@@ -50,7 +50,8 @@ class Settings(BaseSettings):
     # --- Google OAuth (Phase 2+) ---
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
-    GOOGLE_REDIRECT_URI: str = "http://localhost:3000/login"
+    GOOGLE_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/google/callback"
+    FRONTEND_URL: str = "http://localhost:3000"
 
     # --- CORS ---
     CORS_ORIGINS: str = "http://localhost:3000"

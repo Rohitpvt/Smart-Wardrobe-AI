@@ -2,6 +2,16 @@
 
 ## Backend (`backend/.env`)
 
+### Google OAuth Integration
+Used for Google Sign-In and Registration.
+
+```env
+GOOGLE_CLIENT_ID="your_google_client_id"
+GOOGLE_CLIENT_SECRET="your_google_client_secret"
+GOOGLE_REDIRECT_URI="http://localhost:8000/api/v1/auth/google/callback" # Update for production
+FRONTEND_URL="http://localhost:3000" # Update for production
+```
+
 | Variable | Description | Safe Default / Example |
 |---|---|---|
 | `DATABASE_URL` | Database connection string. Must use `postgresql+asyncpg://` | `postgresql+asyncpg://user:pass@host/db` |
