@@ -97,18 +97,7 @@ Access the application at `http://localhost:3000`.
 
 ---
 
-## 🧪 Final Smoke Test
-
-## Google OAuth Integration
-To enable Google Login:
-1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
-2. Create a project and configure the OAuth Consent Screen.
-3. Create OAuth Client ID credentials (Web Application).
-4. Add Authorized JavaScript origins: `http://localhost:3000` (local) and your production frontend URL.
-5. Add Authorized redirect URIs: `http://localhost:8000/api/v1/auth/google/callback` (local) and your production backend callback URL.
-6. Copy the Client ID and Client Secret to your backend `.env` file as `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
-
-## Setup Instructions
+## 🧪 Final Smoke Test (Demo Instructions)
 If you are reviewing this project locally or via the live demo, follow this safe flow:
 1. Navigate to the landing page.
 2. Register a new account (Use a mock email, do not use your real passwords).

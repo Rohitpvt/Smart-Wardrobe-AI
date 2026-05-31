@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.responses import RedirectResponse
+import urllib.parse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import Any
@@ -114,10 +115,10 @@ async def logout() -> Any:
 
 # --- Google OAuth Flow ---
 
-@auth_router.get("/google")
+@auth_router.get("/google/login")
 async def google_auth_url():
     """
-    Returns the Google OAuth consent URL.
+    Redirects to the Google OAuth consent URL.
     """
     if not settings.GOOGLE_CLIENT_ID:
         raise HTTPException(status_code=500, detail="Google Client ID not configured")
@@ -131,16 +132,24 @@ async def google_auth_url():
         f"scope={scope}&"
         f"access_type=offline"
     )
-    return {"url": auth_url}
+    return RedirectResponse(url=auth_url)
 
 @auth_router.get("/google/callback")
-async def google_callback(code: str, db: AsyncSession = Depends(get_db)) -> Any:
+async def google_callback(code: str = None, error: str = None, db: AsyncSession = Depends(get_db)) -> Any:
     """
     Handles the Google OAuth callback, exchanges code for user info, 
-    and returns a JWT token.
+    and redirects to frontend with a JWT token in fragment.
     """
+    frontend_url = settings.FRONTEND_URL.rstrip('/')
+    
+    if error:
+        return RedirectResponse(url=f"{frontend_url}/login?error=google_auth_failed")
+        
+    if not code:
+        return RedirectResponse(url=f"{frontend_url}/login?error=missing_code")
+
     if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_SECRET:
-        raise HTTPException(status_code=500, detail="Google credentials not configured")
+        return RedirectResponse(url=f"{frontend_url}/login?error=google_not_configured")
         
     token_url = "https://oauth2.googleapis.com/token"
     data = {
@@ -155,7 +164,7 @@ async def google_callback(code: str, db: AsyncSession = Depends(get_db)) -> Any:
         # 1. Exchange code for Google token
         response = await client.post(token_url, data=data)
         if response.status_code != 200:
-            raise HTTPException(status_code=400, detail="Failed to authenticate with Google")
+            return RedirectResponse(url=f"{frontend_url}/login?error=google_token_failed")
             
         token_data = response.json()
         access_token = token_data.get("access_token")
@@ -166,7 +175,7 @@ async def google_callback(code: str, db: AsyncSession = Depends(get_db)) -> Any:
         userinfo_response = await client.get(userinfo_url, headers=headers)
         
         if userinfo_response.status_code != 200:
-            raise HTTPException(status_code=400, detail="Failed to get user info from Google")
+            return RedirectResponse(url=f"{frontend_url}/login?error=google_userinfo_failed")
             
         user_info = userinfo_response.json()
         email = user_info.get("email")
@@ -175,7 +184,7 @@ async def google_callback(code: str, db: AsyncSession = Depends(get_db)) -> Any:
         picture = user_info.get("picture")
         
         if not email:
-            raise HTTPException(status_code=400, detail="Google did not provide an email address")
+            return RedirectResponse(url=f"{frontend_url}/login?error=google_no_email")
             
         # 3. Find or Create User
         result = await db.execute(select(User).where(User.email == email))
@@ -204,7 +213,4 @@ async def google_callback(code: str, db: AsyncSession = Depends(get_db)) -> Any:
         
         # 4. Generate our JWT
         our_access_token = create_access_token(subject=user.email)
-        
-        # 5. Redirect to frontend with token
-        frontend_url = settings.FRONTEND_URL.rstrip('/')
-        return RedirectResponse(url=f"{frontend_url}/auth/callback?token={our_access_token}")
+        return RedirectResponse(url=f"{frontend_url}/auth/callback#token={our_access_token}")
