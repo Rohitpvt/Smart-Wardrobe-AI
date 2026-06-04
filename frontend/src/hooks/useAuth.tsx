@@ -19,6 +19,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchUser = async () => {
+    setLoading(true);
     try {
       const response = await api.get("/auth/me");
       setUser(response.data);
@@ -37,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // eslint-disable-next-line
       fetchUser();
     } else {
-      setTimeout(() => setLoading(false), 0);
+      setLoading(false);
     }
   }, []);
 

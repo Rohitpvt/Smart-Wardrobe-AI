@@ -1,9 +1,4 @@
-# macOS
-.DS_Store
-
-# Windows
-Thumbs.db
-Desktop.ini
+# Root .gitignore for Wardrope AI
 
 # IDEs
 .vscode/
@@ -11,5 +6,54 @@ Desktop.ini
 *.swp
 *.swo
 
-# Project specific
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+*.env
+
+# Logs and databases
+*.log
+*.sqlite3
+*.db
+
+# Virtual environments & Python
+venv/
+env/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Node Modules & Frontend Build
+node_modules/
+.next/
+out/
+build/
+dist/
+.pnp
+.pnp.js
+coverage/
+.vercel
+*.tsbuildinfo
+
+# Project specific docs to ignore
 PROJECT_MEMORY.md
+*_audit.md
+*_report.md
