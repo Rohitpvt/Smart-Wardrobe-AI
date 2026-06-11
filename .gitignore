@@ -1,59 +1,29 @@
-# Root .gitignore for Wardrope AI
-
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-Desktop.ini
-
-# Environment variables
+# Environments
 .env
-.env.local
-.env.*.local
-*.env
+.env.*
+!.env.example
 
-# Logs and databases
-*.log
-*.sqlite3
-*.db
-
-# Virtual environments & Python
+# Virtual Environments
 venv/
-env/
 .venv/
-__pycache__/
-*.py[cod]
-*$py.class
-.pytest_cache/
-.coverage
-htmlcov/
-dist/
-build/
-*.egg-info/
+env/
 
-# Node Modules & Frontend Build
+# Node
 node_modules/
 .next/
-out/
-build/
 dist/
-.pnp
-.pnp.js
-coverage/
-.vercel
-*.tsbuildinfo
+build/
 
-# Project specific docs to ignore
-PROJECT_MEMORY.md
-*_audit.md
-*_report.md
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

@@ -1,2 +1,0 @@
-# This directory will contain Alembic migration version files.
-# Phase 2: Run `alembic revision --autogenerate -m "initial"` to create the first migration.
