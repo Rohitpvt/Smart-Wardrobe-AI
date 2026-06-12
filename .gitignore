@@ -20,6 +20,10 @@ __pycache__/
 *.pyo
 *.pyd
 
+# Storage & Logs
+uploads/
+logs/
+
 # OS
 .DS_Store
 Thumbs.db
