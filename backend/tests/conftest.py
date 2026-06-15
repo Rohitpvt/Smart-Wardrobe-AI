@@ -32,3 +32,10 @@ async def client(db: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
     app.dependency_overrides.clear()
+
+from app.core.rate_limit import limiter
+
+@pytest.fixture(autouse=True)
+def reset_rate_limiter():
+    """Reset the SlowAPI rate limiter state before each test."""
+    limiter.reset()

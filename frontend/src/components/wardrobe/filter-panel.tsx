@@ -1,6 +1,7 @@
 "use client";
 
 import { CATEGORIES, SEASONS } from "@/types/wardrobe";
+import { Filter } from "lucide-react";
 
 interface FilterPanelProps {
   category: string;
@@ -11,11 +12,14 @@ interface FilterPanelProps {
 
 export function FilterPanel({ category, season, onCategoryChange, onSeasonChange }: FilterPanelProps) {
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="flex flex-wrap gap-3 items-center">
+      <div className="hidden sm:flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-slate-400">
+        <Filter className="w-4 h-4" />
+      </div>
       <select
         value={category}
         onChange={(e) => onCategoryChange(e.target.value)}
-        className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="px-4 py-2.5 rounded-xl border border-white/10 bg-surface-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-brand-blue/50 focus:border-brand-blue/50 transition-colors appearance-none cursor-pointer hover:bg-surface-3"
       >
         <option value="">All Categories</option>
         {CATEGORIES.map((cat) => (
@@ -28,7 +32,7 @@ export function FilterPanel({ category, season, onCategoryChange, onSeasonChange
       <select
         value={season}
         onChange={(e) => onSeasonChange(e.target.value)}
-        className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="px-4 py-2.5 rounded-xl border border-white/10 bg-surface-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-brand-blue/50 focus:border-brand-blue/50 transition-colors appearance-none cursor-pointer hover:bg-surface-3"
       >
         <option value="">All Seasons</option>
         {SEASONS.map((s) => (

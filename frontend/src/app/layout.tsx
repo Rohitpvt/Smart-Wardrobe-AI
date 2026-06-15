@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { Providers } from "./providers";
 import "./globals.css";
+import { Toaster } from 'sonner';
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-jakarta" });
 
 export const metadata: Metadata = {
   title: "Smart Wardrobe AI",
@@ -17,8 +18,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} font-sans antialiased`}>
-        <Providers>{children}</Providers>
+      <body className={`${jakarta.variable} font-sans antialiased`}>
+        <Providers>
+          {children}
+          <Toaster theme="dark" position="bottom-right" richColors />
+        </Providers>
       </body>
     </html>
   );

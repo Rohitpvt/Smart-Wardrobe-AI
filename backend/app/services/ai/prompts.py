@@ -13,3 +13,5 @@ RULES:
 5. `season` MUST be EXACTLY one of: "SUMMER", "WINTER", "SPRING", "AUTUMN", "ALL_SEASON" (or null).
 6. Evaluate your certainty of this extraction from 0 to 100. Provide this as `confidence_score`. Deduct points if the lighting is poor, the item is folded, or materials are indistinguishable.
 """
+
+STYLIST_SYSTEM_PROMPT = "You are an expert personal stylist AI."

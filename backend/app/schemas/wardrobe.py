@@ -3,7 +3,7 @@ Pydantic schemas for wardrobe operations.
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, date
 from pydantic import BaseModel, Field, ConfigDict
 
 
@@ -20,6 +20,8 @@ class ClothingItemCreate(BaseModel):
     notes: str | None = None
     ai_confidence: int | None = Field(None, ge=0, le=100)
     ai_generated: bool = False
+    purchase_price: float | None = None
+    purchase_date: str | None = None
 
 
 class ClothingItemRead(BaseModel):
@@ -38,6 +40,10 @@ class ClothingItemRead(BaseModel):
     notes: str | None = None
     ai_confidence: int | None = None
     ai_generated: bool
+    purchase_price: float | None = None
+    purchase_date: date | None = None
+    worn_count: int
+    last_worn_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -55,6 +61,8 @@ class ClothingItemUpdate(BaseModel):
     season: str | None = Field(None, max_length=50)
     brand: str | None = Field(None, max_length=100)
     notes: str | None = None
+    purchase_price: float | None = None
+    purchase_date: str | None = None
 
 
 class PaginationMeta(BaseModel):

@@ -8,6 +8,7 @@ from app.core.database import get_db
 from app.core import security
 from app.core.config import settings
 from app.core.lockout import record_failed_attempt, is_locked_out, reset_failed_attempts
+from app.core.rate_limit import limiter
 from app.models import User, RefreshToken
 from app.schemas import UserCreate, UserRead, Token, LoginData
 from app.api.dependencies import get_current_user
@@ -24,6 +25,26 @@ def set_refresh_cookie(response: Response, token: str):
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
     )
 
+def set_csrf_cookie(response: Response, token: str):
+    response.set_cookie(
+        key="csrf_token",
+        value=token,
+        httponly=False, # Needs to be readable by JS
+        secure=settings.ENVIRONMENT == "production",
+        samesite="lax",
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    )
+
+def set_access_cookie(response: Response, token: str):
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        secure=settings.ENVIRONMENT == "production",
+        samesite="lax",
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    )
+
 def clear_refresh_cookie(response: Response):
     response.delete_cookie(
         key="refresh_token",
@@ -32,8 +53,25 @@ def clear_refresh_cookie(response: Response):
         samesite="lax",
     )
 
+def clear_access_cookie(response: Response):
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=settings.ENVIRONMENT == "production",
+        samesite="lax",
+    )
+
+def clear_csrf_cookie(response: Response):
+    response.delete_cookie(
+        key="csrf_token",
+        httponly=False,
+        secure=settings.ENVIRONMENT == "production",
+        samesite="lax",
+    )
+
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
-async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
+@limiter.limit("3/minute")
+async def register(request: Request, user_in: UserCreate, db: AsyncSession = Depends(get_db)):
     # Check if user exists
     stmt = select(User).where(User.email == user_in.email.lower())
     result = await db.execute(stmt)
@@ -61,7 +99,8 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Registration failed.")
 
 @router.post("/login", response_model=Token)
-async def login(login_data: LoginData, response: Response, db: AsyncSession = Depends(get_db)):
+@limiter.limit("5/minute")
+async def login(request: Request, login_data: LoginData, response: Response, db: AsyncSession = Depends(get_db)):
     email = login_data.email.lower()
     if is_locked_out(email):
         raise HTTPException(
@@ -109,6 +148,10 @@ async def login(login_data: LoginData, response: Response, db: AsyncSession = De
     await db.commit()
 
     set_refresh_cookie(response, refresh_token)
+    set_access_cookie(response, access_token)
+    
+    csrf_token = secrets.token_urlsafe(32)
+    set_csrf_cookie(response, csrf_token)
 
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -117,6 +160,11 @@ async def refresh_token(request: Request, response: Response, db: AsyncSession =
     token = request.cookies.get("refresh_token")
     if not token:
         raise HTTPException(status_code=401, detail="Refresh token missing")
+        
+    csrf_cookie = request.cookies.get("csrf_token")
+    csrf_header = request.headers.get("x-csrf-token")
+    if not csrf_cookie or not csrf_header or csrf_cookie != csrf_header:
+        raise HTTPException(status_code=403, detail="CSRF token verification failed")
 
     try:
         payload = security.decode_token(token)
@@ -140,6 +188,8 @@ async def refresh_token(request: Request, response: Response, db: AsyncSession =
     if not rt:
         # Token not found or already revoked (could be token theft)
         clear_refresh_cookie(response)
+        clear_access_cookie(response)
+        clear_csrf_cookie(response)
         raise HTTPException(status_code=401, detail="Refresh token revoked or invalid")
 
     # Fetch user
@@ -165,11 +215,20 @@ async def refresh_token(request: Request, response: Response, db: AsyncSession =
 
     set_refresh_cookie(response, new_refresh_token)
     access_token = security.create_access_token(data={"sub": user.email})
+    set_access_cookie(response, access_token)
+    
+    csrf_token = secrets.token_urlsafe(32)
+    set_csrf_cookie(response, csrf_token)
 
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/logout")
 async def logout(request: Request, response: Response, db: AsyncSession = Depends(get_db)):
+    csrf_cookie = request.cookies.get("csrf_token")
+    csrf_header = request.headers.get("x-csrf-token")
+    if not csrf_cookie or not csrf_header or csrf_cookie != csrf_header:
+        raise HTTPException(status_code=403, detail="CSRF token verification failed")
+
     token = request.cookies.get("refresh_token")
     if token:
         try:
@@ -188,4 +247,6 @@ async def logout(request: Request, response: Response, db: AsyncSession = Depend
             pass # Ignore invalid tokens on logout
             
     clear_refresh_cookie(response)
+    clear_access_cookie(response)
+    clear_csrf_cookie(response)
     return {"message": "Logged out successfully"}

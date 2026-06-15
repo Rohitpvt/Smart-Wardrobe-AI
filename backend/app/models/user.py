@@ -34,3 +34,18 @@ class User(Base, UUIDMixin, TimestampMixin):
     chat_conversations: Mapped[List["ChatConversation"]] = relationship(
         "ChatConversation", back_populates="user", cascade="all, delete-orphan"
     )
+    intelligence_feed_items = relationship(
+        "IntelligenceFeedItem", back_populates="user", cascade="all, delete-orphan"
+    )
+    wardrobe_opportunities = relationship(
+        "WardrobeOpportunity", back_populates="user", cascade="all, delete-orphan"
+    )
+    wardrobe_goals = relationship(
+        "WardrobeGoal", back_populates="user", cascade="all, delete-orphan"
+    )
+    weekly_reports = relationship(
+        "WeeklyReport", back_populates="user", cascade="all, delete-orphan"
+    )
+    insight_quality_metrics = relationship(
+        "InsightQualityMetric", back_populates="user", cascade="all, delete-orphan"
+    )

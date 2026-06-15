@@ -62,6 +62,18 @@ def validate_upload(file: UploadFile) -> None:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Filename is required.",
         )
+        
+    # Check file size efficiently using seek/tell before reading into memory
+    # Note: This protects application memory and does not replace infrastructure-level request size limits (e.g. Nginx).
+    file.file.seek(0, os.SEEK_END)
+    file_size = file.file.tell()
+    file.file.seek(0)  # Reset pointer so subsequent reads work correctly
+    
+    if file_size > MAX_FILE_SIZE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"File size exceeds maximum of {settings.MAX_UPLOAD_SIZE_MB} MB.",
+        )
 
 
 async def save_upload(file: UploadFile, user_id: uuid.UUID) -> str:
@@ -78,7 +90,7 @@ async def save_upload(file: UploadFile, user_id: uuid.UUID) -> str:
     content = await file.read()
     if len(content) > MAX_FILE_SIZE_BYTES:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail=f"File size exceeds maximum of {settings.MAX_UPLOAD_SIZE_MB} MB.",
         )
 

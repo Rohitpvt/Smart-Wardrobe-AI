@@ -39,6 +39,8 @@ async def create_clothing_item(
     notes: str | None = Form(None),
     ai_confidence: int | None = Form(None, ge=0, le=100),
     ai_generated: bool = Form(False),
+    purchase_price: float | None = Form(None, ge=0),
+    purchase_date: str | None = Form(None),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -65,6 +67,8 @@ async def create_clothing_item(
         notes=notes,
         ai_confidence=ai_confidence,
         ai_generated=ai_generated,
+        purchase_price=purchase_price,
+        purchase_date=purchase_date,
     )
     return item
 
@@ -149,3 +153,23 @@ async def delete_clothing_item(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Clothing item not found")
 
     await wardrobe_service.delete_item(db, item)
+
+@router.post("/{item_id}/wear", response_model=ClothingItemRead)
+async def log_item_wear(
+    item_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Log that an item was worn, incrementing worn_count and updating last_worn_at."""
+    from datetime import datetime, timezone
+    
+    item = await wardrobe_service.get_item(db, item_id, current_user.id)
+    if not item:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Clothing item not found")
+
+    update_data = {
+        "worn_count": item.worn_count + 1,
+        "last_worn_at": datetime.now(timezone.utc)
+    }
+    updated = await wardrobe_service.update_item(db, item, update_data)
+    return updated

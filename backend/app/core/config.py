@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     )
 
     # --- Frontend ---
-    FRONTEND_URL: str = "http://localhost:3000"
+    FRONTEND_URLS: str = "http://localhost:3000,http://127.0.0.1:3000"
 
     # --- File Uploads ---
     UPLOAD_DIR: str = "uploads"

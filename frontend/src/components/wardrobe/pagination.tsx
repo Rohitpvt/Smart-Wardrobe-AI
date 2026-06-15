@@ -1,6 +1,7 @@
 "use client";
 
 import { PaginationMeta } from "@/types/wardrobe";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PaginationProps {
   pagination: PaginationMeta;
@@ -22,35 +23,39 @@ export function Pagination({ pagination, onPageChange }: PaginationProps) {
   for (let i = start; i <= end; i++) pages.push(i);
 
   return (
-    <div className="flex items-center justify-center gap-1 mt-8">
+    <div className="flex items-center justify-center gap-2 mt-12 mb-8">
       <button
         onClick={() => onPageChange(page - 1)}
         disabled={page <= 1}
-        className="px-3 py-1.5 rounded-md text-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+        className="flex items-center justify-center w-10 h-10 rounded-xl bg-surface-2 border border-white/10 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-surface-3 hover:text-white hover:border-white/20 transition-all"
+        aria-label="Previous page"
       >
-        Previous
+        <ChevronLeft className="w-5 h-5" />
       </button>
 
-      {pages.map((p) => (
-        <button
-          key={p}
-          onClick={() => onPageChange(p)}
-          className={`px-3 py-1.5 rounded-md text-sm border transition-colors ${
-            p === page
-              ? "bg-blue-600 text-white border-blue-600"
-              : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800"
-          }`}
-        >
-          {p}
-        </button>
-      ))}
+      <div className="flex items-center gap-1">
+        {pages.map((p) => (
+          <button
+            key={p}
+            onClick={() => onPageChange(p)}
+            className={`w-10 h-10 rounded-xl text-sm font-medium transition-all ${
+              p === page
+                ? "bg-brand-blue text-white border-brand-blue shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+                : "bg-surface-2 border border-white/10 text-slate-300 hover:bg-surface-3 hover:text-white hover:border-white/20"
+            }`}
+          >
+            {p}
+          </button>
+        ))}
+      </div>
 
       <button
         onClick={() => onPageChange(page + 1)}
         disabled={page >= total_pages}
-        className="px-3 py-1.5 rounded-md text-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+        className="flex items-center justify-center w-10 h-10 rounded-xl bg-surface-2 border border-white/10 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-surface-3 hover:text-white hover:border-white/20 transition-all"
+        aria-label="Next page"
       >
-        Next
+        <ChevronRight className="w-5 h-5" />
       </button>
     </div>
   );

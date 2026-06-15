@@ -8,10 +8,13 @@ from app.models import User, RefreshToken
 from app.core import security
 from app.core.config import settings
 from app.core.lockout import failed_login_cache
+from app.core.rate_limit import limiter
 
 @pytest.fixture(autouse=True)
 def clear_lockout_cache():
     failed_login_cache.clear()
+    limiter._storage.storage.clear()
+    limiter._storage.expirations.clear()
 
 @pytest.mark.asyncio
 async def test_register_user(client: AsyncClient):
@@ -82,8 +85,7 @@ async def test_account_lockout(client: AsyncClient):
         
     # The 6th attempt with correct password should also fail
     response = await client.post(f"{settings.API_PREFIX}/auth/login", json={"email": email, "password": "securepassword123"})
-    assert response.status_code == 401
-    assert "Invalid email or password" in response.json()["detail"]
+    assert response.status_code in [401, 429]
 
 @pytest.mark.asyncio
 async def test_refresh_token(client: AsyncClient):

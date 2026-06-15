@@ -107,5 +107,71 @@ class GeminiProvider(AIProvider):
             logger.error(f"Error analyzing image with Gemini: {str(e)}")
             raise
 
+    async def generate_outfit_explanation(
+        self,
+        top_name: str,
+        bottom_name: str,
+        footwear_name: str,
+        occasion: str,
+        weather: dict | None,
+        scores: dict | None,
+        style_dna: str | None = None,
+        rotation_context: str | None = None,
+    ) -> str:
+        fallback = "This combination was selected based on your wardrobe preferences and color profile."
+        if not self.client:
+            return fallback
+            
+        weather_str = ""
+        if weather and weather.get("weather_used"):
+            temp = weather.get("temperature_celsius", "")
+            cond = weather.get("condition", "")
+            wind = weather.get("wind_speed")
+            wind_str = f" with wind speed of {wind}m/s" if wind else ""
+            weather_str = f"The current weather is {temp}°C and {cond}{wind_str}."
+            
+        score_str = ""
+        if scores:
+            ov = scores.get("overall_score")
+            util = scores.get("utilization_score")
+            col = scores.get("color_score")
+            score_str = f"The outfit scored {ov}/100 overall (Color Harmony: {col}, Wardrobe Utilization: {util})."
+            
+        prompt = f"""
+You are a concise fashion stylist. Explain why this outfit works in exactly ONE short sentence. 
+Reference the weather conditions (like wind or temperature if relevant) or how it utilizes the wardrobe.
+Do not use lists. Just one sentence.
+
+Occasion: {occasion}
+{weather_str}
+{score_str}
+{f"Style Profile: {style_dna}" if style_dna else ""}
+{f"Rotation Note: {rotation_context}" if rotation_context else ""}
+Top: {top_name}
+Bottom: {bottom_name}
+Footwear: {footwear_name}
+"""
+        try:
+            import asyncio
+            # Wrap the sync call in a thread and enforce a 1.5 second timeout
+            def _generate():
+                return self.client.models.generate_content(
+                    model=self.model_name,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(temperature=0.7),
+                ).text
+            
+            explanation = await asyncio.wait_for(
+                asyncio.to_thread(_generate), 
+                timeout=1.5
+            )
+            return explanation.strip() if explanation else fallback
+        except asyncio.TimeoutError:
+            logger.warning("Gemini explanation generation timed out (1.5s). Using fallback.")
+            return fallback
+        except Exception as e:
+            logger.error(f"Gemini explanation generation failed: {str(e)}. Using fallback.")
+            return fallback
+
 # Singleton instance
 gemini_provider = GeminiProvider()

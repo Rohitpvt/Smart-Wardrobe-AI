@@ -54,6 +54,9 @@ logger = logging.getLogger(__name__)
 
 # --- FastAPI Application ---
 
+from slowapi.errors import RateLimitExceeded
+from app.core.rate_limit import limiter, _rate_limit_exceeded_handler
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version="1.0.0",
@@ -61,23 +64,31 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 # --- CORS Middleware ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL],
+    allow_origins=[origin.strip() for origin in settings.FRONTEND_URLS.split(",")],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-from app.api.endpoints import auth, users, wardrobe, uploads
+from app import models
+from app.api.endpoints import auth, users, wardrobe, uploads, dashboard, recommendations, chat, intelligence
 
 # --- Routers ---
 app.include_router(auth.router, prefix=f"{settings.API_PREFIX}/auth", tags=["Auth"])
 app.include_router(users.router, prefix=f"{settings.API_PREFIX}/users", tags=["Users"])
 app.include_router(wardrobe.router, prefix=f"{settings.API_PREFIX}/wardrobe", tags=["Wardrobe"])
 app.include_router(uploads.router, prefix=f"{settings.API_PREFIX}/uploads", tags=["Uploads"])
+app.include_router(dashboard.router, prefix=f"{settings.API_PREFIX}/dashboard", tags=["Dashboard"])
+app.include_router(recommendations.router, prefix=f"{settings.API_PREFIX}")
+app.include_router(chat.router, prefix=f"{settings.API_PREFIX}")
+app.include_router(intelligence.router, prefix=f"{settings.API_PREFIX}/intelligence", tags=["Intelligence"])
 
 # --- Health Check ---
 

@@ -3,7 +3,7 @@ import uuid
 
 from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 
 from app.models.base import Base, TimestampMixin, UUIDMixin
 
@@ -39,6 +39,10 @@ class ChatMessage(Base, UUIDMixin, TimestampMixin):
     )
     role: Mapped[str] = mapped_column(String(50), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    
+    # Phase 7B additions:
+    tool_invocations: Mapped[dict | list | None] = mapped_column(JSONB, nullable=True)
+    reasoning: Mapped[dict | list | None] = mapped_column(JSONB, nullable=True)
 
     # Relationship
     conversation: Mapped["ChatConversation"] = relationship("ChatConversation", back_populates="messages")

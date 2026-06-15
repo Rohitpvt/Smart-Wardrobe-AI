@@ -15,6 +15,12 @@ export interface ClothingItem {
   season: string | null;
   brand: string | null;
   notes: string | null;
+  ai_confidence?: number | null;
+  ai_generated?: boolean;
+  purchase_price?: number | null;
+  purchase_date?: string | null;
+  worn_count: number;
+  last_worn_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -29,6 +35,8 @@ export interface ClothingItemCreate {
   season?: string;
   brand?: string;
   notes?: string;
+  purchase_price?: number;
+  purchase_date?: string;
 }
 
 export interface ClothingItemUpdate {
@@ -41,6 +49,8 @@ export interface ClothingItemUpdate {
   season?: string;
   brand?: string;
   notes?: string;
+  purchase_price?: number;
+  purchase_date?: string;
 }
 
 export interface PaginationMeta {

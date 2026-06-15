@@ -29,3 +29,18 @@ class AIProvider(ABC):
             AIClothingExtraction: The parsed metadata.
         """
         pass
+
+    @abstractmethod
+    async def generate_outfit_explanation(
+        self,
+        top_name: str,
+        bottom_name: str,
+        footwear_name: str,
+        occasion: str,
+        weather_condition: str | None,
+        temperature: float | None
+    ) -> str:
+        """
+        Generate a 1-sentence stylist explanation for why the outfit works.
+        """
+        pass

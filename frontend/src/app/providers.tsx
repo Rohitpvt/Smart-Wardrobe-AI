@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useState } from 'react';
 
+import { MotionConfig, LazyMotion, domAnimation } from 'framer-motion';
+
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
     () =>
@@ -20,8 +22,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
-      <ReactQueryDevtools initialIsOpen={false} />
+      <LazyMotion features={domAnimation} strict>
+        <MotionConfig reducedMotion="user">
+          {children}
+          <ReactQueryDevtools initialIsOpen={false} />
+        </MotionConfig>
+      </LazyMotion>
     </QueryClientProvider>
   );
 }
