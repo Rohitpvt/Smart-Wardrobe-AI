@@ -1,8 +1,15 @@
 """
-Gemini integration for clothing analysis.
+Gemini AI Provider.
+
+Implements the AIProvider interface using Google's Gemini SDK.
+Supports vision analysis, text generation, JSON generation, and chat with tool-calling.
 """
 
+import asyncio
+import json
 import logging
+from typing import Any
+
 from google import genai
 from google.genai import types
 
@@ -13,22 +20,21 @@ from app.services.ai.prompts import CLOTHING_ANALYSIS_SYSTEM_PROMPT
 
 logger = logging.getLogger(__name__)
 
+
 class GeminiProvider(AIProvider):
     """Implementation of AIProvider using Google's Gemini SDK."""
-    
+
     def __init__(self):
-        # The client automatically picks up GEMINI_API_KEY from environment variables.
-        # We only initialize if the key is present to prevent test suite crashes.
         self.client = genai.Client(api_key=settings.GEMINI_API_KEY) if settings.GEMINI_API_KEY else None
         self.model_name = "gemini-2.5-flash"
-        
+
     def _calculate_backend_confidence(self, extraction: AIClothingExtraction) -> int:
         """
-        Calculate an additional backend confidence score based on the completeness 
+        Calculate an additional backend confidence score based on the completeness
         of the extracted data.
         """
         score = 100
-        
+
         # Deduct points if crucial fields are missing
         if not extraction.category:
             score -= 30
@@ -36,7 +42,7 @@ class GeminiProvider(AIProvider):
             score -= 20
         if not extraction.color:
             score -= 15
-            
+
         # Optional but helpful fields missing
         if not extraction.pattern:
             score -= 5
@@ -44,7 +50,7 @@ class GeminiProvider(AIProvider):
             score -= 5
         if not extraction.season:
             score -= 5
-            
+
         return max(0, score)
 
     async def analyze_clothing_image(
@@ -57,55 +63,195 @@ class GeminiProvider(AIProvider):
         Uses structured outputs (Pydantic schema).
         """
         logger.info(f"Analyzing image with {self.model_name}")
-        
+
         if not self.client:
             raise ValueError("Gemini API key is not configured.")
-        
+
         # Prepare the image part
         image_part = types.Part.from_bytes(
             data=image_data,
             mime_type=mime_type,
         )
-        
-        try:
-            # We use the sync client with asyncio.to_thread to avoid blocking,
-            # or the async client if configured. For simplicity, we use the generate_content directly.
-            # google-genai supports asyncio but the structure varies, let's use the standard call 
-            # and let FastAPI/Starlette threadpool handle it if it's sync, or we can use standard async if supported.
-            
-            # Request structured output using Pydantic schema
-            response = self.client.models.generate_content(
-                model=self.model_name,
-                contents=[image_part, "Analyze this clothing item."],
-                config=types.GenerateContentConfig(
-                    system_instruction=CLOTHING_ANALYSIS_SYSTEM_PROMPT,
-                    response_mime_type="application/json",
-                    response_schema=AIClothingExtraction,
-                    temperature=0.1, # Low temperature for more deterministic extraction
-                ),
+
+        # Request structured output using Pydantic schema
+        response = await asyncio.to_thread(
+            self.client.models.generate_content,
+            model=self.model_name,
+            contents=[image_part, "Analyze this clothing item."],
+            config=types.GenerateContentConfig(
+                system_instruction=CLOTHING_ANALYSIS_SYSTEM_PROMPT,
+                response_mime_type="application/json",
+                response_schema=AIClothingExtraction,
+                temperature=0.1,
+            ),
+        )
+
+        json_text = response.text
+        if not json_text:
+            raise ValueError("Received empty response from Gemini")
+
+        extraction = AIClothingExtraction.model_validate_json(json_text)
+
+        # Calculate backend confidence
+        backend_conf = self._calculate_backend_confidence(extraction)
+        final_confidence = (extraction.confidence_score + backend_conf) // 2
+        extraction.confidence_score = final_confidence
+
+        logger.info(f"Successfully analyzed image. Final confidence: {final_confidence}")
+        return extraction
+
+    async def generate_text(
+        self,
+        prompt: str,
+        system_instruction: str = "",
+        temperature: float = 0.7,
+        timeout: float = 5.0,
+    ) -> str:
+        """Generate plain text using Gemini."""
+        if not self.client:
+            raise ValueError("Gemini API key is not configured.")
+
+        config = types.GenerateContentConfig(temperature=temperature)
+        if system_instruction:
+            config = types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                temperature=temperature,
             )
-            
-            # The response text is a JSON string matching the schema.
-            # Parse it using our Pydantic model.
-            json_text = response.text
-            if not json_text:
-                raise ValueError("Received empty response from Gemini")
-                
-            extraction = AIClothingExtraction.model_validate_json(json_text)
-            
-            # Calculate backend confidence
-            backend_conf = self._calculate_backend_confidence(extraction)
-            
-            # Combine model confidence and backend confidence (average)
-            final_confidence = (extraction.confidence_score + backend_conf) // 2
-            extraction.confidence_score = final_confidence
-            
-            logger.info(f"Successfully analyzed image. Final confidence: {final_confidence}")
-            return extraction
-            
-        except Exception as e:
-            logger.error(f"Error analyzing image with Gemini: {str(e)}")
-            raise
+
+        def _generate():
+            return self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt,
+                config=config,
+            ).text
+
+        result = await asyncio.wait_for(
+            asyncio.to_thread(_generate),
+            timeout=timeout,
+        )
+        return (result or "").strip()
+
+    async def generate_json(
+        self,
+        prompt: str,
+        system_instruction: str = "",
+        temperature: float = 0.7,
+        timeout: float = 5.0,
+    ) -> dict:
+        """Generate JSON using Gemini's response_mime_type."""
+        if not self.client:
+            raise ValueError("Gemini API key is not configured.")
+
+        config_kwargs: dict[str, Any] = {
+            "temperature": temperature,
+            "response_mime_type": "application/json",
+        }
+        if system_instruction:
+            config_kwargs["system_instruction"] = system_instruction
+
+        def _generate():
+            return self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(**config_kwargs),
+            ).text
+
+        result = await asyncio.wait_for(
+            asyncio.to_thread(_generate),
+            timeout=timeout,
+        )
+        if not result:
+            return {}
+        clean_json = result.replace("```json", "").replace("```", "").strip()
+        return json.loads(clean_json)
+
+    async def generate_chat_response(
+        self,
+        messages: list[dict[str, Any]],
+        system_instruction: str = "",
+        tools: list[dict[str, Any]] | None = None,
+        temperature: float = 0.4,
+        timeout: float = 10.0,
+    ) -> dict[str, Any]:
+        """
+        Generate a chat response with optional tool-calling using Gemini.
+
+        Accepts messages in OpenAI-compatible format and converts them to Gemini's
+        native types.Content format internally.
+
+        Returns normalized: {"text": str|None, "function_calls": [{"name": ..., "args": ...}]|None}
+        """
+        if not self.client:
+            raise ValueError("Gemini API key is not configured.")
+
+        # Convert OpenAI-format messages -> Gemini types.Content
+        gemini_contents = []
+        for msg in messages:
+            role = "model" if msg["role"] == "assistant" else "user"
+            parts = [types.Part.from_text(text=msg["content"])]
+            gemini_contents.append(types.Content(role=role, parts=parts))
+
+        # Convert OpenAI-format tools -> Gemini types.Tool
+        gemini_tools = None
+        if tools:
+            func_declarations = []
+            for tool in tools:
+                func = tool.get("function", {})
+                params = func.get("parameters")
+                gemini_params = None
+                if params:
+                    properties = {}
+                    for prop_name, prop_def in params.get("properties", {}).items():
+                        properties[prop_name] = types.Schema(
+                            type=types.Type.STRING,
+                            description=prop_def.get("description", ""),
+                        )
+                    gemini_params = types.Schema(
+                        type=types.Type.OBJECT,
+                        properties=properties,
+                        required=params.get("required", []),
+                    )
+
+                func_declarations.append(
+                    types.FunctionDeclaration(
+                        name=func.get("name", ""),
+                        description=func.get("description", ""),
+                        parameters=gemini_params,
+                    )
+                )
+            gemini_tools = [types.Tool(function_declarations=func_declarations)]
+
+        config_kwargs: dict[str, Any] = {"temperature": temperature}
+        if system_instruction:
+            config_kwargs["system_instruction"] = system_instruction
+        if gemini_tools:
+            config_kwargs["tools"] = gemini_tools
+
+        def _call():
+            return self.client.models.generate_content(
+                model=self.model_name,
+                contents=gemini_contents,
+                config=types.GenerateContentConfig(**config_kwargs),
+            )
+
+        response = await asyncio.wait_for(
+            asyncio.to_thread(_call),
+            timeout=timeout,
+        )
+
+        # Normalize response
+        result: dict[str, Any] = {"text": None, "function_calls": None}
+
+        if response.function_calls:
+            result["function_calls"] = [
+                {"name": fc.name, "args": dict(fc.args) if fc.args else {}}
+                for fc in response.function_calls
+            ]
+
+        if response.text:
+            result["text"] = response.text
+
+        return result
 
     async def generate_outfit_explanation(
         self,
@@ -119,9 +265,7 @@ class GeminiProvider(AIProvider):
         rotation_context: str | None = None,
     ) -> str:
         fallback = "This combination was selected based on your wardrobe preferences and color profile."
-        if not self.client:
-            return fallback
-            
+
         weather_str = ""
         if weather and weather.get("weather_used"):
             temp = weather.get("temperature_celsius", "")
@@ -129,16 +273,16 @@ class GeminiProvider(AIProvider):
             wind = weather.get("wind_speed")
             wind_str = f" with wind speed of {wind}m/s" if wind else ""
             weather_str = f"The current weather is {temp}°C and {cond}{wind_str}."
-            
+
         score_str = ""
         if scores:
             ov = scores.get("overall_score")
             util = scores.get("utilization_score")
             col = scores.get("color_score")
             score_str = f"The outfit scored {ov}/100 overall (Color Harmony: {col}, Wardrobe Utilization: {util})."
-            
+
         prompt = f"""
-You are a concise fashion stylist. Explain why this outfit works in exactly ONE short sentence. 
+You are a concise fashion stylist. Explain why this outfit works in exactly ONE short sentence.
 Reference the weather conditions (like wind or temperature if relevant) or how it utilizes the wardrobe.
 Do not use lists. Just one sentence.
 
@@ -152,26 +296,56 @@ Bottom: {bottom_name}
 Footwear: {footwear_name}
 """
         try:
-            import asyncio
-            # Wrap the sync call in a thread and enforce a 1.5 second timeout
-            def _generate():
-                return self.client.models.generate_content(
-                    model=self.model_name,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(temperature=0.7),
-                ).text
-            
-            explanation = await asyncio.wait_for(
-                asyncio.to_thread(_generate), 
-                timeout=1.5
-            )
-            return explanation.strip() if explanation else fallback
+            return await self.generate_text(prompt=prompt, temperature=0.7, timeout=1.5)
         except asyncio.TimeoutError:
             logger.warning("Gemini explanation generation timed out (1.5s). Using fallback.")
             return fallback
         except Exception as e:
             logger.error(f"Gemini explanation generation failed: {str(e)}. Using fallback.")
             return fallback
+
+    async def generate_outfit_completion_accessories(
+        self,
+        top_name: str,
+        bottom_name: str,
+        footwear_name: str,
+        outerwear_name: str | None,
+        anchor_type: str,
+        styling_preference: str,
+    ) -> dict:
+        fallback = {
+            "reasoning": "This combination builds a balanced aesthetic around your chosen item.",
+            "accessories": {"Style Note": "Minimal accessories recommended."},
+        }
+
+        outer_str = f"Outerwear: {outerwear_name}\n" if outerwear_name else ""
+
+        prompt = f"""
+        You are a highly skilled fashion stylist. An outfit has been built around an anchor item.
+        The user's styling preference is '{styling_preference}'.
+
+        If styling_preference is 'masculine': Recommend items like Belt, Watch, Layering.
+        If styling_preference is 'feminine': Recommend items like Makeup, Lipstick color, Jewelry, Bag.
+        If styling_preference is 'neutral': Recommend items like Watch, Bag, general accessories.
+
+        Provide exactly two things:
+        1. "reasoning": A 1-2 sentence explanation of why this outfit works visually, specifically mentioning the anchor item type ({anchor_type}).
+        2. "accessories": A JSON object mapping accessory types to specific recommendations (e.g. {{"Belt": "Brown Leather", "Watch": "Silver"}}).
+
+        Current Outfit:
+        Top: {top_name}
+        Bottom: {bottom_name}
+        Footwear: {footwear_name}
+        {outer_str}
+
+        Respond with ONLY a valid JSON object matching the requested structure.
+        """
+        try:
+            return await self.generate_json(prompt=prompt, temperature=0.7, timeout=3.0)
+        except Exception as e:
+            logger.error(f"Gemini completion accessory generation failed: {str(e)}")
+            return fallback
+
 
 # Singleton instance
 gemini_provider = GeminiProvider()

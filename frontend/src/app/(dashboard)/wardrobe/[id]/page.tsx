@@ -1,6 +1,7 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { use } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { api } from "@/lib/axios";
@@ -13,11 +14,11 @@ import { ArrowLeft, Edit2, Trash2, Tag, Layers, Droplets, Wind, Sparkles, AlertC
 
 import { fadeUp, staggerContainer as stagger } from "@/lib/animations";
 
-export default function ClothingItemDetailPage() {
-  const params = useParams();
+export default function ClothingItemDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const router = useRouter();
   const queryClient = useQueryClient();
-  const itemId = params.id as string;
+  const itemId = params.id;
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState<Record<string, string>>({});
 

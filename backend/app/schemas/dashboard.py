@@ -75,11 +75,12 @@ class WearAnalyticsResponse(BaseModel):
     wear_trends: Dict[str, WearTrendEntry]
 
 class PurchaseRecommendation(BaseModel):
+    id: str | None = None
     priority: str
-    category: str
+    item_type: str
     reason: str
     expected_outfit_gain: int
-    confidence: int
+    confidence_score: float
 
 class PurchaseRecommendationsResponse(BaseModel):
     recommendations: List[PurchaseRecommendation]

@@ -103,7 +103,7 @@ Mandatory:
 
 Mandatory:
 
-* Gemini 2.5 Flash
+* AI Provider Router (Gemini 2.5 Flash Primary, NVIDIA NIM Fallback)
 
 Permitted Usage:
 
@@ -483,7 +483,7 @@ Clothing Analysis Workflow
 
 Upload Image
 ↓
-Gemini Analysis
+AI Analysis
 ↓
 Structured JSON
 ↓

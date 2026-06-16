@@ -19,6 +19,7 @@ interface ProfileData {
   email: string;
   city: string;
   country_code: string;
+  styling_preference?: string;
 }
 
 export default function SettingsClient({ initialProfile }: { initialProfile: ProfileData }) {
@@ -184,6 +185,27 @@ export default function SettingsClient({ initialProfile }: { initialProfile: Pro
                     className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-brand-blue/50 focus:border-brand-blue/50 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]" 
                   />
                 </div>
+              </div>
+
+              {/* STYLING PREFERENCE */}
+              <div className="pt-4">
+                <label className="block text-xs font-label-sm text-slate-400 uppercase tracking-widest mb-2 pl-1">Styling Preference</label>
+                <div className="relative">
+                  <select
+                    name="styling_preference"
+                    value={profile.styling_preference || "neutral"}
+                    onChange={(e) => setProfile({ ...profile, styling_preference: e.target.value })}
+                    className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-brand-blue/50 focus:border-brand-blue/50 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)] appearance-none"
+                  >
+                    <option value="neutral">Neutral</option>
+                    <option value="masculine">Masculine</option>
+                    <option value="feminine">Feminine</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-500 mt-2 px-1">Used by the AI Stylist to personalize your outfit recommendations and accessories.</p>
               </div>
 
               {/* ═══ SECTION 4: WEATHER & LOCATION ═══ */}

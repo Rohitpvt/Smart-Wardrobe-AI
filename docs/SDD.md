@@ -14,7 +14,7 @@ Smart Wardrobe AI is a full-stack web application that allows users to:
 
 * Create accounts
 * Upload clothing images
-* Analyze clothing using Gemini Vision
+* Analyze clothing using Vision AI (Primary: Gemini, Fallback: NVIDIA NIM Phi-4)
 * Manage a digital wardrobe
 * Receive outfit recommendations
 * Receive weather-aware suggestions
@@ -73,7 +73,7 @@ Database
 
 AI
 
-* Gemini 2.5 Flash
+* AI Provider Router (Gemini 2.5 Flash Primary, NVIDIA NIM Fallback)
 
 External Services
 
@@ -692,7 +692,7 @@ Wardrobe CRUD
 
 Image Upload
 
-Gemini Analysis
+AI Analysis
 
 ---
 

@@ -59,15 +59,15 @@ class ContextBuilderService:
             },
             "rotation_context": {
                 "rotation_score": rotation.get("rotation_score", 0),
-                "overused_items": [item.get("name") for item in rotation.get("overused", [])][:3],
-                "recommended_rotation": [item.get("name") for item in rotation.get("recommended_rotation", [])][:3],
+                "overused_items": [(getattr(item, "name", item.get("name")) if isinstance(item, dict) else getattr(item, "name", None)) for item in rotation.get("overused", [])][:3],
+                "recommended_rotation": [(getattr(item, "name", item.get("name")) if isinstance(item, dict) else getattr(item, "name", None)) for item in rotation.get("recommended_rotation", [])][:3],
             },
             "wardrobe_health": {
                 "gaps": health.get("gaps", []),
                 "weaknesses": health.get("weaknesses", []),
             },
             "purchase_recommendations": [
-                f"{r.get('priority')}: {r.get('category')} - {r.get('reason')}"
+                f"{r.get('priority') if isinstance(r, dict) else getattr(r, 'priority', '')}: {r.get('item_type') if isinstance(r, dict) else getattr(r, 'item_type', '')} - {r.get('reason') if isinstance(r, dict) else getattr(r, 'reason', '')}"
                 for r in purchase_recs[:3]
             ],
             "weather": weather_ctx

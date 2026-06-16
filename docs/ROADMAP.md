@@ -237,9 +237,9 @@ Automate clothing identification.
 
 Deliverables
 
-Gemini Integration
+AI Provider Integration
 
-* Gemini API setup
+* AI Provider Router setup
 * Image analysis service
 * Structured JSON output
 
@@ -256,7 +256,7 @@ Workflow
 
 Upload Image
 ↓
-Gemini Analysis
+AI Analysis
 ↓
 Store Metadata
 
@@ -422,7 +422,7 @@ Frontend
 * Message history
 * Conversation management
 
-Gemini Integration
+AI Provider Integration
 
 Supported Queries
 

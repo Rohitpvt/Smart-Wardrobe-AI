@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 
 import { AmbientGlow } from "@/components/ui/AmbientGlow";
+import { SmartWardrobeLogo } from "@/components/branding/smart-wardrobe-logo";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -77,13 +78,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <aside className="hidden lg:flex flex-col w-[280px] h-full border-r border-white/5 bg-surface-1/40 backdrop-blur-3xl relative z-20">
           
           {/* Brand Area */}
-          <div className="p-8 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-blue to-brand-purple p-px shadow-[0_0_20px_rgba(59,130,246,0.3)]">
-               <div className="w-full h-full bg-[#060816] rounded-[11px] flex items-center justify-center">
-                 <Wand2 className="w-5 h-5 text-brand-blue" />
-               </div>
-            </div>
-            <h2 className="text-xl font-bold tracking-tight text-white">Stitch<span className="text-brand-blue">AI</span></h2>
+          <div className="p-6 pb-4">
+            <SmartWardrobeLogo variant="full" />
           </div>
 
           {/* Navigation Intelligence */}
@@ -155,12 +151,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 className="fixed top-0 left-0 w-[280px] h-full bg-surface-1 border-r border-white/10 z-50 flex flex-col lg:hidden shadow-2xl"
               >
                 <div className="p-6 flex items-center justify-between border-b border-white/5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-brand-blue/10 text-brand-blue flex items-center justify-center border border-brand-blue/20">
-                      <Wand2 className="w-4 h-4" />
-                    </div>
-                    <h2 className="text-lg font-bold text-white">Stitch<span className="text-brand-blue">AI</span></h2>
-                  </div>
+                  <SmartWardrobeLogo variant="compact" />
                   <button onClick={() => setIsMobileNavOpen(false)} aria-label="Close mobile menu" className="p-2 text-slate-400 hover:text-white bg-surface-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue">
                     <X className="w-5 h-5" />
                   </button>

@@ -1,13 +1,20 @@
 "use client";
 
 import { OutfitGenerator } from "@/components/recommendations/OutfitGenerator";
+import { AnchorOutfitGenerator } from "@/components/recommendations/AnchorOutfitGenerator";
 import { RecommendationHistory } from "@/components/recommendations/RecommendationHistory";
-import { m, Variants } from "framer-motion";
-import { Sparkles, CloudSun } from "lucide-react";
+import { m } from "framer-motion";
+import { Sparkles, CloudSun, Anchor } from "lucide-react";
+import { useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { fadeUp, staggerContainer as stagger } from "@/lib/animations";
 
-export default function RecommendationsClient() {
+function RecommendationsClientContent() {
+  const searchParams = useSearchParams();
+  const initialMode = searchParams.get("view") === "anchor" ? "anchor" : "standard";
+  const [mode, setMode] = useState<"standard" | "anchor">(initialMode);
+
   return (
     <m.div initial="hidden" animate="visible" variants={stagger} className="max-w-7xl mx-auto space-y-8 pb-16">
       
@@ -38,9 +45,27 @@ export default function RecommendationsClient() {
       </m.section>
       
       <div className="space-y-12">
+        {/* MODE SELECTOR */}
+        <m.div variants={fadeUp} className="flex justify-center -mb-4 relative z-20">
+          <div className="bg-surface-2/80 backdrop-blur-md p-1 rounded-full border border-white/10 flex items-center shadow-lg">
+            <button
+              onClick={() => setMode("standard")}
+              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all ${mode === "standard" ? "bg-brand-blue/20 text-brand-blue shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] border border-brand-blue/30" : "text-slate-400 hover:text-white"}`}
+            >
+              Standard Recommendation
+            </button>
+            <button
+              onClick={() => setMode("anchor")}
+              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${mode === "anchor" ? "bg-brand-purple/20 text-brand-purple shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] border border-brand-purple/30" : "text-slate-400 hover:text-white"}`}
+            >
+              <Anchor className="w-4 h-4" /> Build Around Item
+            </button>
+          </div>
+        </m.div>
+
         {/* ═══ SECTION 2: GENERATION WORKSPACE ═══ */}
         <m.section variants={fadeUp}>
-          <OutfitGenerator />
+          {mode === "standard" ? <OutfitGenerator /> : <AnchorOutfitGenerator />}
         </m.section>
 
         {/* ═══ SECTION 5: RECOMMENDATION HISTORY ═══ */}
@@ -49,5 +74,13 @@ export default function RecommendationsClient() {
         </m.section>
       </div>
     </m.div>
+  );
+}
+
+export default function RecommendationsClient() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-white/50">Loading recommendations...</div>}>
+      <RecommendationsClientContent />
+    </Suspense>
   );
 }

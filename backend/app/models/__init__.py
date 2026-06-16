@@ -13,6 +13,7 @@ from app.models.refresh_token import RefreshToken
 from app.models.outfit_feedback import OutfitFeedback
 from app.models.style_profile_snapshot import StyleProfileSnapshot
 from app.models.intelligence import IntelligenceFeedItem, WardrobeOpportunity, WardrobeGoal, WeeklyReport, InsightQualityMetric
+from app.models.user_preference import UserPreference
 
 # Expose Base and all models
 __all__ = [
@@ -29,5 +30,6 @@ __all__ = [
     "WardrobeOpportunity",
     "WardrobeGoal",
     "WeeklyReport",
-    "InsightQualityMetric"
+    "InsightQualityMetric",
+    "UserPreference"
 ]

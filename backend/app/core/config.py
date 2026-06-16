@@ -39,6 +39,22 @@ class Settings(BaseSettings):
         description="Google Gemini API key",
     )
 
+    # --- NVIDIA NIM AI ---
+    NVIDIA_API_KEY: str = Field(
+        default="",
+        description="NVIDIA NIM API key",
+    )
+
+    # --- AI Provider Routing ---
+    AI_PRIMARY_PROVIDER: str = Field(
+        default="gemini",
+        description="Primary AI provider: gemini | nvidia",
+    )
+    AI_FALLBACK_PROVIDER: str = Field(
+        default="nvidia",
+        description="Fallback AI provider: nvidia | gemini",
+    )
+
     # --- OpenWeather ---
     OPENWEATHER_API_KEY: str = Field(
         default="",

@@ -3,7 +3,7 @@
 import { ReactNode } from "react";
 import Link from "next/link";
 import { AuthVisualPanel } from "@/components/auth/auth-visual-panel";
-import { Sparkles } from "lucide-react";
+import { SmartWardrobeLogo } from "@/components/branding/smart-wardrobe-logo";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
@@ -20,25 +20,20 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
         {/* Top bar with logo + nav */}
         <div className="flex items-center justify-between p-6 relative z-20">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-blue to-brand-purple flex items-center justify-center transition-transform group-hover:scale-105">
-              <Sparkles className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-text-primary text-lg hidden sm:inline">
-              Wardrobe AI
-            </span>
+          <Link href="/" className="inline-block hover:opacity-90 transition-opacity">
+            <SmartWardrobeLogo variant="full" />
           </Link>
         </div>
 
         {/* Mobile-only compact visual banner */}
         <div className="lg:hidden px-6 pb-6 text-center">
           <h2 className="text-2xl font-bold text-text-primary mb-1">
-            Your AI Stylist.{" "}
+            Smart Wardrobe{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-blue to-brand-purple">
-              Reimagined.
+              AI
             </span>
           </h2>
-          <p className="text-text-secondary text-sm">Smart outfits powered by your wardrobe.</p>
+          <p className="text-text-secondary text-sm">Your AI-Powered Personal Styling Intelligence Platform</p>
         </div>
 
         {/* Form container — centered vertically */}

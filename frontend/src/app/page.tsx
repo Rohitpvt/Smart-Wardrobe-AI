@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 
 import { fadeUp, staggerContainer, useCountUp } from "@/lib/animations";
 import { AmbientGlow } from "@/components/ui/AmbientGlow";
+import { SmartWardrobeLogo } from "@/components/branding/smart-wardrobe-logo";
 
 function AnimatedCounter({ value, suffix = "" }: { value: number, suffix?: string }) {
   const count = useCountUp(value);
@@ -26,14 +27,9 @@ export default function LandingPage() {
       {/* ═══ NAVIGATION ═══ */}
       <nav className="fixed top-0 left-0 w-full z-50 border-b border-white/5 bg-[#02040a]/60 backdrop-blur-2xl">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-blue to-brand-purple p-px shadow-[0_0_20px_rgba(59,130,246,0.2)]">
-               <div className="w-full h-full bg-[#060816] rounded-[11px] flex items-center justify-center">
-                 <Wand2 className="w-5 h-5 text-brand-blue" />
-               </div>
-            </div>
-            <span className="text-xl font-bold tracking-tight text-white">Stitch<span className="text-brand-blue">AI</span></span>
-          </div>
+          <Link href="/" className="inline-block hover:opacity-90 transition-opacity">
+            <SmartWardrobeLogo variant="full" />
+          </Link>
           <div className="flex items-center gap-6">
             <Link href="/login" className="text-sm font-medium text-slate-400 hover:text-white transition-colors hidden sm:block">
               Sign In
@@ -301,10 +297,9 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-16">
             <div className="col-span-2 md:col-span-2">
-              <div className="flex items-center gap-3 mb-6">
-                 <Wand2 className="w-5 h-5 text-brand-blue" />
-                 <span className="text-xl font-bold tracking-tight text-white">Stitch<span className="text-brand-blue">AI</span></span>
-              </div>
+              <Link href="/" className="inline-block mb-6 hover:opacity-90 transition-opacity">
+                <SmartWardrobeLogo variant="full" />
+              </Link>
               <p className="text-slate-400 text-sm max-w-xs leading-relaxed">
                 The most advanced fashion intelligence platform. Organize, analyze, and automate your personal style.
               </p>
@@ -339,7 +334,7 @@ export default function LandingPage() {
           
           <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-slate-600 text-sm">
-              &copy; {new Date().getFullYear()} StitchAI. All rights reserved.
+              &copy; {new Date().getFullYear()} Smart Wardrobe AI. All rights reserved.
             </p>
             <div className="flex gap-6 text-sm text-slate-600">
               <Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link>

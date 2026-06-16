@@ -8,6 +8,7 @@ class UserBase(BaseModel):
     last_name: str = Field(..., max_length=100)
     city: str | None = Field(None, max_length=100)
     country_code: str | None = Field(None, max_length=10)
+    styling_preference: str | None = Field(None, max_length=20)
 
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8, max_length=100)
@@ -24,6 +25,7 @@ class UserUpdate(BaseModel):
     last_name: str | None = Field(None, max_length=100)
     city: str | None = Field(None, max_length=100)
     country_code: str | None = Field(None, max_length=10)
+    styling_preference: str | None = Field(None, max_length=20)
 
 class UserChangePassword(BaseModel):
     current_password: str

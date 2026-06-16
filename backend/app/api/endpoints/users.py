@@ -5,13 +5,18 @@ from sqlalchemy.future import select
 from app.core.database import get_db
 from app.core import security
 from app.models import User, RefreshToken
+from app.models.user_preference import UserPreference
 from app.schemas import UserRead, UserUpdate, UserChangePassword
 from app.api.dependencies import get_current_user
 
 router = APIRouter()
 
 @router.get("/me", response_model=UserRead)
-async def read_current_user(current_user: User = Depends(get_current_user)):
+async def read_current_user(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    # Fetch styling preference
+    pref_query = await db.execute(select(UserPreference).where(UserPreference.user_id == current_user.id))
+    pref = pref_query.scalar_one_or_none()
+    current_user.styling_preference = pref.styling_preference if pref else "neutral"
     return current_user
 
 @router.put("/profile", response_model=UserRead)
@@ -21,12 +26,31 @@ async def update_profile(
     db: AsyncSession = Depends(get_db)
 ):
     update_data = user_update.model_dump(exclude_unset=True)
+    
+    pref_val = update_data.pop("styling_preference", None)
+    
     for field, value in update_data.items():
         setattr(current_user, field, value)
         
     db.add(current_user)
+    
+    if pref_val:
+        pref_query = await db.execute(select(UserPreference).where(UserPreference.user_id == current_user.id))
+        pref = pref_query.scalar_one_or_none()
+        if pref:
+            pref.styling_preference = pref_val
+        else:
+            pref = UserPreference(user_id=current_user.id, styling_preference=pref_val)
+            db.add(pref)
+            
     await db.commit()
     await db.refresh(current_user)
+    
+    # Reload styling preference for the response
+    pref_query = await db.execute(select(UserPreference).where(UserPreference.user_id == current_user.id))
+    pref = pref_query.scalar_one_or_none()
+    current_user.styling_preference = pref.styling_preference if pref else "neutral"
+    
     return current_user
 
 @router.put("/password")

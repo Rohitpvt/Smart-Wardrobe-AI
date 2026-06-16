@@ -57,6 +57,8 @@ User
 │
 ├── Refresh Tokens
 │
+├── User Preferences
+│
 └── Chat Conversations
         │
         └── Chat Messages
@@ -367,6 +369,45 @@ Delete Refresh Tokens
 
 ---
 
+# 8b. Table: user_preferences
+
+Purpose
+
+Stores long-term user personalization settings such as styling preference.
+
+Columns
+
+| Column             | Type         | Nullable |
+| ------------------ | ------------ | -------- |
+| id                 | UUID         | No       |
+| user_id            | UUID         | No       |
+| styling_preference | VARCHAR(20)  | No       |
+| created_at         | TIMESTAMP    | No       |
+| updated_at         | TIMESTAMP    | No       |
+
+Constraints
+
+* Primary Key: id
+* Foreign Key: user_id → users.id (Unique)
+
+Indexes
+
+```sql
+user_preferences_user_id_idx
+```
+
+Delete Rule
+
+```text
+Delete User
+      ↓
+Delete User Preferences
+```
+
+(CASCADE)
+
+---
+
 # 9. Relationship Diagram
 
 ```text
@@ -458,8 +499,6 @@ packing_lists
 wardrobe_analytics
 
 notifications
-
-user_preferences
 ```
 
 No migrations should create these tables during MVP development.

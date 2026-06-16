@@ -104,7 +104,7 @@ Authentication
 
 AI Services
 
-* Gemini 2.5 Flash
+* AI Provider Router (Gemini 2.5 Flash Primary, NVIDIA NIM Fallback)
 
 Weather Service
 
@@ -175,7 +175,7 @@ Acceptance Criteria
 
 Description
 
-Uploaded clothing items are analyzed automatically using Gemini Vision.
+Uploaded clothing items are analyzed automatically using Vision AI (Primary: Gemini, Fallback: NVIDIA NIM Phi-4).
 
 Analysis Fields
 
@@ -345,7 +345,7 @@ Example Questions
 Requirements
 
 * Assistant must use wardrobe data as context
-* Assistant uses Gemini 2.5 Flash
+* Assistant uses AI Provider Router (Gemini 2.5 Flash Primary, NVIDIA NIM Fallback)
 * Responses must reference actual wardrobe items
 
 Acceptance Criteria

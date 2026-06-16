@@ -3,7 +3,7 @@
 import React from "react";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { PurchaseRecommendationsResponse } from "@/types/dashboard";
-import { ShoppingBag, ChevronRight, Zap } from "lucide-react";
+import { ShoppingBag, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PurchaseRecommendationsCardProps {
@@ -36,7 +36,7 @@ export function PurchaseRecommendationsCard({ data }: PurchaseRecommendationsCar
       ) : (
         <div className="space-y-3">
           {data.recommendations.map((rec, i) => {
-            const style = priorityStyles[rec.priority] || priorityStyles.low;
+            const style = priorityStyles[(rec.priority ?? "low").toLowerCase()] || priorityStyles.low;
             return (
               <div
                 key={i}
@@ -56,7 +56,7 @@ export function PurchaseRecommendationsCard({ data }: PurchaseRecommendationsCar
                       >
                         {style.label}
                       </span>
-                      <span className="text-sm font-medium text-white capitalize">{rec.category.replace("_", " ")}</span>
+                      <span className="text-sm font-medium text-white capitalize">{(rec.item_type ?? "Unknown").replaceAll("_", " ")}</span>
                     </div>
                     <p className="text-xs text-zinc-400 leading-relaxed">{rec.reason}</p>
                   </div>
@@ -71,7 +71,7 @@ export function PurchaseRecommendationsCard({ data }: PurchaseRecommendationsCar
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-[10px] text-zinc-500 uppercase">Confidence:</span>
-                    <span className="text-xs font-bold text-zinc-300">{rec.confidence}%</span>
+                    <span className="text-xs font-bold text-zinc-300">{Math.round(rec.confidence_score ?? 0)}%</span>
                   </div>
                 </div>
               </div>

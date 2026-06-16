@@ -14,7 +14,7 @@ from pydantic import ValidationError
 from app.models import User
 from app.api.dependencies import get_current_user
 from app.services.storage import local as storage_service
-from app.services.ai import gemini_provider, AIClothingExtraction
+from app.services.ai import ai_provider, AIClothingExtraction
 from app.core.rate_limit import limiter
 
 router = APIRouter()
@@ -90,7 +90,7 @@ async def analyze_upload(
     
     try:
         # Analyze with Gemini
-        extraction = await gemini_provider.analyze_clothing_image(
+        extraction = await ai_provider.analyze_clothing_image(
             image_data=content,
             mime_type=image.content_type or "image/jpeg"
         )

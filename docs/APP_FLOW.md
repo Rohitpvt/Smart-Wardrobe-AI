@@ -254,7 +254,7 @@ Upload
       ↓
 Backend Validation
       ↓
-Gemini Analysis
+AI Analysis
       ↓
 Metadata Generated
       ↓
@@ -297,7 +297,7 @@ Flow:
 ```
 Image Upload
       ↓
-Gemini Vision
+Vision AI (Primary: Gemini, Fallback: NVIDIA NIM Phi-4)
       ↓
 Structured Analysis
       ↓

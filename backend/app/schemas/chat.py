@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from typing import List, Dict, Any, Optional
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 class ChatMessageBase(BaseModel):
     role: str
@@ -11,10 +11,10 @@ class ChatMessageBase(BaseModel):
 
 class ChatMessageRead(ChatMessageBase):
     id: uuid.UUID
-    session_id: uuid.UUID
+    session_id: uuid.UUID = Field(validation_alias="conversation_id")
     created_at: datetime
     
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 class ChatSessionRead(BaseModel):
     id: uuid.UUID

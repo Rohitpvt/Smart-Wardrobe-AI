@@ -27,7 +27,7 @@ export default function WardrobeClient() {
   const { data: dashboardData, isLoading: dashboardLoading } = dashboardQuery;
 
   const getMostCommonCategory = () => {
-    if (dashboardData?.category_distribution) {
+    if (dashboardData?.category_distribution && dashboardData.category_distribution.length > 0) {
       const sorted = [...dashboardData.category_distribution].sort((a: {count: number}, b: {count: number}) => b.count - a.count);
       return sorted[0].name;
     }

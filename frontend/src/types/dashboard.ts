@@ -23,23 +23,30 @@ export interface RecentWardrobeItem {
 
 export interface HealthMetrics {
   ai_coverage_percentage: number;
+  metadata_completeness_percentage: number;
+  category_balance: Record<string, number>;
+  imbalance_flag: boolean;
 }
 
 export interface DashboardSummary {
   total_items: number;
   categories: number;
+  unique_colors: number;
   unique_brands: number;
+  ai_generated_items: number;
+  manual_items: number;
+  average_ai_confidence: number;
   health_metrics: HealthMetrics;
   category_distribution: CategoryDistribution[];
   season_distribution: SeasonDistribution[];
   color_distribution: ColorDistribution[];
+  brand_distribution: DistributionItem[];
   recent_items: RecentWardrobeItem[];
-  favorites_count: number;
 }
 
 export interface DashboardTrendData {
   date: string;
-  confidence: number;
+  average_confidence: number;
 }
 
 export type DashboardTrend = DashboardTrendData[];
@@ -92,11 +99,12 @@ export interface WearAnalyticsResponse {
 }
 
 export interface PurchaseRecommendation {
+  id?: string;
   priority: string;
-  category: string;
+  item_type: string;
   reason: string;
   expected_outfit_gain: number;
-  confidence: number;
+  confidence_score: number;
 }
 
 export interface PurchaseRecommendationsResponse {

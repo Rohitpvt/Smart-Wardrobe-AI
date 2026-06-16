@@ -49,9 +49,9 @@ export function StylistChatPanel({ messages, onSendMessage, isLoading }: Stylist
             <div className="w-16 h-16 rounded-2xl bg-brand-purple/10 border border-brand-purple/20 flex items-center justify-center mb-6">
               <Bot className="w-8 h-8 text-brand-purple" />
             </div>
-            <h3 className="text-xl font-medium text-white mb-2">Welcome to your Personal Stylist Workspace</h3>
+            <h3 className="text-xl font-medium text-white mb-2">Welcome to Smart Wardrobe AI.</h3>
             <p className="text-white/60 max-w-sm mb-8">
-              Ask me for outfit recommendations, advice on your rotation, or what you should buy next.
+              I'm your personal AI stylist, wardrobe analyst, and outfit strategist.
             </p>
             <div className="flex flex-wrap justify-center gap-3 max-w-2xl">
               {[

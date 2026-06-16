@@ -18,11 +18,15 @@ from app.schemas.wardrobe import PaginationMeta
 from app.services.recommendations.engine import outfit_engine, RecommendationError
 from app.services.recommendations.outfit_scoring import outfit_scoring_engine
 from app.services.weather.provider import weather_service
-from app.services.ai.gemini_provider import gemini_provider
+from app.services.ai import ai_provider
 from app.services.feedback_service import feedback_service
 from app.services.preference_learning_service import preference_learning_service
 from app.services.recommendation_reranker import recommendation_reranker
+from app.services.recommendations.completion_engine import outfit_completion_engine
+from app.models.user_preference import UserPreference
+from app.models.clothing_item import ClothingItem
 from app.schemas.recommendation import FeedbackRequest, FeedbackRead, FeedbackHistoryResponse
+from app.schemas.completion import CompletionBuildRequest, OutfitCompletionResponse
 
 router = APIRouter(prefix="/recommendations", tags=["recommendations"])
 
@@ -66,7 +70,7 @@ async def generate_recommendation(
     )
     
     # 4. AI Explanation Generation
-    ai_explanation = await gemini_provider.generate_outfit_explanation(
+    ai_explanation = await ai_provider.generate_outfit_explanation(
         top_name=top.name,
         bottom_name=bottom.name,
         footwear_name=shoes.name,
@@ -121,6 +125,81 @@ async def generate_recommendation(
             "scores": reranked["scores"],
             "created_at": db_rec.created_at,
             "updated_at": db_rec.updated_at
+        }
+    )
+
+@router.post("/build-around", response_model=OutfitCompletionResponse, status_code=200)
+@limiter.limit("5/minute")
+async def build_around_anchor(
+    request: Request,
+    body: CompletionBuildRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Build a complete outfit around an existing anchor item.
+    """
+    # 1. Fetch anchor item
+    anchor_query = await db.execute(
+        select(ClothingItem).where(
+            ClothingItem.id == body.anchor_item_id,
+            ClothingItem.user_id == current_user.id
+        )
+    )
+    anchor_item = anchor_query.scalar_one_or_none()
+    if not anchor_item:
+        raise HTTPException(status_code=404, detail="Anchor item not found in wardrobe.")
+
+    # 2. Fetch User Styling Preference
+    pref_query = await db.execute(select(UserPreference).where(UserPreference.user_id == current_user.id))
+    pref = pref_query.scalar_one_or_none()
+    styling_preference = pref.styling_preference if pref else "neutral"
+
+    # 3. Fetch Weather
+    weather_ctx = await weather_service.get_current_weather(
+        current_user.city, current_user.country_code
+    )
+
+    # 4. Engine Generation
+    try:
+        top, bottom, shoes, outerwear, scores = await outfit_completion_engine.build_around_anchor(
+            session=db,
+            user_id=current_user.id,
+            anchor_item=anchor_item,
+            occasion=body.occasion,
+            weather=weather_ctx
+        )
+    except RecommendationError as e:
+        raise HTTPException(
+            status_code=422,
+            detail={"error_code": e.error_code, "message": str(e)}
+        )
+        
+    # 5. Gemini Accessories & Reasoning
+    gemini_resp = await ai_provider.generate_outfit_completion_accessories(
+        top_name=top.name,
+        bottom_name=bottom.name,
+        footwear_name=shoes.name,
+        outerwear_name=outerwear.name if outerwear else None,
+        anchor_type=anchor_item.category,
+        styling_preference=styling_preference
+    )
+    
+    # 6. Overall backend confidence is the overall_score
+    confidence = scores.get("overall_score", 85)
+
+    return OutfitCompletionResponse(
+        success=True,
+        data={
+            "anchor_item": anchor_item,
+            "top_item": top,
+            "bottom_item": bottom,
+            "footwear_item": shoes,
+            "outerwear_item": outerwear,
+            "accessories": gemini_resp.get("accessories", {}),
+            "reasoning": gemini_resp.get("reasoning", "A balanced aesthetic for your anchor item."),
+            "confidence_score": confidence,
+            "scores": scores
         }
     )
 

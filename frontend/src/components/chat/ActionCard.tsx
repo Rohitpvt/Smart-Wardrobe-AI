@@ -3,6 +3,7 @@ import { fadeUp } from "@/lib/animations";
 import { ToolInvocation } from "@/types/chat";
 import { Sparkles, ArrowRight, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
+import { OutfitCompletionCard } from "../recommendations/OutfitCompletionCard";
 
 interface ActionCardProps {
   action: ToolInvocation;
@@ -51,11 +52,25 @@ export function ActionCard({ action }: ActionCardProps) {
       href = "/dashboard";
       buttonText = "View Taste Profile";
       break;
+    case "build_outfit_around_item":
+      title = "Outfit Builder";
+      description = `Outfit successfully built around your requested item.`;
+      href = `/recommendations?view=anchor&keyword=${encodeURIComponent(action.params?.item_keyword || "")}`;
+      buttonText = "View Outfit";
+      break;
     default:
       title = "Unknown Action";
       description = "This action is not recognized.";
       buttonText = "View Dashboard";
       break;
+  }
+
+  if (action.type === "build_outfit_around_item" && action.params?.outfit_data) {
+    return (
+      <div className="mt-4 w-full">
+        <OutfitCompletionCard data={action.params.outfit_data} />
+      </div>
+    );
   }
 
   return (

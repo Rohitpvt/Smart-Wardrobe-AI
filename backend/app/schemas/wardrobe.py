@@ -21,7 +21,7 @@ class ClothingItemCreate(BaseModel):
     ai_confidence: int | None = Field(None, ge=0, le=100)
     ai_generated: bool = False
     purchase_price: float | None = None
-    purchase_date: str | None = None
+    purchase_date: date | None = None
 
 
 class ClothingItemRead(BaseModel):
@@ -62,7 +62,7 @@ class ClothingItemUpdate(BaseModel):
     brand: str | None = Field(None, max_length=100)
     notes: str | None = None
     purchase_price: float | None = None
-    purchase_date: str | None = None
+    purchase_date: date | None = None
 
 
 class PaginationMeta(BaseModel):

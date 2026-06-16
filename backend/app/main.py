@@ -6,7 +6,17 @@ FastAPI application with CORS, health check, and structured logging.
 
 import logging
 import os
+import socket
 from logging.handlers import RotatingFileHandler
+
+# --- Environment Fix: Force IPv4 ---
+# The local testing environment has a broken IPv6 route (blackholing) that causes asyncpg and pip to time out.
+orig_getaddrinfo = socket.getaddrinfo
+def getaddrinfo_ipv4_only(host, port, family=0, type=0, proto=0, flags=0):
+    if family == 0 or family == socket.AF_UNSPEC:
+        family = socket.AF_INET
+    return orig_getaddrinfo(host, port, family, type, proto, flags)
+socket.getaddrinfo = getaddrinfo_ipv4_only
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
