@@ -43,34 +43,31 @@ class SeasonalIntelligenceService:
         current_season = self.get_current_season(region)
         opportunities = []
         
-        # Calculate coverage for the current season based on categories or tags
-        # In a real system, this would map categories (e.g. "Sweaters", "Shorts") to seasons.
-        # Here we perform a mock evaluation.
+        # In a deterministic gap analysis, we do not hallucinate required seasonal items.
+        # This will be replaced with real ML logic or deterministic mapping when user 
+        # specifically requests seasonal goals. For now, it returns empty list if no
+        # deterministic gaps exist.
         
-        season_category_map = {
-            "Winter": ["Sweater", "Jacket", "Coat"],
-            "Summer": ["Shorts", "T-shirt", "Tank Top"],
-            "Monsoon": ["Jacket", "Raincoat", "Boots"],
-            "Spring": ["T-shirt", "Cardigan"],
-            "Autumn": ["Sweater", "Jacket"]
-        }
-        
-        expected_categories = season_category_map.get(current_season, [])
-        found_categories = {item.get("category") for item in wardrobe_items}
-        
-        missing = set(expected_categories) - found_categories
-        
-        if missing:
-            opportunities.append({
-                "type": "gap",
-                "season": current_season,
-                "missing_categories": list(missing),
-                "message": f"{current_season} is here, but you're missing essential categories like {', '.join(missing)}."
-            })
-            
-        # Check for rotation risks (e.g., Summer items heavily worn in Winter)
-        # Assuming wear analytics provides last_worn or frequency
-        
+        # Example deterministic check: If winter is active and 0 outerwear exists
+        if current_season in ["Winter", "Autumn"]:
+            outerwear = [i for i in wardrobe_items if i.get("category", "").lower() in ["outerwear", "coat", "jacket"]]
+            if not outerwear and len(wardrobe_items) >= 3:
+                opportunities.append({
+                    "type": "gap",
+                    "season": current_season,
+                    "missing_categories": ["Outerwear"],
+                    "message": f"{current_season} is active. Ensure you have adequate outerwear."
+                })
+        elif current_season == "Summer":
+            shorts = [i for i in wardrobe_items if i.get("category", "").lower() == "shorts"]
+            if not shorts and len(wardrobe_items) >= 3:
+                opportunities.append({
+                    "type": "gap",
+                    "season": current_season,
+                    "missing_categories": ["Shorts"],
+                    "message": f"Summer is active. Consider adding shorts to your rotation."
+                })
+                
         return opportunities
 
 seasonal_intelligence_service = SeasonalIntelligenceService()

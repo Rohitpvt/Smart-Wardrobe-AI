@@ -54,8 +54,8 @@ export function UsageIntelligenceCard() {
           </div>
           <div className="flex flex-wrap gap-2">
             {usage.top_worn.length > 0 ? usage.top_worn.map(item => (
-              <div key={item.id} className="relative w-12 h-12 rounded-lg overflow-hidden border border-white/10" title={`${item.name} (${item.worn_count} wears)`}>
-                <Image src={item.image_url} alt={item.name} fill className="object-cover" />
+              <div key={item.id} className="relative w-12 h-12 rounded-lg overflow-hidden border border-white/10 bg-surface-2" title={`${item.name} (${item.worn_count} wears)`}>
+                {item.image_url && <Image src={item.image_url} alt={item.name} fill className="object-cover" unoptimized />}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end justify-center pb-1">
                   <span className="text-[10px] font-bold text-white">{item.worn_count}</span>
                 </div>
@@ -71,8 +71,8 @@ export function UsageIntelligenceCard() {
           </div>
           <div className="flex flex-wrap gap-2">
             {usage.least_worn.length > 0 ? usage.least_worn.map(item => (
-              <div key={item.id} className="relative w-12 h-12 rounded-lg overflow-hidden border border-white/10 opacity-60 hover:opacity-100 transition-opacity" title={item.name}>
-                <Image src={item.image_url} alt={item.name} fill className="object-cover" />
+              <div key={item.id} className="relative w-12 h-12 rounded-lg overflow-hidden border border-white/10 opacity-60 hover:opacity-100 transition-opacity bg-surface-2" title={item.name}>
+                {item.image_url && <Image src={item.image_url} alt={item.name} fill className="object-cover" unoptimized />}
               </div>
             )) : <span className="text-sm text-slate-500">No neglected items!</span>}
           </div>

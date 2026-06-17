@@ -92,13 +92,13 @@ export default function DailyStylistClient() {
             </h2>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 relative z-10">
-              {[recommended_outfit.top, recommended_outfit.bottom, recommended_outfit.shoes].map((item, idx) => (
+              {[recommended_outfit?.top, recommended_outfit?.bottom, recommended_outfit?.shoes].filter(Boolean).map((item, idx) => (
                 <div key={idx} className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden group/item hover:bg-white/10 transition-colors">
                   <div className="aspect-square relative bg-white/5">
-                    {item.image_url ? (
+                    {item?.image_url ? (
                       <Image 
                         src={item.image_url} 
-                        alt={item.name} 
+                        alt={item?.name || "Item"} 
                         fill 
                         className="object-cover mix-blend-screen opacity-90 group-hover/item:scale-105 transition-transform duration-500"
                         unoptimized
@@ -110,11 +110,11 @@ export default function DailyStylistClient() {
                     )}
                   </div>
                   <div className="p-3">
-                    <p className="text-sm font-medium text-white truncate">{item.name}</p>
+                    <p className="text-sm font-medium text-white truncate">{item?.name || "Clothing Item"}</p>
                   </div>
                 </div>
               ))}
-              {recommended_outfit.outerwear && (
+              {recommended_outfit?.outerwear && (
                 <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden group/item hover:bg-white/10 transition-colors">
                   <div className="aspect-square relative bg-white/5">
                     {recommended_outfit.outerwear.image_url && (

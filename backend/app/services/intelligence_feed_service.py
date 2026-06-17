@@ -84,7 +84,9 @@ class IntelligenceFeedService:
             ))
             
         # 3. Behavioral Insights (Guardrail: Conf > 70)
-        usage_data = {"weekend_generation_ratio": 0.85, "total_generations": 60} # Mock
+        # We currently do not have live generation tracking tables enabled.
+        # Removing mock logic:
+        usage_data = {} # Empty data, deterministic. No hallucination.
         behavioral_insights = behavioral_pattern_service.generate_behavioral_insights(usage_data)
         for b_insight in behavioral_insights:
             new_items.append(IntelligenceFeedItem(
@@ -113,20 +115,8 @@ class IntelligenceFeedService:
             ))
 
         # 5. Weather Triggers
-        weather_mock = {"temperature": 35, "condition": "sunny", "uv_index": 9}
-        w_trigger = weather_trigger_service.evaluate_weather(weather_mock)
-        if w_trigger:
-            w_conf = weather_trigger_service.map_severity_to_confidence_boost(w_trigger["severity"]) * 100
-            new_items.append(IntelligenceFeedItem(
-                user_id=user_id,
-                item_type="alert",
-                content=w_trigger["message"],
-                impact_score=88.0,
-                confidence_score=w_conf,
-                feed_category="weather",
-                source_services=["weather_trigger_service"],
-                expires_at=now + timedelta(days=1)
-            ))
+        # Removed weather_mock. We do not generate synthetic weather data.
+        # If no live weather integration exists, we return no weather triggers.
 
         if new_items:
             session.add_all(new_items)

@@ -63,18 +63,18 @@ export function StyleDNACard({ data }: StyleDNACardProps) {
         </div>
 
         {/* Color Palette */}
-        {data.dominant_colors.length > 0 && (
+        {data?.dominant_colors?.length > 0 && (
           <div>
             <p className="text-sm font-medium text-zinc-400 mb-2">Dominant Palette</p>
             <div className="flex gap-2">
               {data.dominant_colors.map((color) => (
-                <div key={color.name} className="flex flex-col items-center gap-1">
+                <div key={color?.name || Math.random().toString()} className="flex flex-col items-center gap-1">
                   <div
                     className="w-8 h-8 rounded-full border-2 border-white/10 shadow-inner"
-                    style={{ backgroundColor: color.name.toLowerCase() }}
-                    title={color.name}
+                    style={{ backgroundColor: color?.name?.toLowerCase() || 'transparent' }}
+                    title={color?.name || 'Unknown'}
                   />
-                  <span className="text-[10px] text-zinc-500 capitalize">{color.name}</span>
+                  <span className="text-[10px] text-zinc-500 capitalize">{color?.name || 'Unknown'}</span>
                 </div>
               ))}
             </div>

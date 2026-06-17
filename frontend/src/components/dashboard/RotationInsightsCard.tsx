@@ -46,7 +46,7 @@ export function RotationInsightsCard({ data }: RotationInsightsCardProps) {
 
       <div className="space-y-4">
         {/* Overused Items */}
-        {data.overused.length > 0 && (
+        {data?.overused?.length > 0 && (
           <div>
             <div className="flex items-center space-x-2 text-zinc-400 mb-2">
               <AlertCircle className="w-4 h-4 text-red-400" />
@@ -55,10 +55,10 @@ export function RotationInsightsCard({ data }: RotationInsightsCardProps) {
             <div className="space-y-1.5">
               {data.overused.slice(0, 3).map((item) => (
                 <div
-                  key={item.id}
+                  key={item?.id || Math.random().toString()}
                   className="flex items-center justify-between p-2 rounded-lg bg-red-500/5 border border-red-500/10"
                 >
-                  <span className="text-sm text-zinc-300 truncate max-w-[160px]">{item.name}</span>
+                  <span className="text-sm text-zinc-300 truncate max-w-[160px]">{item?.name || 'Unknown Item'}</span>
                   <span className="text-xs font-bold text-red-400">Overused</span>
                 </div>
               ))}
@@ -67,7 +67,7 @@ export function RotationInsightsCard({ data }: RotationInsightsCardProps) {
         )}
 
         {/* Suggested Rotation */}
-        {data.recommended_rotation.length > 0 && (
+        {data?.recommended_rotation?.length > 0 && (
           <div>
             <div className="flex items-center space-x-2 text-zinc-400 mb-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
@@ -76,11 +76,11 @@ export function RotationInsightsCard({ data }: RotationInsightsCardProps) {
             <div className="space-y-1.5">
               {data.recommended_rotation.slice(0, 3).map((item) => (
                 <div
-                  key={item.id}
+                  key={item?.id || Math.random().toString()}
                   className="flex items-center justify-between p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10"
                 >
-                  <span className="text-sm text-zinc-300 truncate max-w-[160px]">{item.name}</span>
-                  <span className="text-xs text-emerald-400">{item.category}</span>
+                  <span className="text-sm text-zinc-300 truncate max-w-[160px]">{item?.name || 'Unknown Item'}</span>
+                  <span className="text-xs text-emerald-400">{item?.category || 'General'}</span>
                 </div>
               ))}
             </div>

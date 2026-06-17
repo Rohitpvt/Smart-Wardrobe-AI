@@ -65,3 +65,59 @@ class FashionEvolutionResponse(BaseModel):
     timeline: List[EvolutionTimelineEvent] = Field(default_factory=list, description="Chronological style events")
     major_changes: List[str] = Field(default_factory=list, description="Summary of significant shifts in style")
     growth_score: int = Field(..., ge=0, le=100, description="0-100 score of wardrobe improvement over time")
+
+# 7. Intelligence Center (Phase 8)
+from datetime import datetime
+from pydantic import ConfigDict
+import uuid
+
+class IntelligenceFeedItemRead(BaseModel):
+    id: uuid.UUID
+    item_type: str
+    feed_category: str
+    content: str
+    impact_score: float
+    confidence_score: float
+    action_payload: Optional[Dict[str, Any]] = None
+    source_services: Optional[List[str]] = None
+    is_read: int
+    created_at: datetime
+    expires_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+class WardrobeOpportunityRead(BaseModel):
+    id: uuid.UUID
+    title: str
+    description: Optional[str] = None
+    impact_score: float
+    status: str
+    created_at: datetime
+    expires_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+class WardrobeGoalRead(BaseModel):
+    id: uuid.UUID
+    title: str
+    goal_type: str
+    metric_target: float
+    current_progress: float
+    status: str
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class WeeklyReportRead(BaseModel):
+    id: uuid.UUID
+    report_date: datetime
+    snapshot_json: Dict[str, Any]
+    coaching_advice: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
+class IntelligenceCenterResponse(BaseModel):
+    feed: List[IntelligenceFeedItemRead] = Field(default_factory=list)
+    opportunities: List[WardrobeOpportunityRead] = Field(default_factory=list)
+    goals: List[WardrobeGoalRead] = Field(default_factory=list)
+    weekly_report: Optional[WeeklyReportRead] = None
+
+class OpportunityStatusUpdate(BaseModel):
+    status: str
+

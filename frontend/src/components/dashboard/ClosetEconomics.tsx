@@ -44,39 +44,47 @@ export function ClosetEconomics({ stats }: ClosetEconomicsProps) {
       </div>
 
       <div className="space-y-4">
-        {stats.most_valuable_item && (
-          <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
-            <div className="flex items-center space-x-3">
-              <div className="h-8 w-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                <TrendingDown className="w-4 h-4 text-emerald-400" />
-              </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-500/20">
+            <div className="flex items-center space-x-2 text-emerald-400 mb-3">
+              <TrendingUp className="w-4 h-4" />
+              <span className="text-sm font-medium">Best Value</span>
+            </div>
+            {stats?.most_valuable_item ? (
               <div>
-                <p className="text-sm font-medium text-emerald-300">Most Valuable</p>
-                <p className="text-xs text-zinc-400 truncate max-w-[150px]">{stats.most_valuable_item.name}</p>
+                <p className="text-sm text-white font-medium truncate max-w-[150px]">{stats.most_valuable_item.name}</p>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs text-zinc-400">CPW</span>
+                  <span className="text-sm font-bold text-emerald-400">
+                    ${((stats.most_valuable_item as any).cpw ?? (((stats.most_valuable_item as any).purchase_price || 0) / Math.max((stats.most_valuable_item as any).worn_count || 1, 1))).toFixed(2)}
+                  </span>
+                </div>
               </div>
-            </div>
-            <div className="text-right">
-              <span className="text-sm font-bold text-emerald-400">Highest ROI</span>
-            </div>
+            ) : (
+              <p className="text-xs text-zinc-500">Not enough data</p>
+            )}
           </div>
-        )}
 
-        {stats.least_utilized_item && (
-          <div className="flex items-center justify-between p-3 rounded-lg bg-red-500/5 border border-red-500/10">
-            <div className="flex items-center space-x-3">
-              <div className="h-8 w-8 rounded-full bg-red-500/20 flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-red-400" />
-              </div>
+          <div className="p-4 rounded-xl bg-gradient-to-br from-red-500/10 to-transparent border border-red-500/20">
+            <div className="flex items-center space-x-2 text-red-400 mb-3">
+              <TrendingDown className="w-4 h-4" />
+              <span className="text-sm font-medium">Needs Wear</span>
+            </div>
+            {stats?.least_utilized_item ? (
               <div>
-                <p className="text-sm font-medium text-red-300">Least Utilized</p>
-                <p className="text-xs text-zinc-400 truncate max-w-[150px]">{stats.least_utilized_item.name}</p>
+                <p className="text-sm text-white font-medium truncate max-w-[150px]">{stats.least_utilized_item.name}</p>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs text-zinc-400">CPW</span>
+                  <span className="text-sm font-bold text-red-400">
+                    ${((stats.least_utilized_item as any).cpw ?? (((stats.least_utilized_item as any).purchase_price || 0) / Math.max((stats.least_utilized_item as any).worn_count || 1, 1))).toFixed(2)}
+                  </span>
+                </div>
               </div>
-            </div>
-            <div className="text-right">
-              <span className="text-sm font-bold text-red-400">Needs Wear</span>
-            </div>
+            ) : (
+              <p className="text-xs text-zinc-500">Not enough data</p>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </GlassPanel>
   );

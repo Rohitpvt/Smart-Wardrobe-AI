@@ -185,12 +185,13 @@ async def get_dashboard_intelligence(session: AsyncSession, user_id: uuid.UUID) 
         "least_utilized_item": least_utilized_item
     }
     
-    # 3. Outfit Success Rate (Mocked temporarily until user feedback logging is added, or derived from average scores)
+    # 3. Outfit Success Rate
+    # Derived from average outfit scores. Returns 0 if no data exists instead of hallucinating.
     stmt_outfits = select(func.avg(OutfitRecommendation.overall_score)).where(OutfitRecommendation.user_id == user_id)
     result_outfits = await session.execute(stmt_outfits)
     avg_outfit_score = result_outfits.scalar() or 0.0
     
-    outfit_success_rate = round(avg_outfit_score, 1) if avg_outfit_score > 0 else 85.5 # Default baseline if no outfits generated
+    outfit_success_rate = round(avg_outfit_score, 1) if avg_outfit_score > 0 else 0.0
     
     return {
         "health": health_report,

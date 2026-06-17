@@ -23,9 +23,12 @@ export function WardrobeIntelligenceCenter() {
     return null;
   }
 
-  // If there's absolutely no data generated yet, we could hide it or show an empty state.
-  // But usually, at least WeeklyReport will generate.
-  const hasContent = data.feed.length > 0 || data.opportunities.length > 0 || data.goals.length > 0 || !!data.weekly_report;
+  const feed = data.feed ?? [];
+  const opportunities = data.opportunities ?? [];
+  const goals = data.goals ?? [];
+  const weekly_report = data.weekly_report ?? null;
+
+  const hasContent = feed.length > 0 || opportunities.length > 0 || goals.length > 0 || !!weekly_report;
 
   if (!hasContent) return null;
 
@@ -43,28 +46,28 @@ export function WardrobeIntelligenceCenter() {
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-auto lg:auto-rows-[280px]"
       >
         {/* Row 1: Weekly Report (span 2), Feed (span 1), Opportunities (span 1) */}
-        {data.weekly_report && (
+        {weekly_report && (
           <div className="md:col-span-2 row-span-1">
-            <WeeklyReportCard report={data.weekly_report} />
+            <WeeklyReportCard report={weekly_report} />
           </div>
         )}
         
-        {data.feed.length > 0 && (
+        {feed.length > 0 && (
           <div className="col-span-1 row-span-1">
-            <IntelligenceFeedCard items={data.feed} />
+            <IntelligenceFeedCard items={feed} />
           </div>
         )}
 
-        {data.opportunities.length > 0 && (
+        {opportunities.length > 0 && (
           <div className="col-span-1 row-span-1">
-            <OpportunityCard opportunities={data.opportunities} />
+            <OpportunityCard opportunities={opportunities} />
           </div>
         )}
 
         {/* If goals exist, display them in the next available slot */}
-        {data.goals.length > 0 && (
+        {goals.length > 0 && (
           <div className="col-span-1 row-span-1">
-            <GoalsProgressCard goals={data.goals} />
+            <GoalsProgressCard goals={goals} />
           </div>
         )}
       </m.div>

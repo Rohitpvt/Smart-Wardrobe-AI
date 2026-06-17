@@ -3,6 +3,7 @@ from typing import List, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.models.clothing_item import ClothingItem
+from app.services.shopping_intelligence.purchase_opportunity_engine import purchase_opportunity_engine
 
 class PurchaseRecommendationService:
     async def recommend(self, session: AsyncSession, user_id: uuid.UUID) -> List[Dict[str, Any]]:
@@ -13,37 +14,18 @@ class PurchaseRecommendationService:
         
         categories = {item.category for item in items}
         
-        # Simple gap analysis for demonstration of service recovery
-        recommendations = []
+        # Consume deterministic Gap Analysis Engine
+        opportunities = await purchase_opportunity_engine.get_opportunities(session, user_id)
         
-        if "Outerwear" not in categories:
+        recommendations = []
+        for idx, opp in enumerate(opportunities):
             recommendations.append({
-                "id": "rec-1",
-                "item_type": "Versatile Outerwear",
-                "reason": "You have no outerwear. A neutral jacket would instantly unlock 4+ new outfits with your existing tops.",
-                "expected_outfit_gain": 4,
-                "confidence_score": 92.5,
-                "priority": "High"
-            })
-            
-        if "Footwear" not in categories:
-            recommendations.append({
-                "id": "rec-2",
-                "item_type": "Everyday Sneakers",
-                "reason": "Missing casual footwear limits your bottom/top pairings.",
-                "expected_outfit_gain": 5,
-                "confidence_score": 88.0,
-                "priority": "High"
-            })
-
-        if not recommendations and len(items) > 0:
-            recommendations.append({
-                "id": "rec-3",
-                "item_type": "Statement Accessory",
-                "reason": "Your wardrobe essentials are well-covered. Consider a statement accessory to elevate your standard rotations.",
-                "expected_outfit_gain": 2,
-                "confidence_score": 75.0,
-                "priority": "Medium"
+                "id": f"rec-{idx+1}",
+                "item_type": opp.get("item_name", "Wardrobe Gap"),
+                "reason": opp.get("why_this_item", "Identified as a critical wardrobe gap."),
+                "expected_outfit_gain": opp.get("outfits_unlocked", 0),
+                "confidence_score": opp.get("confidence_score", 0),
+                "priority": "High" if opp.get("priority_score", 0) >= 90 else "Medium"
             })
             
         return recommendations

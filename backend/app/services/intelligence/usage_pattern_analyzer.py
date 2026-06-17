@@ -30,8 +30,8 @@ class UsagePatternAnalyzer:
         else:
             least_worn = least_worn[:5]
 
-        # Calculate neglected value (mock logic: $50 avg per item if purchase_price is missing)
-        neglected_value = sum((i.purchase_price or 50.0) for i in items if i.worn_count == 0)
+        # Calculate neglected value using actual purchase price (no guessing)
+        neglected_value = sum((i.purchase_price or 0.0) for i in items if i.worn_count == 0)
 
         # Rotation quality: percentage of items worn at least once
         worn_items = len([i for i in items if i.worn_count > 0])

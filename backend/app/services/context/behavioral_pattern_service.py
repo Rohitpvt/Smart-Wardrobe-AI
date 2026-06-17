@@ -13,8 +13,8 @@ class BehavioralPatternService:
         """
         insights = []
         
-        # In a real implementation, usage_data would contain aggregated metrics
-        # For demonstration, we'll mock a pattern if specific flags are present in usage_data
+        # In a real implementation, usage_data would contain aggregated metrics.
+        # Currently, usage tracking is inactive, so this gracefully returns no insights.
         
         # Example 1: High weekend usage
         if usage_data.get("weekend_generation_ratio", 0) > 0.8:

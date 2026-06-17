@@ -67,10 +67,18 @@ class DailyStylistService:
         return self._format_brief_response(new_brief)
 
     def _format_brief_response(self, brief: DailyStyleBrief) -> dict:
+        outfit_data = brief.recommended_outfit
+        
+        # Guard: If the backend accidentally saved the full ExplainableRecommendationItem structure
+        # (which has a nested "recommendation" dict), we flatten it here so the frontend API 
+        # contract remains stable.
+        if isinstance(outfit_data, dict) and "recommendation" in outfit_data:
+            outfit_data = outfit_data["recommendation"]
+            
         return {
             "date": brief.brief_date.isoformat(),
             "weather": brief.weather_context,
-            "recommended_outfit": brief.recommended_outfit,
+            "recommended_outfit": outfit_data,
             "confidence": brief.confidence_score,
             "style_tip": brief.style_tip,
             "daily_insight": brief.insight,

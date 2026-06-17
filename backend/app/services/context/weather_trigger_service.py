@@ -12,11 +12,13 @@ class WeatherTriggerService:
         Severities: 'low', 'medium', 'high', 'critical'
         """
         # In a real implementation, this would parse real weather API data.
-        # We will use mock heuristics for demonstration.
-        
-        temp_c = weather_data.get("temperature", 20)
-        condition = weather_data.get("condition", "clear").lower()
-        uv_index = weather_data.get("uv_index", 5)
+        # Ensure we do not hallucinate weather defaults.
+        if "temperature" not in weather_data or "condition" not in weather_data:
+            return None
+            
+        temp_c = weather_data["temperature"]
+        condition = weather_data["condition"].lower()
+        uv_index = weather_data.get("uv_index", 0)
         
         if temp_c >= 40:
             return {

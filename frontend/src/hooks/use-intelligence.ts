@@ -9,7 +9,7 @@ export function useIntelligenceDashboard() {
   return useQuery({
     queryKey: ["intelligence-dashboard"],
     queryFn: async (): Promise<IntelligenceDashboardData> => {
-      const response = await api.get<IntelligenceDashboardData>("/dashboard/intelligence");
+      const response = await api.get<IntelligenceDashboardData>("/intelligence/center");
       return response.data;
     },
     staleTime: 5 * 60 * 1000, 

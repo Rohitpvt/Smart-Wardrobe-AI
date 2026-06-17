@@ -22,7 +22,9 @@ export function DailyStylistWidget() {
   if (!res || !res.success || !res.brief) return null;
 
   const brief = res.brief;
-  const top = brief.recommended_outfit.top;
+  const top = brief?.recommended_outfit?.top;
+
+  if (!top) return null;
 
   return (
     <m.div variants={fadeUp} className="relative overflow-hidden bg-gradient-to-br from-brand-blue/10 to-brand-purple/5 border border-white/10 rounded-2xl p-6 group shadow-lg">

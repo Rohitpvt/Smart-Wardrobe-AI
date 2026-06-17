@@ -35,14 +35,14 @@ class WardrobeHealthAnalyzer:
         if len(rep_insights) > 0:
             utilization_health = max(0, utilization_health - (len(rep_insights) * 5))
             
-        # Coverage (20%) - Stubbed for Gap Analyzer integration
-        coverage_health = 85 
+        # Coverage (20%) - Not implemented yet, returning 0
+        coverage_health = 0 
         
-        # Style Alignment (20%) - Stubbed for Style Memory integration
-        style_alignment = 80
+        # Style Alignment (20%) - Not implemented yet, returning 0
+        style_alignment = 0
         
-        # Recommendation Effectiveness (15%) - Stubbed for Outfit Effectiveness
-        recommendation_effectiveness = 75
+        # Recommendation Effectiveness (15%) - Not implemented yet, returning 0
+        recommendation_effectiveness = 0
         
         # Financial Efficiency (10%)
         cpw_metrics = await cost_per_wear_engine.get_cpw_metrics(session, user_id)
@@ -51,20 +51,16 @@ class WardrobeHealthAnalyzer:
             avg_cpw = sum(m["cpw"] for m in all_metrics) / len(all_metrics)
             financial_efficiency = max(0, min(100, 100 - (avg_cpw / 2))) # rough formula
         else:
-            financial_efficiency = 50
+            financial_efficiency = 0 # No data, return 0
 
-        # Future Readiness (10%) - Stubbed for Predictive
-        future_readiness = 80
+        # Future Readiness (10%) - Not implemented yet, returning 0
+        future_readiness = 0
         
-        # Calculate Final Score
-        overall_score = (
-            (utilization_health * 0.25) +
-            (coverage_health * 0.20) +
-            (style_alignment * 0.20) +
-            (recommendation_effectiveness * 0.15) +
-            (financial_efficiency * 0.10) +
-            (future_readiness * 0.10)
-        )
+        # Calculate Final Score (only weigh what has data)
+        active_score = (utilization_health * 0.25) + (financial_efficiency * 0.10)
+        active_weight = 0.25 + 0.10
+        
+        overall_score = active_score / active_weight if active_weight > 0 else 0
         
         scores = {
             "overall_score": round(overall_score),
