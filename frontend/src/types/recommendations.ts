@@ -61,3 +61,53 @@ export interface GenerateRecommendationResponse {
   success: boolean;
   data: OutfitRecommendation;
 }
+
+// Phase 9B additions
+export interface RecommendationSignals {
+  style_alignment: number;
+  weather_alignment: number;
+  rotation_benefit: number;
+  seasonal_alignment: number;
+}
+
+export interface RecommendationReasoning {
+  primary_reason: string;
+  supporting_reasons: string[];
+}
+
+export interface RecommendationExplanation {
+  outfit_id?: string;
+  confidence: number;
+  success_probability: number;
+  reasoning: RecommendationReasoning;
+  signals: RecommendationSignals;
+  improvement_suggestions: string[];
+}
+
+export interface RecommendationTrace {
+  style_dna_used: boolean;
+  usage_intelligence_used: boolean;
+  seasonal_readiness_used: boolean;
+  outfit_prediction_used: boolean;
+}
+
+export interface ExplainableRecommendationItem {
+  recommendation: {
+    top: ClothingItemMinimal;
+    bottom: ClothingItemMinimal;
+    shoes: ClothingItemMinimal;
+    outerwear?: ClothingItemMinimal;
+  };
+  explanation: RecommendationExplanation;
+  trace: RecommendationTrace;
+}
+
+export interface ExplainableRecommendationRequest {
+  occasion: string;
+  generation_mode: 'standard' | 'anchor';
+  anchor_item_id?: string;
+}
+
+export interface ExplainableRecommendationResponse {
+  recommendations: ExplainableRecommendationItem[];
+}

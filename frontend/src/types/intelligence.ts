@@ -63,3 +63,71 @@ export interface IntelligenceDashboardResponse {
   success: boolean;
   data: IntelligenceDashboardData;
 }
+
+// --- Phase 9A Additions ---
+export interface OutfitSuccessPrediction {
+  success_probability: number;
+  confidence: number;
+  reasons: string[];
+  improvement_suggestions: string[];
+}
+
+export interface StyleDNA {
+  dominant_style: string;
+  secondary_styles: string[];
+  color_affinities: string[];
+  fit_preferences: string[];
+  brand_patterns: string[];
+  style_confidence: number;
+}
+
+export interface WardrobeHealth {
+  overall_score: number;
+  grade: string;
+  utilization_health: number;
+  coverage_health: number;
+  style_alignment: number;
+  recommendation_effectiveness: number;
+  financial_efficiency: number;
+  future_readiness: number;
+  strongest_area: string;
+  weakest_area: string;
+  top_improvement: string;
+  projected_score_gain: number;
+  score_delta: number;
+  previous_score: number;
+}
+
+export interface UsageItem {
+  id: string;
+  name: string;
+  image_url: string;
+  worn_count: number;
+  last_worn_at: string | null;
+}
+
+export interface UsageIntelligence {
+  top_worn: UsageItem[];
+  least_worn: UsageItem[];
+  neglected_value: number;
+  rotation_quality: number;
+}
+
+export interface SeasonalReadiness {
+  season: string;
+  readiness_score: number;
+  missing_items: string[];
+  recommended_purchases: string[];
+}
+
+export interface EvolutionTimelineEvent {
+  date: string;
+  event: string;
+  description: string;
+}
+
+export interface FashionEvolution {
+  timeline: EvolutionTimelineEvent[];
+  major_changes: string[];
+  growth_score: number;
+}

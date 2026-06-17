@@ -61,6 +61,15 @@ class Settings(BaseSettings):
         description="OpenWeather API key",
     )
 
+    # --- Rate Limiting & Caching ---
+    RATE_LIMIT_DAILY_STYLIST: str = "10/day"
+    RATE_LIMIT_RECOMMENDATIONS: str = "100/day"
+    RATE_LIMIT_SHOPPING: str = "50/day"
+    REDIS_URL: str = Field(
+        default="",
+        description="Redis URL for caching",
+    )
+
     # --- Frontend ---
     FRONTEND_URLS: str = "http://localhost:3000,http://127.0.0.1:3000"
 

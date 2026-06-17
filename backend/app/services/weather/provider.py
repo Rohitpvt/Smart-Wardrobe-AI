@@ -3,6 +3,7 @@ from datetime import datetime
 import httpx
 from cachetools import TTLCache
 from pydantic import BaseModel, ConfigDict
+import json
 
 from app.core.config import settings
 
@@ -27,6 +28,13 @@ class OpenWeatherService:
     def __init__(self):
         self.api_key = settings.OPENWEATHER_API_KEY
         self.base_url = "https://api.openweathermap.org/data/2.5/weather"
+        self.redis_client = None
+        if settings.REDIS_URL:
+            try:
+                import redis.asyncio as redis
+                self.redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
+            except Exception as e:
+                logger.warning(f"Failed to initialize Redis for weather cache: {e}")
 
     async def get_current_weather(self, city: str | None, country_code: str | None) -> WeatherContext:
         """
@@ -38,8 +46,18 @@ class OpenWeatherService:
 
         # Build cache key
         country_str = country_code or ""
-        cache_key = f"{city.lower().strip()}:{country_str.lower().strip()}"
+        cache_key = f"weather:{city.lower().strip()}:{country_str.lower().strip()}"
         
+        # 1. Try Redis
+        if self.redis_client:
+            try:
+                cached_json = await self.redis_client.get(cache_key)
+                if cached_json:
+                    return WeatherContext.model_validate(json.loads(cached_json))
+            except Exception as e:
+                logger.warning(f"Redis get failed: {e}")
+        
+        # 2. Try TTLCache fallback
         if cache_key in weather_cache:
             return weather_cache[cache_key]
             
@@ -70,9 +88,6 @@ class OpenWeatherService:
                     weather_list = data.get("weather", [])
                     condition = weather_list[0].get("main") if weather_list else None
                     
-                    # For current weather endpoint, rain prob and uv are not provided.
-                    # We will synthesize a rain probability based on condition and cloud cover, 
-                    # and a generic UV index based on condition and temperature for demonstration.
                     rain_prob = 0
                     if condition in ["Rain", "Drizzle", "Thunderstorm"]:
                         rain_prob = 80
@@ -94,6 +109,13 @@ class OpenWeatherService:
                         weather_used=True
                     )
                     
+                    # 3. Store in caches
+                    try:
+                        if self.redis_client:
+                            await self.redis_client.setex(cache_key, 1800, json.dumps(weather_ctx.model_dump()))
+                    except Exception as e:
+                        logger.warning(f"Redis set failed: {e}")
+                        
                     weather_cache[cache_key] = weather_ctx
                     return weather_ctx
                 else:

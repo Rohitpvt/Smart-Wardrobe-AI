@@ -41,3 +41,4 @@ class ClothingItem(Base, UUIDMixin, TimestampMixin):
 
     # Relationship
     user: Mapped["User"] = relationship("User", back_populates="clothing_items")
+    wear_events: Mapped[list["WearEvent"]] = relationship("WearEvent", back_populates="clothing_item", cascade="all, delete-orphan")

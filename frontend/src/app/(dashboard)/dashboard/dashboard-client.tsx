@@ -6,8 +6,9 @@ import { getImageUrl } from "@/lib/image-url";
 import Link from "next/link";
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import { m } from "framer-motion";
-import { Shirt, UploadCloud, Wand2, BarChart3, Sparkles, Layers, TrendingUp } from "lucide-react";
+import { useState } from "react";
+import { m, AnimatePresence } from "framer-motion";
+import { Shirt, UploadCloud, Wand2, BarChart3, Sparkles, Layers, TrendingUp, ChevronDown, ChevronUp } from "lucide-react";
 
 const COLORS = ["#3b82f6", "#8b5cf6", "#adc6ff", "#d0bcff", "#10b981"];
 
@@ -25,6 +26,8 @@ import { PreferenceInsightsCard } from "@/components/dashboard/PreferenceInsight
 import { StyleEvolutionCard } from "@/components/dashboard/StyleEvolutionCard";
 import { WardrobeIntelligenceCenter } from "@/components/dashboard/intelligence/WardrobeIntelligenceCenter";
 import { ContextIntelligenceSection } from "@/components/dashboard/context/ContextIntelligenceSection";
+import { DailyStylistWidget } from "@/components/dashboard/DailyStylistWidget";
+import { RecentOutfitHistoryWidget } from "@/components/dashboard/RecentOutfitHistoryWidget";
 
 const DashboardCharts = dynamic(() => import("@/components/dashboard/DashboardCharts"), {
   ssr: false,
@@ -47,6 +50,7 @@ export default function DashboardClient() {
   const { data: purchaseRecsData } = purchaseRecs;
   const { data: predictiveData } = predictive;
   const { data: tasteProfileData } = useDashboard().tasteProfile;
+  const [activeTab, setActiveTab] = useState<"predictive" | "personal" | "analytics">("predictive");
 
   /* ─── LOADING STATE ─── */
   if (isLoading) {
@@ -142,6 +146,12 @@ export default function DashboardClient() {
         </div>
       </m.section>
 
+      {/* ═══ SECTION 1.2: DAILY STYLIST WIDGET ═══ */}
+      <DailyStylistWidget />
+
+      {/* ═══ SECTION 1.3: RECENT OUTFIT HISTORY ═══ */}
+      <RecentOutfitHistoryWidget />
+
       {/* ═══ SECTION 1.5: WARDROBE INTELLIGENCE CENTER (Phase 8A) ═══ */}
       <WardrobeIntelligenceCenter />
 
@@ -159,7 +169,7 @@ export default function DashboardClient() {
       {intelData && !isIntelLoading && (
         <m.section variants={stagger} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <m.div variants={fadeUp}>
-            <WardrobeHealth report={intelData.health} />
+            <WardrobeHealth />
           </m.div>
           <m.div variants={fadeUp}>
             <ClosetEconomics stats={intelData.economics} />
@@ -167,68 +177,70 @@ export default function DashboardClient() {
         </m.section>
       )}
 
-      {/* ═══ SECTION 2.6: PERSONAL STYLIST (Phase 7A) ═══ */}
-      {tasteProfileData && (
-        <>
-          <m.div variants={fadeUp}>
-            <div className="flex items-center justify-between mt-4 mb-6">
-              <h2 className="text-2xl font-semibold text-white tracking-tight">Personal Stylist</h2>
+      {/* ═══ SECTION 2.6: TIERED INSIGHTS TABS ═══ */}
+      <m.div variants={fadeUp} className="mt-8 border-b border-white/10 flex gap-6 pb-2">
+        {(["predictive", "personal", "analytics"] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`text-lg font-medium transition-colors ${activeTab === tab ? "text-brand-blue" : "text-slate-400 hover:text-white"}`}
+          >
+            {tab === "predictive" ? "Predictive Insights" : tab === "personal" ? "Personal Stylist" : "Historical Analytics"}
+          </button>
+        ))}
+      </m.div>
+
+      <AnimatePresence mode="wait">
+        <m.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.2 }}
+        >
+          {/* TAB: PREDICTIVE INSIGHTS */}
+          {activeTab === "predictive" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 pt-6">
+              {predictiveData?.style_dna && (
+                <StyleDNACard data={predictiveData.style_dna} />
+              )}
+              {predictiveData?.rotation && (
+                <RotationInsightsCard data={predictiveData.rotation} />
+              )}
+              {purchaseRecsData && (
+                <PurchaseRecommendationsCard data={purchaseRecsData} />
+              )}
             </div>
-          </m.div>
-          <m.section variants={stagger} className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            <m.div variants={fadeUp} className="md:col-span-12 xl:col-span-5">
-              <TasteProfileCard data={tasteProfileData} />
-            </m.div>
-            <m.div variants={fadeUp} className="md:col-span-6 xl:col-span-4">
-              <PreferenceInsightsCard data={tasteProfileData} />
-            </m.div>
-            <m.div variants={fadeUp} className="md:col-span-6 xl:col-span-3">
-              <StyleEvolutionCard data={tasteProfileData} />
-            </m.div>
-          </m.section>
-        </>
-      )}
+          )}
 
-      {/* ═══ SECTION 2.7: PREDICTIVE INTELLIGENCE (Phase 6B) ═══ */}
-      <m.div variants={fadeUp}>
-        <div className="flex items-center justify-between mt-4 mb-6">
-          <h2 className="text-2xl font-semibold text-white tracking-tight">Predictive Intelligence</h2>
-        </div>
-      </m.div>
-      <m.section variants={stagger} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-        {analyticsData && (
-          <m.div variants={fadeUp}>
-            <WearAnalyticsCard data={analyticsData} />
-          </m.div>
-        )}
-        {predictiveData?.style_dna && (
-          <m.div variants={fadeUp}>
-            <StyleDNACard data={predictiveData.style_dna} />
-          </m.div>
-        )}
-        {predictiveData?.rotation && (
-          <m.div variants={fadeUp}>
-            <RotationInsightsCard data={predictiveData.rotation} />
-          </m.div>
-        )}
-        {purchaseRecsData && (
-          <m.div variants={fadeUp}>
-            <PurchaseRecommendationsCard data={purchaseRecsData} />
-          </m.div>
-        )}
-      </m.section>
+          {/* TAB: PERSONAL STYLIST */}
+          {activeTab === "personal" && tasteProfileData && (
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pt-6">
+              <div className="md:col-span-12 xl:col-span-5">
+                <TasteProfileCard data={tasteProfileData} />
+              </div>
+              <div className="md:col-span-6 xl:col-span-4">
+                <PreferenceInsightsCard data={tasteProfileData} />
+              </div>
+              <div className="md:col-span-6 xl:col-span-3">
+                <StyleEvolutionCard data={tasteProfileData} />
+              </div>
+            </div>
+          )}
 
-      {/* ═══ SECTION 3: ANALYTICS VISUALIZATION ═══ */}
-      <m.div variants={fadeUp}>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-semibold text-white tracking-tight">Closet Intelligence</h2>
-          <Link href="/wardrobe" className="text-sm font-medium text-brand-blue hover:text-blue-400 transition-colors flex items-center gap-1">
-            View Wardrobe <span className="text-base">→</span>
-          </Link>
-        </div>
-      </m.div>
-
-      <DashboardCharts data={data} trendData={trendData} />
+          {/* TAB: HISTORICAL ANALYTICS */}
+          {activeTab === "analytics" && (
+            <div className="space-y-6 pt-6">
+              {analyticsData && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <WearAnalyticsCard data={analyticsData} />
+                </div>
+              )}
+              <DashboardCharts data={data} trendData={trendData} />
+            </div>
+          )}
+        </m.div>
+      </AnimatePresence>
 
       {/* ═══ SECTION 4: RECENT ADDITIONS ═══ */}
       <m.div variants={fadeUp}>

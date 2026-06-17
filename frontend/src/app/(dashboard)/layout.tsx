@@ -24,7 +24,13 @@ import {
   X,
   ChevronRight,
   Command,
-  MessageSquare
+  MessageSquare,
+  Brain,
+  Sparkles,
+  CalendarDays,
+  Telescope,
+  ShoppingBag,
+  History
 } from "lucide-react";
 
 import { AmbientGlow } from "@/components/ui/AmbientGlow";
@@ -50,6 +56,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     { href: "/wardrobe", label: "Wardrobe", icon: Shirt },
     { href: "/wardrobe/upload", label: "Upload", icon: UploadCloud },
     { href: "/recommendations", label: "Recommendations", icon: Wand2 },
+    { href: "/outfit-history", label: "Outfit History", icon: History },
+    { href: "/intelligence", label: "Intelligence", icon: Brain },
+    { href: "/daily-stylist", label: "Daily Stylist", icon: CalendarDays },
+    { href: "/predictive-stylist", label: "Predictive Stylist", icon: Telescope },
+    { href: "/shopping-intelligence", label: "Shopping Intelligence", icon: ShoppingBag },
+    { href: "/style-memory", label: "Style Memory", icon: Sparkles },
     { href: "/stylist", label: "AI Stylist", icon: MessageSquare },
     { href: "/settings", label: "Settings", icon: Settings2 },
   ];

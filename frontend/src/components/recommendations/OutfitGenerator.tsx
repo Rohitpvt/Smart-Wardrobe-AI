@@ -1,10 +1,11 @@
 "use client";
 import { useState } from "react";
-import { useRecommendations } from "@/hooks/use-recommendations";
-import { GenerateRecommendationRequest } from "@/types/recommendations";
 import { Sparkles, Loader2, Target, AlertCircle } from "lucide-react";
 import axios from "axios";
 import { m } from "framer-motion";
+import { useExplainableRecommendations } from "@/hooks/use-explainable-recommendations";
+import { ExplainableRecommendationResponse } from "@/types/recommendations";
+import { RecommendationExplanationCard } from "./RecommendationExplanationCard";
 
 const OCCASIONS = ["CASUAL", "COLLEGE", "OFFICE", "PARTY", "FORMAL"];
 
@@ -15,14 +16,17 @@ interface OutfitGeneratorProps {
 export function OutfitGenerator({ onSuccess }: OutfitGeneratorProps) {
   const [occasion, setOccasion] = useState(OCCASIONS[0]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const { generateMutation } = useRecommendations();
-  const mutation = generateMutation;
+  const [explainableResult, setExplainableResult] = useState<ExplainableRecommendationResponse | null>(null);
+  const { generateExplainableMutation } = useExplainableRecommendations();
+  const mutation = generateExplainableMutation;
 
   const handleGenerate = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
-    mutation.mutate({ occasion }, {
-      onSuccess: () => {
+    setExplainableResult(null);
+    mutation.mutate({ occasion, generation_mode: 'standard' }, {
+      onSuccess: (data) => {
+        setExplainableResult(data);
         if (onSuccess) onSuccess();
       },
       onError: (error: unknown) => {
@@ -130,6 +134,38 @@ export function OutfitGenerator({ onSuccess }: OutfitGeneratorProps) {
           <div>
             <h4 className="text-red-400 font-semibold mb-1">Stylist Unavailable</h4>
             <p className="text-red-300/80 text-sm leading-relaxed">{errorMsg}</p>
+          </div>
+        </m.div>
+      )}
+
+      {explainableResult && explainableResult.recommendations.length > 0 && (
+        <m.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-12 space-y-8 relative z-10"
+        >
+          {/* We show the explanation card for the first recommendation */}
+          <RecommendationExplanationCard explanation={explainableResult.recommendations[0].explanation} />
+
+          {/* Simple outfit preview since existing outfit cards expect full OutfitRecommendation schema */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {['top', 'bottom', 'shoes'].map((cat) => {
+              const item = (explainableResult.recommendations[0].recommendation as any)[cat];
+              if (!item) return null;
+              return (
+                <div key={item.id} className="bg-surface-2/50 border border-white/5 rounded-xl p-4 flex flex-col items-center">
+                  <div className="w-full aspect-square rounded-lg bg-surface-3/50 flex items-center justify-center overflow-hidden mb-4">
+                    {item.image_url ? (
+                      <img src={item.image_url} alt={item.name} className="object-cover w-full h-full" />
+                    ) : (
+                      <div className="text-white/20">No Image</div>
+                    )}
+                  </div>
+                  <h4 className="text-sm font-semibold text-white text-center">{item.name}</h4>
+                  <p className="text-xs text-slate-400 capitalize mt-1">{cat}</p>
+                </div>
+              );
+            })}
           </div>
         </m.div>
       )}

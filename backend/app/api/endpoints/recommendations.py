@@ -14,6 +14,7 @@ from app.schemas.recommendation import (
     OutfitRecommendationListResponse,
     WeatherSnapshot,
 )
+from app.core.config import settings
 from app.schemas.wardrobe import PaginationMeta
 from app.services.recommendations.engine import outfit_engine, RecommendationError
 from app.services.recommendations.outfit_scoring import outfit_scoring_engine
@@ -27,11 +28,16 @@ from app.models.user_preference import UserPreference
 from app.models.clothing_item import ClothingItem
 from app.schemas.recommendation import FeedbackRequest, FeedbackRead, FeedbackHistoryResponse
 from app.schemas.completion import CompletionBuildRequest, OutfitCompletionResponse
+from app.services.recommendations.recommendation_service import recommendation_service
+from app.schemas.recommendation_explanation import (
+    ExplainableRecommendationRequest,
+    ExplainableRecommendationResponse
+)
 
 router = APIRouter(prefix="/recommendations", tags=["recommendations"])
 
 @router.post("/generate", response_model=OutfitRecommendationResponse, status_code=201)
-@limiter.limit("5/minute")
+@limiter.limit(settings.RATE_LIMIT_RECOMMENDATIONS)
 async def generate_recommendation(
     request: Request,
     body: RecommendationGenerateRequest,
@@ -128,8 +134,56 @@ async def generate_recommendation(
         }
     )
 
+@router.post("/explainable", response_model=ExplainableRecommendationResponse, status_code=200)
+@limiter.limit(settings.RATE_LIMIT_RECOMMENDATIONS)
+async def generate_explainable_recommendation(
+    request: Request,
+    body: ExplainableRecommendationRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Generate an explainable AI recommendation (standard or anchor modes).
+    """
+    # Fetch weather
+    weather_ctx = await weather_service.get_current_weather(
+        current_user.city, current_user.country_code
+    )
+
+    anchor_item = None
+    if body.generation_mode == "anchor" and body.anchor_item_id:
+        anchor_query = await db.execute(
+            select(ClothingItem).where(
+                ClothingItem.id == body.anchor_item_id,
+                ClothingItem.user_id == current_user.id
+            )
+        )
+        anchor_item = anchor_query.scalar_one_or_none()
+        if not anchor_item:
+            raise HTTPException(status_code=404, detail="Anchor item not found.")
+
+    try:
+        recommendations = await recommendation_service.generate_explainable_recommendations(
+            session=db,
+            user_id=current_user.id,
+            occasion=body.occasion,
+            weather=weather_ctx,
+            generation_mode=body.generation_mode,
+            anchor_item=anchor_item
+        )
+    except RecommendationError as e:
+        raise HTTPException(
+            status_code=422,
+            detail={"error_code": e.error_code, "message": str(e)}
+        )
+
+    return ExplainableRecommendationResponse(
+        recommendations=recommendations
+    )
+
+
 @router.post("/build-around", response_model=OutfitCompletionResponse, status_code=200)
-@limiter.limit("5/minute")
+@limiter.limit(settings.RATE_LIMIT_RECOMMENDATIONS)
 async def build_around_anchor(
     request: Request,
     body: CompletionBuildRequest,

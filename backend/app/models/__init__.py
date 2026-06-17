@@ -14,6 +14,8 @@ from app.models.outfit_feedback import OutfitFeedback
 from app.models.style_profile_snapshot import StyleProfileSnapshot
 from app.models.intelligence import IntelligenceFeedItem, WardrobeOpportunity, WardrobeGoal, WeeklyReport, InsightQualityMetric
 from app.models.user_preference import UserPreference
+from app.models.daily_style_brief import DailyStyleBrief
+from app.models.wear_event import WearEvent
 
 # Expose Base and all models
 __all__ = [
@@ -31,5 +33,6 @@ __all__ = [
     "WardrobeGoal",
     "WeeklyReport",
     "InsightQualityMetric",
-    "UserPreference"
+    "UserPreference",
+    "DailyStyleBrief"
 ]
