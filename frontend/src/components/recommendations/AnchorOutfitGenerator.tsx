@@ -129,8 +129,9 @@ export function AnchorOutfitGenerator() {
                       onClick={() => setSelectedItemId(item.id)}
                       className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${selectedItemId === item.id ? 'border-brand-purple shadow-[0_0_15px_rgba(139,92,246,0.3)] scale-95' : 'border-transparent hover:border-white/20'}`}
                     >
-                      {item.image_url ? (
-                        <Image src={getImageUrl(item.image_url) || ""} alt={item.name} fill className="object-cover" unoptimized />
+                      {getImageUrl(item.image_url) ? (
+            <Image 
+              src={getImageUrl(item.image_url) as string} alt={item.name} fill className="object-cover" unoptimized />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-surface-3">👕</div>
                       )}

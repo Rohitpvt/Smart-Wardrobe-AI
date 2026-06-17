@@ -33,9 +33,9 @@ export function OutfitCompletionCard({ data }: OutfitCompletionCardProps) {
       </span>
       <div className={`bg-surface-2 rounded-2xl border ${isAnchor ? 'border-brand-blue/50' : 'border-white/5'} overflow-hidden group-hover:border-brand-blue/30 transition-all shadow-[0_0_20px_rgba(0,0,0,0.2)]`}>
         <div className="aspect-[3/4] relative bg-[#060816] overflow-hidden">
-          {item.image_url ? (
+          {getImageUrl(item.image_url) ? (
             <Image 
-              src={getImageUrl(item.image_url) || ""} 
+              src={getImageUrl(item.image_url) as string} 
               alt={item.name}
               fill
               sizes="(max-width: 768px) 100vw, 33vw"

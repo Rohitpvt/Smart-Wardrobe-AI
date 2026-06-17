@@ -3,6 +3,7 @@
 import { useDailyStylist } from "@/hooks/use-daily-stylist";
 import { m } from "framer-motion";
 import { CalendarDays, ArrowRight, Loader2, Shirt } from "lucide-react";
+import { getImageUrl } from "@/lib/image-url";
 import Image from "next/image";
 import Link from "next/link";
 import { fadeUp } from "@/lib/animations";
@@ -42,9 +43,9 @@ export function DailyStylistWidget() {
 
       <div className="flex items-center gap-4 relative z-10">
         <div className="w-16 h-16 rounded-xl bg-surface-2 border border-white/5 relative overflow-hidden flex-shrink-0">
-          {top.image_url ? (
+          {getImageUrl(top.image_url) ? (
             <Image 
-              src={top.image_url} 
+              src={getImageUrl(top.image_url) as string} 
               alt={top.name} 
               fill 
               className="object-cover mix-blend-screen opacity-90"

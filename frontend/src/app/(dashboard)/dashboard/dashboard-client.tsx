@@ -28,6 +28,7 @@ import { WardrobeIntelligenceCenter } from "@/components/dashboard/intelligence/
 import { ContextIntelligenceSection } from "@/components/dashboard/context/ContextIntelligenceSection";
 import { DailyStylistWidget } from "@/components/dashboard/DailyStylistWidget";
 import { RecentOutfitHistoryWidget } from "@/components/dashboard/RecentOutfitHistoryWidget";
+import { WidgetErrorBoundary } from "@/components/error-boundaries";
 
 const DashboardCharts = dynamic(() => import("@/components/dashboard/DashboardCharts"), {
   ssr: false,
@@ -147,16 +148,24 @@ export default function DashboardClient() {
       </m.section>
 
       {/* ═══ SECTION 1.2: DAILY STYLIST WIDGET ═══ */}
-      <DailyStylistWidget />
+      <WidgetErrorBoundary widgetName="DailyStylistWidget" route="/dashboard">
+        <DailyStylistWidget />
+      </WidgetErrorBoundary>
 
       {/* ═══ SECTION 1.3: RECENT OUTFIT HISTORY ═══ */}
-      <RecentOutfitHistoryWidget />
+      <WidgetErrorBoundary widgetName="RecentOutfitHistoryWidget" route="/dashboard">
+        <RecentOutfitHistoryWidget />
+      </WidgetErrorBoundary>
 
       {/* ═══ SECTION 1.5: WARDROBE INTELLIGENCE CENTER (Phase 8A) ═══ */}
-      <WardrobeIntelligenceCenter />
+      <WidgetErrorBoundary widgetName="WardrobeIntelligenceCenter" route="/dashboard">
+        <WardrobeIntelligenceCenter />
+      </WidgetErrorBoundary>
 
       {/* ═══ SECTION 1.6: CONTEXT INTELLIGENCE SECTION (Phase 8B) ═══ */}
-      <ContextIntelligenceSection />
+      <WidgetErrorBoundary widgetName="ContextIntelligenceSection" route="/dashboard">
+        <ContextIntelligenceSection />
+      </WidgetErrorBoundary>
 
       {/* ═══ SECTION 2: KPI CARDS ═══ */}
       <m.section variants={stagger} className="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -169,10 +178,14 @@ export default function DashboardClient() {
       {intelData && !isIntelLoading && (
         <m.section variants={stagger} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <m.div variants={fadeUp}>
-            <WardrobeHealth />
+            <WidgetErrorBoundary widgetName="WardrobeHealth" route="/dashboard">
+              <WardrobeHealth />
+            </WidgetErrorBoundary>
           </m.div>
           <m.div variants={fadeUp}>
-            <ClosetEconomics stats={intelData.economics} />
+            <WidgetErrorBoundary widgetName="ClosetEconomics" route="/dashboard">
+              <ClosetEconomics stats={intelData.economics} />
+            </WidgetErrorBoundary>
           </m.div>
         </m.section>
       )}
@@ -202,13 +215,19 @@ export default function DashboardClient() {
           {activeTab === "predictive" && (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 pt-6">
               {predictiveData?.style_dna && (
-                <StyleDNACard data={predictiveData.style_dna} />
+                <WidgetErrorBoundary widgetName="StyleDNACard" route="/dashboard">
+                  <StyleDNACard data={predictiveData.style_dna} />
+                </WidgetErrorBoundary>
               )}
               {predictiveData?.rotation && (
-                <RotationInsightsCard data={predictiveData.rotation} />
+                <WidgetErrorBoundary widgetName="RotationInsightsCard" route="/dashboard">
+                  <RotationInsightsCard data={predictiveData.rotation} />
+                </WidgetErrorBoundary>
               )}
               {purchaseRecsData && (
-                <PurchaseRecommendationsCard data={purchaseRecsData} />
+                <WidgetErrorBoundary widgetName="PurchaseRecommendationsCard" route="/dashboard">
+                  <PurchaseRecommendationsCard data={purchaseRecsData} />
+                </WidgetErrorBoundary>
               )}
             </div>
           )}
@@ -217,13 +236,19 @@ export default function DashboardClient() {
           {activeTab === "personal" && tasteProfileData && (
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pt-6">
               <div className="md:col-span-12 xl:col-span-5">
-                <TasteProfileCard data={tasteProfileData} />
+                <WidgetErrorBoundary widgetName="TasteProfileCard" route="/dashboard">
+                  <TasteProfileCard data={tasteProfileData} />
+                </WidgetErrorBoundary>
               </div>
               <div className="md:col-span-6 xl:col-span-4">
-                <PreferenceInsightsCard data={tasteProfileData} />
+                <WidgetErrorBoundary widgetName="PreferenceInsightsCard" route="/dashboard">
+                  <PreferenceInsightsCard data={tasteProfileData} />
+                </WidgetErrorBoundary>
               </div>
               <div className="md:col-span-6 xl:col-span-3">
-                <StyleEvolutionCard data={tasteProfileData} />
+                <WidgetErrorBoundary widgetName="StyleEvolutionCard" route="/dashboard">
+                  <StyleEvolutionCard data={tasteProfileData} />
+                </WidgetErrorBoundary>
               </div>
             </div>
           )}
@@ -233,10 +258,14 @@ export default function DashboardClient() {
             <div className="space-y-6 pt-6">
               {analyticsData && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <WearAnalyticsCard data={analyticsData} />
+                  <WidgetErrorBoundary widgetName="WearAnalyticsCard" route="/dashboard">
+                    <WearAnalyticsCard data={analyticsData} />
+                  </WidgetErrorBoundary>
                 </div>
               )}
-              <DashboardCharts data={data} trendData={trendData} />
+              <WidgetErrorBoundary widgetName="DashboardCharts" route="/dashboard">
+                <DashboardCharts data={data} trendData={trendData} />
+              </WidgetErrorBoundary>
             </div>
           )}
         </m.div>
@@ -260,9 +289,9 @@ export default function DashboardClient() {
             className="group rounded-2xl overflow-hidden bg-surface-1/70 backdrop-blur-xl border border-white/10 hover:border-white/15 hover:-translate-y-[2px] hover:shadow-[0_0_40px_rgba(59,130,246,0.1)] transition-all duration-300"
           >
             <div className="aspect-[3/4] bg-surface-2 relative overflow-hidden">
-              {item.image_url && (
-                <Image
-                  src={getImageUrl(item.image_url) || ""}
+              {getImageUrl(item.image_url) && (
+          <Image
+            src={getImageUrl(item.image_url) as string}
                   alt={item.name}
                   fill
                   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"

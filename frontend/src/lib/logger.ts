@@ -4,25 +4,23 @@
  * future integration with Sentry, Datadog, etc.
  */
 
+import { monitoring } from "./monitoring";
+
 const isProduction = process.env.NODE_ENV === "production";
 
 export const logger = {
   info: (message: string, context?: Record<string, unknown>) => {
-    if (!isProduction) {
-      console.log(`[INFO]: ${message}`, context || "");
-    }
-    // TODO: Send to external monitoring in production
+    monitoring.captureMessage(message, "info", { metadata: context });
   },
   warn: (message: string, context?: Record<string, unknown>) => {
-    if (!isProduction) {
-      console.warn(`[WARN]: ${message}`, context || "");
-    }
-    // TODO: Send to external monitoring in production
+    monitoring.captureMessage(message, "warning", { metadata: context });
   },
   error: (error: Error | string | unknown, context?: Record<string, unknown>) => {
-    if (!isProduction) {
-      console.error(`[ERROR]:`, error, context || "");
+    if (error instanceof Error) {
+      monitoring.captureError(error, { metadata: context });
+    } else {
+      const errorMessage = typeof error === "string" ? error : JSON.stringify(error);
+      monitoring.captureMessage(errorMessage, "error", { metadata: context });
     }
-    // TODO: Send to external monitoring (e.g., Sentry) in production
   },
 };

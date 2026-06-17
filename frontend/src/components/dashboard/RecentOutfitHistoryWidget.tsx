@@ -1,4 +1,5 @@
 import { useWearTracking } from "@/hooks/use-wear-tracking";
+import { getImageUrl } from "@/lib/image-url";
 import { History, Plus } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -41,8 +42,9 @@ export function RecentOutfitHistoryWidget() {
             <div className="flex -space-x-3 overflow-hidden">
               {group.items.slice(0, 4).map((item, i) => (
                 <div key={item.id} className={`w-10 h-10 rounded-full border-2 border-surface-1 bg-surface-2 relative overflow-hidden z-[${4-i}]`}>
-                  {item.image_url ? (
-                    <Image src={item.image_url} alt={item.name} fill className="object-cover" unoptimized />
+                  {getImageUrl(item.image_url) ? (
+            <Image 
+              src={getImageUrl(item.image_url) as string} alt={item.name} fill className="object-cover" unoptimized />
                   ) : (
                     <div className="w-full h-full bg-white/5" />
                   )}

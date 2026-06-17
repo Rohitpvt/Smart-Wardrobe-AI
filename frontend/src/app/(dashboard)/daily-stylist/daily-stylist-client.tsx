@@ -1,5 +1,7 @@
 "use client";
 
+import { RecommendationExplanationCard } from "@/components/recommendations/RecommendationExplanationCard";
+import { getImageUrl } from "@/lib/image-url";
 import { useDailyStylist } from "@/hooks/use-daily-stylist";
 import { m } from "framer-motion";
 import { fadeUp, staggerContainer as stagger } from "@/lib/animations";
@@ -96,13 +98,13 @@ export default function DailyStylistClient() {
                 <div key={idx} className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden group/item hover:bg-white/10 transition-colors">
                   <div className="aspect-square relative bg-white/5">
                     {item?.image_url ? (
-                      <Image 
-                        src={item.image_url} 
+                      {getImageUrl(item.image_url) ? <Image 
+                        src={getImageUrl(item.image_url) as string} 
                         alt={item?.name || "Item"} 
                         fill 
                         className="object-cover mix-blend-screen opacity-90 group-hover/item:scale-105 transition-transform duration-500"
                         unoptimized
-                      />
+                      /> : <div className="w-full h-full flex items-center justify-center bg-surface-2 opacity-50"><Shirt className="w-1/2 h-1/2 text-white/30"/></div>}
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center">
                         <Shirt className="w-8 h-8 text-white/20" />

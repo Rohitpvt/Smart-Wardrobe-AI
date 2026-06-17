@@ -15,16 +15,13 @@ class PredictiveStylistService:
     
     async def get_insights(self, session: AsyncSession, user_id: uuid.UUID) -> Dict[str, Any]:
         opportunities = await wardrobe_opportunity_engine.get_underutilized_value(session, user_id)
-        # For our logic, neglected items are closely tied to underutilized. Let's split them by some arbitrary threshold if needed,
-        # but here we pass the opportunities to both lists or differentiate later.
-        
         gaps = await wardrobe_gap_analyzer.identify_gaps(session, user_id)
         rotation_risks = await utilization_predictor.get_rotation_risks(session, user_id)
         unlocks = await outfit_unlock_engine.get_outfit_unlocks(session, user_id)
         
         prioritized = predictive_insight_priority_engine.format_and_prioritize(
             underutilized=opportunities,
-            neglected=[], # Placeholder if distinct query exists
+            neglected=[],
             gaps=gaps,
             rotation_risks=rotation_risks,
             unlocks=unlocks

@@ -34,11 +34,8 @@ class FashionEvolutionTracker:
             last = snapshots[-1]
             if first.profile_name != last.profile_name:
                 major_changes.append(f"Shifted from {first.profile_name} to {last.profile_name}")
-            else:
-                major_changes.append("Style has remained consistent over the tracked period.")
             growth_score = min(100, last.personalization_score + (len(snapshots) * 5))
         else:
-            major_changes.append("Initial style baseline established.")
             growth_score = snapshots[0].personalization_score
 
         return {
@@ -50,7 +47,7 @@ class FashionEvolutionTracker:
     def _empty_state(self) -> Dict[str, Any]:
         return {
             "timeline": [],
-            "major_changes": ["Not enough data to track evolution."],
+            "major_changes": [],
             "growth_score": 0
         }
 

@@ -1,52 +1,28 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 import uuid
 from typing import Dict, List
 
-from app.models.clothing_item import ClothingItem
+from app.services.shopping_intelligence.purchase_opportunity_engine import purchase_opportunity_engine
 
 class OutfitUnlockEngine:
     """
     Quantifies the mathematical impact of adding a generic item type
-    to expand outfit combinations.
+    by querying the central Purchase Opportunity Engine.
     """
 
     async def get_outfit_unlocks(self, session: AsyncSession, user_id: uuid.UUID) -> List[Dict]:
-        query = select(ClothingItem.category, func.count(ClothingItem.id)).where(
-            ClothingItem.user_id == user_id
-        ).group_by(ClothingItem.category)
-        
-        result = await session.execute(query)
-        counts = {row[0].lower(): row[1] for row in result.all()}
-        
-        tops = counts.get("tops", 0)
-        bottoms = counts.get("bottoms", 0)
-        shoes = counts.get("footwear", 0)
-        outerwear = counts.get("outerwear", 0)
+        opportunities = await purchase_opportunity_engine.get_opportunities(session, user_id)
         
         unlocks = []
-        
-        # If adding 1 outerwear item
-        if outerwear < 2 and tops > 0 and bottoms > 0:
-            potential = tops * bottoms * max(1, shoes)
-            unlocks.append({
-                "insight": f"Adding a versatile jacket would unlock up to {potential} new layered outfit combinations.",
-                "why_it_matters": "Layering multiplies existing wardrobe value exponentially without needing many new items.",
-                "recommended_action": "Look for a neutral overshirt or casual blazer.",
-                "priority_score": min(95, potential * 2)
-            })
-            
-        # If adding 1 pair of shoes
-        if shoes < 3 and tops > 0 and bottoms > 0:
-            potential = tops * bottoms * max(1, outerwear + 1)
-            unlocks.append({
-                "insight": f"One new pair of neutral sneakers could improve versatility across {potential} outfits.",
-                "why_it_matters": "Footwear acts as the anchor for outfit formality. A versatile shoe unlocks entirely new aesthetic contexts.",
-                "recommended_action": "Consider a minimalist white or grey leather sneaker.",
-                "priority_score": min(90, potential * 1.5)
-            })
-
-        unlocks.sort(key=lambda x: x["priority_score"], reverse=True)
+        for opp in opportunities:
+            if opp.get("opportunity_type") == "high_outfit_unlock":
+                unlocks.append({
+                    "insight": f"Adding {opp.get('category', 'an item')} unlocks up to {opp.get('outfits_unlocked', 0)} combinations.",
+                    "why_it_matters": opp.get("reasoning", "Multiplies your wardrobe combinations."),
+                    "recommended_action": opp.get("expected_impact", "Consider this category."),
+                    "priority_score": opp.get("priority_score", 50)
+                })
+                
         return unlocks
 
 outfit_unlock_engine = OutfitUnlockEngine()

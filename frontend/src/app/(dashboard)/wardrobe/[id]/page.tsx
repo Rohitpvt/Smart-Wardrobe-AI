@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import Image from "next/image";
 import { ClothingItem, CATEGORIES, SEASONS } from "@/types/wardrobe";
 import { m, Variants } from "framer-motion";
-import { ArrowLeft, Edit2, Trash2, Tag, Layers, Droplets, Wind, Sparkles, AlertCircle, BarChart3, ScanFace } from "lucide-react";
+import { ArrowLeft, Edit2, Trash2, Tag, Layers, Droplets, Wind, Sparkles, AlertCircle, BarChart3, ScanFace , Shirt } from "lucide-react";
 
 import { fadeUp, staggerContainer as stagger } from "@/lib/animations";
 
@@ -177,15 +177,15 @@ export default function ClothingItemDetailPage(props: { params: Promise<{ id: st
             {/* Ambient Image Glow */}
             <div className="absolute inset-0 bg-gradient-to-tr from-brand-blue/10 to-brand-purple/10 mix-blend-overlay z-10" />
             
-            <Image
-              src={getImageUrl(item.image_url) || ""}
+            {getImageUrl(item.image_url) ? <Image
+              src={getImageUrl(item.image_url) as string}
               alt={item.name}
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"
               priority
               unoptimized={true}
               className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-            />
+            /> : <div className="w-full h-full flex items-center justify-center bg-surface-2 opacity-50"><Shirt className="w-1/2 h-1/2 text-white/30"/></div>}
             
             {/* Floating Badges */}
             <div className="absolute top-4 left-4 right-4 flex justify-between z-20">

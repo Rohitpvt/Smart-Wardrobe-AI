@@ -7,6 +7,15 @@ async migrations with SQLAlchemy.
 
 import asyncio
 from logging.config import fileConfig
+import socket
+
+# --- Environment Fix: Force IPv4 ---
+orig_getaddrinfo = socket.getaddrinfo
+def getaddrinfo_ipv4_only(host, port, family=0, type=0, proto=0, flags=0):
+    if family == 0 or family == socket.AF_UNSPEC:
+        family = socket.AF_INET
+    return orig_getaddrinfo(host, port, family, type, proto, flags)
+socket.getaddrinfo = getaddrinfo_ipv4_only
 
 from alembic import context
 from sqlalchemy import pool
@@ -48,7 +57,7 @@ def run_migrations_offline() -> None:
 
 def do_run_migrations(connection) -> None:
     """Run migrations with a given connection."""
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
 
     with context.begin_transaction():
         context.run_migrations()

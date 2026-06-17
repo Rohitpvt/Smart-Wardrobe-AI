@@ -38,9 +38,9 @@ export function OutfitCard({ recommendation, onDelete, isDeleting }: OutfitCardP
       <span className="text-[10px] font-label-sm text-slate-500 uppercase tracking-widest mb-3 pl-1">{label}</span>
       <div className="bg-surface-2 rounded-2xl border border-white/5 overflow-hidden group-hover:border-white/15 transition-all shadow-[0_0_20px_rgba(0,0,0,0.2)]">
         <div className="aspect-[3/4] relative bg-[#060816] overflow-hidden">
-          {item.image_url ? (
+          {getImageUrl(item.image_url) ? (
             <Image 
-              src={getImageUrl(item.image_url) || ""} 
+              src={getImageUrl(item.image_url) as string} 
               alt={item.name}
               fill
               sizes="(max-width: 768px) 100vw, 33vw"

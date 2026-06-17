@@ -1,4 +1,9 @@
 import uuid
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.user import User
+    from app.models.wear_event import WearEvent
 
 from sqlalchemy import ForeignKey, String, Text, Index, text, Float, Date, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -21,7 +26,7 @@ class ClothingItem(Base, UUIDMixin, TimestampMixin):
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False
     )
-    image_url: Mapped[str] = mapped_column(Text, nullable=False)
+    image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     clothing_type: Mapped[str] = mapped_column(String(100), nullable=False)
     category: Mapped[str] = mapped_column(String(50), index=True, nullable=False)

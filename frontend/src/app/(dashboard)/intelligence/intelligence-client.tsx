@@ -7,6 +7,8 @@ import { UsageIntelligenceCard } from "@/components/dashboard/intelligence/Usage
 import { SeasonalReadinessCard } from "@/components/dashboard/intelligence/SeasonalReadinessCard";
 import { FashionEvolutionCard } from "@/components/dashboard/intelligence/FashionEvolutionCard";
 
+import { WidgetErrorBoundary } from "@/components/error-boundaries";
+
 export function IntelligenceClient() {
   return (
     <div className="max-w-7xl mx-auto space-y-8">
@@ -21,15 +23,25 @@ export function IntelligenceClient() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column - Core Health & DNA */}
         <div className="lg:col-span-8 space-y-6">
-          <WardrobeHealthCard />
-          <UsageIntelligenceCard />
-          <FashionEvolutionCard />
+          <WidgetErrorBoundary widgetName="WardrobeHealthCard" route="/intelligence">
+            <WardrobeHealthCard />
+          </WidgetErrorBoundary>
+          <WidgetErrorBoundary widgetName="UsageIntelligenceCard" route="/intelligence">
+            <UsageIntelligenceCard />
+          </WidgetErrorBoundary>
+          <WidgetErrorBoundary widgetName="FashionEvolutionCard" route="/intelligence">
+            <FashionEvolutionCard />
+          </WidgetErrorBoundary>
         </div>
 
         {/* Right Column - Secondary Analysis */}
         <div className="lg:col-span-4 space-y-6">
-          <StyleDNACard />
-          <SeasonalReadinessCard />
+          <WidgetErrorBoundary widgetName="StyleDNACard" route="/intelligence">
+            <StyleDNACard />
+          </WidgetErrorBoundary>
+          <WidgetErrorBoundary widgetName="SeasonalReadinessCard" route="/intelligence">
+            <SeasonalReadinessCard />
+          </WidgetErrorBoundary>
         </div>
       </div>
     </div>

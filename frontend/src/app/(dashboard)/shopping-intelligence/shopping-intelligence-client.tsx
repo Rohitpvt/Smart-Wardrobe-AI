@@ -6,6 +6,7 @@ import { fadeUp, staggerContainer as stagger } from "@/lib/animations";
 import { Loader2, ShoppingBag, Target, Unlock, TrendingUp, Sparkles, Heart, Shirt, Layers, CloudSun, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { ShoppingOpportunity, ROI_Breakdown } from "@/types/shopping-intelligence";
+import { WidgetErrorBoundary } from "@/components/error-boundaries";
 
 function getCategoryIcon(category: string) {
   const c = category.toLowerCase();
@@ -151,7 +152,9 @@ export default function ShoppingIntelligenceClient() {
 
       {/* TOP OPPORTUNITY (HERO) */}
       <m.div variants={fadeUp}>
-        <ShoppingOpportunityCard opp={oppsRes[0]} />
+        <WidgetErrorBoundary widgetName="ShoppingOpportunityCard (Hero)" route="/shopping-intelligence">
+          <ShoppingOpportunityCard opp={oppsRes[0]} />
+        </WidgetErrorBoundary>
       </m.div>
 
       {/* SECONDARY OPPORTUNITIES GRID */}
@@ -159,7 +162,9 @@ export default function ShoppingIntelligenceClient() {
         <m.div variants={stagger} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {oppsRes.slice(1, 3).map((opp, idx) => (
             <m.div key={idx} variants={fadeUp}>
-              <ShoppingOpportunityCard opp={opp} />
+              <WidgetErrorBoundary widgetName={`ShoppingOpportunityCard (${idx + 1})`} route="/shopping-intelligence">
+                <ShoppingOpportunityCard opp={opp} />
+              </WidgetErrorBoundary>
             </m.div>
           ))}
         </m.div>

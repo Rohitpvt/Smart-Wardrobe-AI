@@ -3,6 +3,7 @@
 import { useWearTracking } from "@/hooks/use-wear-tracking";
 import { m } from "framer-motion";
 import { fadeUp, staggerContainer as stagger } from "@/lib/animations";
+import { getImageUrl } from "@/lib/image-url";
 import { Loader2, History, AlertTriangle, TrendingDown, TrendingUp, Calendar as CalendarIcon, Tag, Zap } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -34,8 +35,9 @@ function WearTimelineCard({ group }: { group: WearGroup }) {
         {group.items.map((item) => (
           <div key={item.id} className="flex items-center gap-3 bg-white/5 rounded-xl p-2 pr-4">
             <div className="w-12 h-12 rounded-lg bg-surface-2 relative overflow-hidden flex-shrink-0">
-              {item.image_url ? (
-                <Image src={item.image_url} alt={item.name} fill className="object-cover mix-blend-screen opacity-90" unoptimized />
+              {getImageUrl(item.image_url) ? (
+            <Image 
+              src={getImageUrl(item.image_url) as string} alt={item.name} fill className="object-cover mix-blend-screen opacity-90" unoptimized />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-xs text-slate-500">Item</div>
               )}

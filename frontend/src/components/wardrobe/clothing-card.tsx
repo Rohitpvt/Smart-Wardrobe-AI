@@ -23,9 +23,9 @@ export function ClothingCard({ item, index, onLogWear }: ClothingCardProps) {
       className="group rounded-2xl overflow-hidden bg-surface-1/70 backdrop-blur-xl border border-white/10 hover:border-white/15 hover:-translate-y-[2px] hover:shadow-[0_0_40px_rgba(59,130,246,0.1)] transition-all duration-300 break-inside-avoid relative"
     >
       <Link href={`/wardrobe/${item.id}`} className="block relative aspect-[3/4] bg-surface-2 overflow-hidden">
-        {item.image_url && (
+        {getImageUrl(item.image_url) && (
           <Image
-            src={getImageUrl(item.image_url) || ""}
+            src={getImageUrl(item.image_url) as string}
             alt={item.name}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"

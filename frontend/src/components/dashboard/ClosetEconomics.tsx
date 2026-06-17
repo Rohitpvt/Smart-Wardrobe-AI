@@ -10,6 +10,13 @@ interface ClosetEconomicsProps {
 }
 
 export function ClosetEconomics({ stats }: ClosetEconomicsProps) {
+  // --- PRIORITY 5B: FORCED FAILURE TEST ---
+  if (typeof window !== "undefined" && window.location.search.includes("test_boundary=true")) {
+    throw new Error("Boundary Test");
+  }
+  
+  if (!stats) return null;
+
   return (
     <GlassPanel className="p-6">
       <div className="flex items-center justify-between mb-6">

@@ -28,7 +28,7 @@ class ClothingItemRead(BaseModel):
     """Schema for reading a clothing item."""
     id: uuid.UUID
     user_id: uuid.UUID
-    image_url: str
+    image_url: str | None = None
     name: str
     clothing_type: str
     category: str

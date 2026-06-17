@@ -1,11 +1,12 @@
 "use client";
 import { useState } from "react";
-import { Sparkles, Loader2, Target, AlertCircle } from "lucide-react";
+import { Sparkles, Loader2, Target, AlertCircle , Shirt } from "lucide-react";
 import axios from "axios";
 import { m } from "framer-motion";
 import { useExplainableRecommendations } from "@/hooks/use-explainable-recommendations";
 import { ExplainableRecommendationResponse } from "@/types/recommendations";
 import { RecommendationExplanationCard } from "./RecommendationExplanationCard";
+import { getImageUrl } from "@/lib/image-url";
 
 const OCCASIONS = ["CASUAL", "COLLEGE", "OFFICE", "PARTY", "FORMAL"];
 
@@ -156,7 +157,7 @@ export function OutfitGenerator({ onSuccess }: OutfitGeneratorProps) {
                 <div key={item.id} className="bg-surface-2/50 border border-white/5 rounded-xl p-4 flex flex-col items-center">
                   <div className="w-full aspect-square rounded-lg bg-surface-3/50 flex items-center justify-center overflow-hidden mb-4">
                     {item.image_url ? (
-                      <img src={item.image_url} alt={item.name} className="object-cover w-full h-full" />
+                      {getImageUrl(item.image_url) ? <img src={getImageUrl(item.image_url) as string} alt={item.name} className="object-cover w-full h-full" /> : <div className="w-full h-full flex items-center justify-center bg-surface-2 opacity-50"><Shirt className="w-1/2 h-1/2 text-white/30"/></div>}
                     ) : (
                       <div className="text-white/20">No Image</div>
                     )}

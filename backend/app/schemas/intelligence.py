@@ -38,7 +38,7 @@ class WardrobeHealthResponse(BaseModel):
 class UsageItem(BaseModel):
     id: str
     name: str
-    image_url: str
+    image_url: str | None = None
     worn_count: int
     last_worn_at: Optional[str] = None
 

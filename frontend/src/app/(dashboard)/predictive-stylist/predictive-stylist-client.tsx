@@ -1,12 +1,14 @@
 "use client";
 
 import { usePredictiveStylist } from "@/hooks/use-predictive-stylist";
+import { getImageUrl } from "@/lib/image-url";
 import { m } from "framer-motion";
 import { fadeUp, staggerContainer as stagger } from "@/lib/animations";
 import { Loader2, Telescope, Sparkles, TrendingUp, AlertTriangle, Layers, Shirt, Unlock } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { PredictiveInsight, UtilizationHeatmapData } from "@/types/predictive-stylist";
+import { WidgetErrorBoundary } from "@/components/error-boundaries";
 
 // Helpers
 function getInsightIcon(type: string) {
@@ -49,7 +51,7 @@ function PredictiveInsightCard({ insight }: { insight: PredictiveInsight }) {
         {insight.image_url && (
           <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
             <div className="w-16 h-16 rounded-xl bg-surface-2 relative overflow-hidden flex-shrink-0">
-              <Image src={insight.image_url} alt={insight.item_name || 'Item'} fill className="object-cover mix-blend-screen opacity-90" unoptimized />
+              {getImageUrl(insight.image_url) ? <Image src={getImageUrl(insight.image_url) as string} alt={insight.item_name || 'Item'} fill className="object-cover mix-blend-screen opacity-90" unoptimized /> : <div className="w-full h-full flex items-center justify-center bg-surface-2 opacity-50"><Shirt className="w-1/2 h-1/2 text-white/30"/></div>}
             </div>
             <div>
               <p className="text-sm font-medium text-white">{insight.item_name}</p>
@@ -98,7 +100,7 @@ function UtilizationHeatmap({ data }: { data: UtilizationHeatmapData[] }) {
   if (!data || data.length === 0) return <div className="text-slate-500 text-sm p-4">No data available</div>;
   
   // Find max for scaling
-  const maxWorn = Math.max(...data.map(d => d.avg_worn), 1);
+  const maxWorn = Math.max(...(data || []).map(d => d.avg_worn || 0), 1);
 
   return (
     <div className="space-y-4 mt-2">
@@ -182,14 +184,18 @@ export default function PredictiveStylistClient() {
         <div className="lg:col-span-8 space-y-8">
           {insightsRes?.top_priority_insight && (
             <m.div variants={fadeUp}>
-              <PredictiveInsightCard insight={insightsRes.top_priority_insight} />
+              <WidgetErrorBoundary widgetName="PredictiveInsightCard" route="/predictive-stylist">
+                <PredictiveInsightCard insight={insightsRes.top_priority_insight} />
+              </WidgetErrorBoundary>
             </m.div>
           )}
 
           {insightsRes?.all_insights && insightsRes.all_insights.length > 1 && (
             <m.div variants={fadeUp} className="space-y-4">
               <h3 className="text-lg font-semibold text-white mb-4">Other Opportunities</h3>
-              <SecondaryInsightList insights={insightsRes.all_insights.slice(1)} />
+              <WidgetErrorBoundary widgetName="SecondaryInsightList" route="/predictive-stylist">
+                <SecondaryInsightList insights={(insightsRes?.all_insights || []).slice(1)} />
+              </WidgetErrorBoundary>
             </m.div>
           )}
         </div>
@@ -202,37 +208,43 @@ export default function PredictiveStylistClient() {
               <TrendingUp className="w-4 h-4" />
               Utilization Spread
             </h3>
-            <UtilizationHeatmap data={forecastRes?.heatmap_data || []} />
+            <WidgetErrorBoundary widgetName="UtilizationHeatmap" route="/predictive-stylist">
+              <UtilizationHeatmap data={forecastRes?.heatmap_data || []} />
+            </WidgetErrorBoundary>
           </m.div>
 
           {oppsRes?.gaps && oppsRes.gaps.length > 0 && (
             <m.div variants={fadeUp} className="bg-surface-1 border border-white/5 rounded-3xl p-6">
-              <h3 className="text-sm font-label-md text-slate-500 uppercase tracking-wider mb-4">Wardrobe Gaps</h3>
-              <div className="space-y-4">
-                {oppsRes.gaps.slice(0, 2).map((gap, i) => (
-                  <div key={i} className="pb-4 border-b border-white/5 last:border-0 last:pb-0">
-                    <p className="text-sm font-medium text-white mb-1">{gap.insight}</p>
-                    <p className="text-xs text-brand-blue">Action: {gap.recommended_action}</p>
-                  </div>
-                ))}
-              </div>
+              <WidgetErrorBoundary widgetName="WardrobeGaps" route="/predictive-stylist">
+                <h3 className="text-sm font-label-md text-slate-500 uppercase tracking-wider mb-4">Wardrobe Gaps</h3>
+                <div className="space-y-4">
+                  {(oppsRes?.gaps || []).slice(0, 2).map((gap, i) => (
+                    <div key={i} className="pb-4 border-b border-white/5 last:border-0 last:pb-0">
+                      <p className="text-sm font-medium text-white mb-1">{gap.insight}</p>
+                      <p className="text-xs text-brand-blue">Action: {gap.recommended_action}</p>
+                    </div>
+                  ))}
+                </div>
+              </WidgetErrorBoundary>
             </m.div>
           )}
 
           {oppsRes?.unlocks && oppsRes.unlocks.length > 0 && (
             <m.div variants={fadeUp} className="bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-500/20 rounded-3xl p-6">
-              <h3 className="text-sm font-label-md text-emerald-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <Unlock className="w-4 h-4" />
-                Outfit Unlocks
-              </h3>
-              <div className="space-y-4">
-                {oppsRes.unlocks.slice(0, 2).map((unlock, i) => (
-                  <div key={i} className="pb-4 border-b border-white/5 last:border-0 last:pb-0">
-                    <p className="text-sm font-medium text-white mb-1">{unlock.insight}</p>
-                    <p className="text-xs text-slate-400 leading-relaxed">{unlock.why_it_matters}</p>
-                  </div>
-                ))}
-              </div>
+              <WidgetErrorBoundary widgetName="OutfitUnlocks" route="/predictive-stylist">
+                <h3 className="text-sm font-label-md text-emerald-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <Unlock className="w-4 h-4" />
+                  Outfit Unlocks
+                </h3>
+                <div className="space-y-4">
+                  {(oppsRes?.unlocks || []).slice(0, 2).map((unlock, i) => (
+                    <div key={i} className="pb-4 border-b border-white/5 last:border-0 last:pb-0">
+                      <p className="text-sm font-medium text-white mb-1">{unlock.insight}</p>
+                      <p className="text-xs text-slate-400 leading-relaxed">{unlock.why_it_matters}</p>
+                    </div>
+                  ))}
+                </div>
+              </WidgetErrorBoundary>
             </m.div>
           )}
 

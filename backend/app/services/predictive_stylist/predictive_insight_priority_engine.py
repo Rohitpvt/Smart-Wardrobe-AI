@@ -26,7 +26,7 @@ class PredictiveInsightPriorityEngine:
             item["global_priority"] = item.get("priority_score", 0) + 500
             all_insights.append(item)
             
-        for item in neglected: # neglected uses same logic as underutilized in our context, but let's separate
+        for item in neglected:
             item["type"] = "neglected_items"
             item["global_priority"] = item.get("priority_score", 0) + 400
             all_insights.append(item)
