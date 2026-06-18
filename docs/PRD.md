@@ -83,7 +83,8 @@ The MVP must allow users to:
 
 Frontend
 
-* Next.js 15
+* Next.js 16.2.6
+* React 19.2.4
 * TypeScript
 * Tailwind CSS
 * Shadcn/UI
@@ -104,7 +105,9 @@ Authentication
 
 AI Services
 
-* AI Provider Router (Gemini 2.5 Flash Primary, NVIDIA NIM Fallback)
+* Multi-Provider AI Architecture (Gemini 2.5 Flash Primary, NVIDIA NIM Fallback)
+* Intelligent Provider Router for failover
+* Explainable Recommendation System
 
 Weather Service
 
@@ -122,7 +125,7 @@ Future Production:
 
 ---
 
-# 7. Core Features
+# 7. Section A: Core Platform Features (Original MVP)
 
 ## Feature 1: Authentication
 
@@ -286,9 +289,21 @@ Supported Occasions
 
 Important
 
-Version 1 will use a rule-based recommendation engine.
+Outfit generation remains deterministic and rule-based. AI is permitted only for explanation, styling rationale, accessory suggestions, personalization refinement, and natural-language fashion insights. AI is never the source of truth for core outfit selection.
 
-No AI model should be used for outfit generation in MVP.
+Rule-Based Engine:
+* Outfit selection
+* Candidate scoring
+* Filtering
+* Ranking
+* Wardrobe gap detection
+
+AI-Assisted Layer:
+* Outfit explanations
+* Style reasoning
+* Accessory recommendations
+* Preference interpretation
+* Natural-language insights
 
 Acceptance Criteria
 
@@ -401,7 +416,33 @@ Acceptance Criteria
 
 ---
 
-# 8. Non-Functional Requirements
+# 8. Section B: Advanced Intelligence Features (Implemented)
+
+## Feature 11: Intelligence Center
+* Style DNA profile generation
+* Wardrobe Health scoring
+* Usage Analytics (overused vs neglected items)
+* Closet Economics tracking
+
+## Feature 12: Wear Tracking
+* Log wear events and occasions
+* Calculate Cost Per Wear
+* Track outfit repetition warnings
+
+## Feature 13: Shopping Intelligence
+* Identify wardrobe gaps deterministically
+* Smart purchase recommendations
+
+## Feature 14: Predictive Stylist
+* Outfit success prediction
+* Future wardrobe forecasting
+
+## Feature 15: Build Around Item Workflow
+* Generate complete outfits starting from a single anchor item
+
+---
+
+# 9. Non-Functional Requirements
 
 Performance
 
@@ -430,7 +471,7 @@ Reliability
 
 ---
 
-# 9. Excluded Features (Not MVP)
+# 10. Excluded Features (Not MVP)
 
 The following features are explicitly excluded:
 
@@ -451,7 +492,7 @@ These may be considered after MVP completion.
 
 ---
 
-# 10. Success Metrics
+# 11. Success Metrics
 
 Product Metrics
 
@@ -472,7 +513,7 @@ Performance Metrics
 
 ---
 
-# 11. Development Phases
+# 12. Development Phases
 
 Phase 1
 
@@ -507,9 +548,9 @@ Phase 5
 
 ---
 
-# 12. Final MVP Definition
+# 13. Current Platform Definition
 
-Version 1 is considered complete when a user can:
+The current platform capabilities include: a user can:
 
 1. Register and log in
 2. Upload clothing items

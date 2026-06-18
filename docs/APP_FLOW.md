@@ -23,6 +23,9 @@ Smart Wardrobe AI is a web-based application that allows users to:
 * Receive outfit recommendations
 * Receive weather-aware clothing suggestions
 * Chat with an AI wardrobe assistant
+* Access Intelligence Center (Style DNA, Wardrobe Health)
+* Track wear history and Cost Per Wear
+* View Shopping Intelligence and Predictive Forecasts
 
 This document describes how users interact with the application from entry to exit.
 
@@ -73,6 +76,11 @@ Logout
     │   └── Upload Clothing
     │
     ├── Recommendations
+    │   └── Build Around Item
+    │
+    ├── Intelligence Center
+    │
+    ├── Shopping & Analytics
     │
     ├── AI Assistant
     │
@@ -433,6 +441,24 @@ No AI model may generate outfits.
 
 ---
 
+# 12.5 Build Around Item Flow
+
+Purpose:
+Generate a complete outfit utilizing a specific anchor item.
+
+Flow:
+```
+Select Anchor Item
+        ↓
+Rule Engine Compiles Outfit
+        ↓
+AI Generates Accessories & Rationale
+        ↓
+Display Complete Look
+```
+
+---
+
 # 13. Weather Recommendation Flow
 
 Purpose:
@@ -512,6 +538,33 @@ Assistant must not:
 
 ---
 
+# 14.5 Intelligence & Wear Tracking Flow
+
+Purpose:
+Provide advanced analytics and tracking of wardrobe usage.
+
+Flow (Wear Tracking):
+```
+Log Wear Event
+      ↓
+Recalculate Cost Per Wear
+      ↓
+Update Repetition Warnings
+      ↓
+Update Intelligence Center
+```
+
+Flow (Intelligence Center):
+```
+Open Intelligence
+        ↓
+Fetch Style DNA & Health
+        ↓
+Display Insights
+```
+
+---
+
 # 15. Settings Flow
 
 Purpose:
@@ -582,6 +635,32 @@ Allowed AI Calls
 ✓ Clothing Upload Analysis
 
 ✓ AI Assistant Chat
+
+✓ Outfit Explanation and Reasoning
+
+✓ Accessory Recommendations
+
+✓ AI Provider Router Fallback/Failover (Gemini <-> NVIDIA NIM)
+
+---
+
+# 18. AI Provider Router Flow
+
+Purpose:
+Ensure high availability for AI operations via automatic failover.
+
+Flow:
+```
+AI Request Initiated
+        ↓
+Attempt Primary Provider (Gemini 2.5 Flash)
+        ↓
+If Success -> Return Response
+        ↓
+If Failure/Rate Limit -> Attempt Fallback Provider (NVIDIA NIM Phi-4)
+        ↓
+Return Response
+```
 
 Forbidden AI Calls
 

@@ -323,9 +323,9 @@ Generate outfit recommendations.
 
 Version
 
-Rule-Based System
+Hybrid System
 
-No AI generation.
+Deterministic Rule-Based Engine for outfit selection + AI-Assisted Layer for styling rationale and accessories.
 
 Deliverables
 
@@ -451,7 +451,82 @@ High
 
 ---
 
-# 11. Phase 9 – Testing & Quality Assurance
+# 12. Phase 8.1 – Intelligence Center
+
+Goal
+Deliver deep wardrobe analytics.
+
+Deliverables
+* Style DNA
+* Wardrobe Health Scoring
+* Usage Analytics
+
+Success Criteria
+✓ APIs return valid analytics
+✓ Health score is accurate
+
+Estimated Priority
+Completed
+
+---
+
+# 13. Phase 8.2 – Wear Tracking & Closet Economics
+
+Goal
+Track item usage and value.
+
+Deliverables
+* Cost Per Wear engine
+* Repetition warnings
+* Wear event logging
+
+Success Criteria
+✓ Cost metrics calculate correctly
+✓ Repetitions are flagged
+
+Estimated Priority
+Completed
+
+---
+
+# 14. Phase 8.3 – Predictive & Shopping Intelligence
+
+Goal
+Anticipate future wardrobe needs.
+
+Deliverables
+* Shopping opportunity detection
+* Outfit success prediction
+
+Success Criteria
+✓ Gaps identified successfully
+
+Estimated Priority
+Completed
+
+---
+
+# 15. Phase 9.9 – Production Hardening & Certification
+
+Goal
+Ensure platform scalability and robust error handling.
+
+Deliverables
+* Monitoring Layer setup
+* Widget Error Boundaries
+* Multi-provider fallback certification
+* Load testing
+
+Success Criteria
+✓ System passes certification audit
+✓ All widgets degrade gracefully
+
+Estimated Priority
+High
+
+---
+
+# 16. Phase 9 – Testing & Quality Assurance
 
 Goal
 
@@ -495,7 +570,7 @@ Critical
 
 ---
 
-# 12. Phase 10 – Performance Optimization
+# 17. Phase 10 – Performance Optimization
 
 Goal
 
@@ -537,7 +612,7 @@ Medium
 
 ---
 
-# 13. Phase 11 – Documentation & Release Preparation
+# 18. Phase 11 – Documentation & Release Preparation
 
 Goal
 
@@ -570,7 +645,7 @@ Medium
 
 ---
 
-# 14. MVP Release Criteria
+# 19. Current Platform Release Criteria
 
 The MVP is considered complete when all of the following are operational:
 
@@ -638,7 +713,7 @@ Quality
 
 ---
 
-# 15. Post-MVP Backlog (Version 2+)
+# 20. Future Roadmap (Version 2+)
 
 The following features are intentionally excluded from MVP:
 
@@ -657,7 +732,7 @@ These features must not be implemented until MVP completion is formally approved
 
 ---
 
-# 16. Final Development Rule
+# 21. Final Development Rule
 
 Development must proceed strictly in roadmap order.
 

@@ -898,6 +898,39 @@ Verification
 
 ---
 
+---
+
+# PHASE 8.X — ADVANCED INTELLIGENCE FEATURES
+
+### Task P8.1
+[x] Implement Intelligence Center API (Style DNA, Wardrobe Health)
+
+### Task P8.2
+[x] Implement Wear Tracking & Cost Per Wear Engine
+
+### Task P8.3
+[x] Implement Shopping Intelligence & Wardrobe Gap Detection
+
+### Task P8.4
+[x] Implement Predictive Stylist
+
+### Task P8.5
+[x] Implement Build-Around-Item Recommendation Workflow
+
+---
+
+# PHASE 9.9 — PRODUCTION HARDENING & CERTIFICATION
+
+### Task P9.9.1
+[ ] Configure Monitoring Layer
+
+### Task P9.9.2
+[ ] Implement Widget Error Boundaries on frontend
+
+### Task P9.9.3
+[ ] Complete Certification Audit
+
+
 # PHASE 9 — TESTING & QA
 
 Goal
