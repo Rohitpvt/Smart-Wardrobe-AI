@@ -47,10 +47,14 @@ class WeeklyReportService:
         }
         
         # 2. Get AI Coaching Advice
-        coaching = await ai_coach_service.generate_coaching_insight({
-            "health": health,
-            "predictive": predictive
-        })
+        coaching = await ai_coach_service.generate_coaching_insight(
+            db=session,
+            user_id=user_id,
+            context_dict={
+                "health": health,
+                "predictive": predictive
+            }
+        )
         
         report = WeeklyReport(
             user_id=user_id,

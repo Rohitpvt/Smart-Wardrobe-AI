@@ -131,9 +131,29 @@ export default function OutfitHistoryClient() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <Loader2 className="w-8 h-8 animate-spin text-brand-purple" />
-        <p className="text-slate-400 animate-pulse">Reconstructing behavioral history...</p>
+      <div className="space-y-8">
+        <div className="rounded-2xl bg-surface-1/70 backdrop-blur-xl border border-white/[0.06] p-8 md:p-10">
+          <div className="h-8 w-56 mb-3 rounded-lg skeleton-shimmer" />
+          <div className="h-4 w-80 rounded skeleton-shimmer" />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="rounded-2xl bg-surface-1/70 border border-white/[0.06] p-5">
+              <div className="h-7 w-20 rounded-lg skeleton-shimmer mb-2" />
+              <div className="h-3 w-24 rounded skeleton-shimmer" />
+            </div>
+          ))}
+        </div>
+        <div className="rounded-2xl bg-surface-1/70 border border-white/[0.06] overflow-hidden">
+          <div className="flex gap-4 p-4 border-b border-white/[0.06]">
+            {[...Array(5)].map((_, i) => <div key={i} className="h-3 flex-1 rounded skeleton-shimmer" />)}
+          </div>
+          {[...Array(6)].map((_, r) => (
+            <div key={r} className="flex gap-4 p-4 border-b border-white/[0.03] last:border-0">
+              {[...Array(5)].map((_, c) => <div key={c} className="h-3 flex-1 rounded skeleton-shimmer" />)}
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

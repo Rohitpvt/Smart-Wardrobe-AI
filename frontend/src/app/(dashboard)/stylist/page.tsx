@@ -2,6 +2,7 @@ import StylistClient from "./stylist-client";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/axios";
 import { cookies } from "next/headers";
+import AIFeatureLock from "@/components/ui/AIFeatureLock";
 
 export const metadata = {
   title: "AI Stylist | Wardrobe AI",
@@ -34,7 +35,9 @@ export default async function StylistPage() {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <StylistClient />
+      <AIFeatureLock>
+        <StylistClient />
+      </AIFeatureLock>
     </HydrationBoundary>
   );
 }

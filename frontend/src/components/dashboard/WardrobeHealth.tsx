@@ -3,6 +3,7 @@
 import React from "react";
 import { useWardrobeHealth } from "@/hooks/use-intelligence";
 import { GlassPanel } from "@/components/ui/GlassPanel";
+import { WidgetSkeleton } from "@/components/ui/skeleton-loaders";
 import { ShieldCheck, ShieldAlert, TrendingUp, TrendingDown, ArrowRight, Activity, Loader2 } from "lucide-react";
 import { m } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -12,8 +13,16 @@ export function WardrobeHealth() {
 
   if (isLoading) {
     return (
-      <GlassPanel className="p-6 h-full min-h-[400px] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-brand-purple" />
+      <GlassPanel className="p-6 h-full border border-brand-purple/20">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            <Activity className="w-5 h-5 text-brand-purple" />
+            Wardrobe Health
+          </h2>
+        </div>
+        <div className="flex items-center justify-center py-6">
+          <WidgetSkeleton />
+        </div>
       </GlassPanel>
     );
   }

@@ -7,7 +7,6 @@ must implement to participate in the AIProviderRouter failover chain.
 
 from abc import ABC, abstractmethod
 from typing import Any
-
 from app.services.ai.schemas import AIClothingExtraction
 
 
@@ -17,6 +16,9 @@ class AIProvider(ABC):
     @abstractmethod
     async def analyze_clothing_image(
         self,
+        db: Any,
+        user_id: Any,
+        feature_name: str,
         image_data: bytes,
         mime_type: str,
     ) -> AIClothingExtraction:
@@ -35,6 +37,9 @@ class AIProvider(ABC):
     @abstractmethod
     async def generate_text(
         self,
+        db: Any,
+        user_id: Any,
+        feature_name: str,
         prompt: str,
         system_instruction: str = "",
         temperature: float = 0.7,
@@ -57,6 +62,9 @@ class AIProvider(ABC):
     @abstractmethod
     async def generate_json(
         self,
+        db: Any,
+        user_id: Any,
+        feature_name: str,
         prompt: str,
         system_instruction: str = "",
         temperature: float = 0.7,
@@ -79,6 +87,9 @@ class AIProvider(ABC):
     @abstractmethod
     async def generate_chat_response(
         self,
+        db: Any,
+        user_id: Any,
+        feature_name: str,
         messages: list[dict[str, Any]],
         system_instruction: str = "",
         tools: list[dict[str, Any]] | None = None,
@@ -107,6 +118,9 @@ class AIProvider(ABC):
     @abstractmethod
     async def generate_outfit_explanation(
         self,
+        db: Any,
+        user_id: Any,
+        feature_name: str,
         top_name: str,
         bottom_name: str,
         footwear_name: str,
@@ -124,6 +138,9 @@ class AIProvider(ABC):
     @abstractmethod
     async def generate_outfit_completion_accessories(
         self,
+        db: Any,
+        user_id: Any,
+        feature_name: str,
         top_name: str,
         bottom_name: str,
         footwear_name: str,

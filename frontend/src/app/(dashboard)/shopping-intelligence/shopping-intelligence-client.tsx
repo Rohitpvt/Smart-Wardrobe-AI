@@ -103,9 +103,25 @@ export default function ShoppingIntelligenceClient() {
 
   if (opportunitiesQuery.isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <Loader2 className="w-8 h-8 animate-spin text-brand-blue" />
-        <p className="text-slate-400 animate-pulse">Analyzing wardrobe ROI & unlocks...</p>
+      <div className="space-y-8">
+        <div className="rounded-2xl bg-surface-1/70 backdrop-blur-xl border border-white/[0.06] p-8 md:p-10">
+          <div className="h-8 w-56 mb-3 rounded-lg skeleton-shimmer" />
+          <div className="h-4 w-96 rounded skeleton-shimmer" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="rounded-2xl bg-surface-1/70 border border-white/[0.06] p-6">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-10 h-10 rounded-xl skeleton-shimmer" />
+                <div className="h-4 w-32 rounded skeleton-shimmer" />
+              </div>
+              <div className="space-y-3">
+                <div className="h-3 w-full rounded skeleton-shimmer" />
+                <div className="h-3 w-4/5 rounded skeleton-shimmer" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

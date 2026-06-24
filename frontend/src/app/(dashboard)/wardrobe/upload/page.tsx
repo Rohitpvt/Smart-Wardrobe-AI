@@ -46,6 +46,7 @@ export default function UploadPage() {
       data.append("image", file);
       const res = await api.post("/uploads/analyze", data, {
         headers: { "Content-Type": "multipart/form-data" },
+        timeout: 60000, // AI analysis can take longer than the default 10s
       });
       return res.data;
     },

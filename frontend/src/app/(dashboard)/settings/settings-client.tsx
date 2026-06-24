@@ -1,17 +1,17 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 import { api } from "@/lib/axios";
 import axios from "axios";
-import { m, Variants } from "framer-motion";
+import { m } from "framer-motion";
 import { 
   User, Shield, MapPin, Sparkles, CheckCircle2, AlertCircle, 
-  Settings2, CloudSun, Lock, Mail, BadgeCheck, Activity
+  Settings2, CloudSun, Lock, Mail, BadgeCheck, Activity,
+  Camera, Trash2, Loader2, Image as ImageIcon
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { fadeUp, staggerContainer as stagger } from "@/lib/animations";
-import { GlassPanel } from "@/components/ui/GlassPanel";
 
 interface ProfileData {
   first_name: string;
@@ -20,6 +20,13 @@ interface ProfileData {
   city: string;
   country_code: string;
   styling_preference?: string;
+  age?: number | null;
+  gender?: string | null;
+  height_cm?: number | null;
+  body_type?: string | null;
+  fashion_experience?: string | null;
+  primary_style?: string | null;
+  profile_image_url?: string | null;
 }
 
 export default function SettingsClient({ initialProfile }: { initialProfile: ProfileData }) {
@@ -33,8 +40,10 @@ export default function SettingsClient({ initialProfile }: { initialProfile: Pro
 
   const [profileLoading, setProfileLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setProfile({ ...profile, [e.target.name]: e.target.value });
   };
 
@@ -46,12 +55,57 @@ export default function SettingsClient({ initialProfile }: { initialProfile: Pro
     e.preventDefault();
     setProfileLoading(true);
     try {
-      await api.put("/users/profile", profile);
+      const payload = {
+        ...profile,
+        age: profile.age ? parseInt(profile.age as any, 10) : null,
+        height_cm: profile.height_cm ? parseInt(profile.height_cm as any, 10) : null,
+      };
+      await api.put("/users/profile", payload);
       toast.success("Profile intelligence updated successfully.");
     } catch (err) {
       toast.error("Failed to update profile parameters.");
     } finally {
       setProfileLoading(false);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    
+    const file = e.target.files[0];
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size must be less than 5MB");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    setImageUploading(true);
+    try {
+      const res = await api.post("/users/profile-picture", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      setProfile({ ...profile, profile_image_url: res.data.profile_image_url });
+      toast.success("Profile picture updated successfully.");
+    } catch (err) {
+      toast.error("Failed to upload profile picture.");
+    } finally {
+      setImageUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDeleteImage = async () => {
+    setImageUploading(true);
+    try {
+      await api.delete("/users/profile-picture");
+      setProfile({ ...profile, profile_image_url: null });
+      toast.success("Profile picture removed.");
+    } catch (err) {
+      toast.error("Failed to remove profile picture.");
+    } finally {
+      setImageUploading(false);
     }
   };
 
@@ -85,7 +139,11 @@ export default function SettingsClient({ initialProfile }: { initialProfile: Pro
   };
 
   // Compute Intelligence Readiness
-  const fields = [profile.first_name, profile.last_name, profile.city, profile.country_code];
+  const fields = [
+    profile.first_name, profile.last_name, profile.city, profile.country_code,
+    profile.age, profile.gender, profile.height_cm, profile.body_type, 
+    profile.fashion_experience, profile.primary_style
+  ];
   const filledFields = fields.filter(Boolean).length;
   const completenessScore = Math.round((filledFields / fields.length) * 100) || 0;
   
@@ -104,31 +162,49 @@ export default function SettingsClient({ initialProfile }: { initialProfile: Pro
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-brand-blue/10 to-transparent rounded-full blur-[80px] pointer-events-none" />
         
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
-          <div className="flex items-center gap-6">
-            <div className="w-24 h-24 rounded-full bg-surface-2 border-2 border-brand-blue/30 p-1 relative group">
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <div className="w-24 h-24 rounded-full bg-surface-2 border-2 border-brand-blue/30 p-1 relative group shrink-0">
               <div className="absolute inset-0 bg-brand-blue/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="w-full h-full bg-[#060816] rounded-full flex items-center justify-center relative z-10 overflow-hidden">
-                <span className="text-3xl font-bold text-white uppercase">
-                  {profile.first_name ? profile.first_name[0] : <User className="w-8 h-8 text-slate-500" />}
-                  {profile.last_name ? profile.last_name[0] : ""}
-                </span>
-              </div>
-              {hasLocation && (
-                <div className="absolute -bottom-1 -right-1 bg-surface-1 border border-brand-blue/30 w-8 h-8 rounded-full flex items-center justify-center z-20 shadow-lg">
-                  <BadgeCheck className="w-4 h-4 text-brand-blue" />
+              <div className="w-full h-full bg-[#060816] rounded-full flex items-center justify-center relative z-10 overflow-hidden group-hover:bg-black/50 transition-colors">
+                {profile.profile_image_url ? (
+                  <img src={profile.profile_image_url} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-3xl font-bold text-white uppercase">
+                    {profile.first_name ? profile.first_name[0] : <User className="w-8 h-8 text-slate-500" />}
+                    {profile.last_name ? profile.last_name[0] : ""}
+                  </span>
+                )}
+                
+                {/* Upload overlay */}
+                <div 
+                  className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {imageUploading ? <Loader2 className="w-6 h-6 text-white animate-spin" /> : <Camera className="w-6 h-6 text-white" />}
                 </div>
+              </div>
+              <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+              
+              {profile.profile_image_url && (
+                <button 
+                  onClick={handleDeleteImage}
+                  disabled={imageUploading}
+                  className="absolute -bottom-1 -right-1 bg-red-500 hover:bg-red-600 border border-red-400 w-8 h-8 rounded-full flex items-center justify-center z-20 shadow-lg transition-colors"
+                >
+                  <Trash2 className="w-4 h-4 text-white" />
+                </button>
               )}
             </div>
             
-            <div>
-              <h1 className="text-3xl font-bold text-white tracking-tight mb-2 flex items-center gap-3">
+            <div className="text-center md:text-left">
+              <h1 className="text-3xl font-bold text-white tracking-tight mb-2 flex items-center justify-center md:justify-start gap-3">
                 {profile.first_name || profile.last_name ? `${profile.first_name} ${profile.last_name}` : "Stylist Profile"}
               </h1>
-              <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm text-slate-400">
                 <span className="flex items-center gap-1.5"><Mail className="w-4 h-4" /> {profile.email || "No email linked"}</span>
                 {hasLocation && (
                   <>
-                    <span className="w-1 h-1 rounded-full bg-white/20" />
+                    <span className="w-1 h-1 rounded-full bg-white/20 hidden md:block" />
                     <span className="flex items-center gap-1.5 text-brand-blue"><MapPin className="w-4 h-4" /> {profile.city}, {profile.country_code.toUpperCase()}</span>
                   </>
                 )}
@@ -158,88 +234,102 @@ export default function SettingsClient({ initialProfile }: { initialProfile: Pro
             <div className="flex items-center gap-3 mb-8 pb-6 border-b border-white/5">
               <Settings2 className="w-6 h-6 text-brand-blue" />
               <div>
-                <h2 className="text-xl font-bold text-white tracking-tight">Identity & Localization</h2>
-                <p className="text-sm text-slate-400 mt-1">Configure your core identity for AI personalization.</p>
+                <h2 className="text-xl font-bold text-white tracking-tight">Identity & Style Context</h2>
+                <p className="text-sm text-slate-400 mt-1">Configure your identity to refine AI personalization.</p>
               </div>
             </div>
 
-            <form onSubmit={submitProfile} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-xs font-label-sm text-slate-400 uppercase tracking-widest mb-2 pl-1">First Name</label>
-                  <input 
-                    type="text" 
-                    name="first_name" 
-                    value={profile.first_name} 
-                    onChange={handleProfileChange}
-                    className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-brand-blue/50 focus:border-brand-blue/50 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]" 
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-label-sm text-slate-400 uppercase tracking-widest mb-2 pl-1">Last Name</label>
-                  <input 
-                    type="text" 
-                    name="last_name" 
-                    value={profile.last_name} 
-                    onChange={handleProfileChange}
-                    className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-brand-blue/50 focus:border-brand-blue/50 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]" 
-                  />
+            <form onSubmit={submitProfile} className="space-y-8">
+              
+              <div className="space-y-6">
+                <h3 className="text-sm font-bold text-slate-300 border-b border-white/5 pb-2">Basic Info</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-xs font-label-sm text-slate-400 uppercase tracking-widest mb-2 pl-1">First Name</label>
+                    <input type="text" name="first_name" value={profile.first_name} onChange={handleProfileChange} className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-brand-blue/50 focus:border-brand-blue/50 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-label-sm text-slate-400 uppercase tracking-widest mb-2 pl-1">Last Name</label>
+                    <input type="text" name="last_name" value={profile.last_name} onChange={handleProfileChange} className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-brand-blue/50 focus:border-brand-blue/50 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]" />
+                  </div>
                 </div>
               </div>
 
-              {/* STYLING PREFERENCE */}
-              <div className="pt-4">
-                <label className="block text-xs font-label-sm text-slate-400 uppercase tracking-widest mb-2 pl-1">Styling Preference</label>
-                <div className="relative">
-                  <select
-                    name="styling_preference"
-                    value={profile.styling_preference || "neutral"}
-                    onChange={(e) => setProfile({ ...profile, styling_preference: e.target.value })}
-                    className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-brand-blue/50 focus:border-brand-blue/50 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)] appearance-none"
-                  >
-                    <option value="neutral">Neutral</option>
-                    <option value="masculine">Masculine</option>
-                    <option value="feminine">Feminine</option>
-                  </select>
-                  <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              <div className="space-y-6">
+                <h3 className="text-sm font-bold text-slate-300 border-b border-white/5 pb-2">Physical Traits</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-xs font-label-sm text-slate-400 uppercase tracking-widest mb-2 pl-1">Age</label>
+                    <input type="number" name="age" value={profile.age || ""} onChange={handleProfileChange} className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-brand-blue/50 focus:border-brand-blue/50 transition-all" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-label-sm text-slate-400 uppercase tracking-widest mb-2 pl-1">Gender</label>
+                    <select name="gender" value={profile.gender || ""} onChange={handleProfileChange} className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-brand-blue/50 focus:border-brand-blue/50 transition-all appearance-none">
+                      <option value="">Select</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Non-binary">Non-binary</option>
+                      <option value="Prefer not to say">Prefer not to say</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-label-sm text-slate-400 uppercase tracking-widest mb-2 pl-1">Height (cm)</label>
+                    <input type="number" name="height_cm" value={profile.height_cm || ""} onChange={handleProfileChange} className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-brand-blue/50 focus:border-brand-blue/50 transition-all" />
                   </div>
                 </div>
-                <p className="text-xs text-slate-500 mt-2 px-1">Used by the AI Stylist to personalize your outfit recommendations and accessories.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-xs font-label-sm text-slate-400 uppercase tracking-widest mb-2 pl-1">Body Type</label>
+                    <select name="body_type" value={profile.body_type || ""} onChange={handleProfileChange} className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-brand-blue/50 focus:border-brand-blue/50 transition-all appearance-none">
+                      <option value="">Select</option>
+                      <option value="Slim">Slim</option>
+                      <option value="Athletic">Athletic</option>
+                      <option value="Average">Average</option>
+                      <option value="Curvy">Curvy</option>
+                      <option value="Plus Size">Plus Size</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <h3 className="text-sm font-bold text-slate-300 border-b border-white/5 pb-2">Style Profile</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-xs font-label-sm text-slate-400 uppercase tracking-widest mb-2 pl-1">Fashion Experience</label>
+                    <select name="fashion_experience" value={profile.fashion_experience || ""} onChange={handleProfileChange} className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-brand-blue/50 focus:border-brand-blue/50 transition-all appearance-none">
+                      <option value="">Select</option>
+                      <option value="Beginner">Beginner</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Advanced">Advanced</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-label-sm text-slate-400 uppercase tracking-widest mb-2 pl-1">Primary Style Goal</label>
+                    <select name="primary_style" value={profile.primary_style || ""} onChange={handleProfileChange} className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-brand-blue/50 focus:border-brand-blue/50 transition-all appearance-none">
+                      <option value="">Select</option>
+                      <option value="Casual">Casual</option>
+                      <option value="Streetwear">Streetwear</option>
+                      <option value="Minimalist">Minimalist</option>
+                      <option value="Vintage">Vintage</option>
+                      <option value="Business Professional">Business Professional</option>
+                      <option value="Bohemian">Bohemian</option>
+                    </select>
+                  </div>
+                </div>
               </div>
 
               {/* ═══ SECTION 4: WEATHER & LOCATION ═══ */}
-              <div className="mt-8 pt-8 border-t border-white/5">
-                <div className="flex items-center justify-between mb-6">
-                   <label className="block text-xs font-label-sm text-brand-blue uppercase tracking-widest pl-1">Environmental Targeting</label>
-                   {!hasLocation && (
-                     <span className="text-xs text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded border border-yellow-500/20">Missing Data</span>
-                   )}
-                </div>
+              <div className="pt-6">
+                <h3 className="text-sm font-bold text-slate-300 border-b border-white/5 pb-2 mb-6">Environmental Targeting</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
-                  
                   <div>
                     <label className="block text-xs font-label-sm text-slate-400 uppercase tracking-widest mb-2 pl-1">City</label>
-                    <input 
-                      type="text" 
-                      name="city" 
-                      placeholder="e.g. London"
-                      value={profile.city} 
-                      onChange={handleProfileChange}
-                      className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-brand-blue/50 focus:border-brand-blue/50 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]" 
-                    />
+                    <input type="text" name="city" placeholder="e.g. London" value={profile.city} onChange={handleProfileChange} className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-brand-blue/50 focus:border-brand-blue/50 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]" />
                   </div>
                   <div>
                     <label className="block text-xs font-label-sm text-slate-400 uppercase tracking-widest mb-2 pl-1">Country Code</label>
-                    <input 
-                      type="text" 
-                      name="country_code" 
-                      placeholder="e.g. UK"
-                      maxLength={2}
-                      value={profile.country_code} 
-                      onChange={handleProfileChange}
-                      className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-brand-blue/50 focus:border-brand-blue/50 uppercase transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]" 
-                    />
+                    <input type="text" name="country_code" placeholder="e.g. UK" maxLength={2} value={profile.country_code} onChange={handleProfileChange} className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-brand-blue/50 focus:border-brand-blue/50 uppercase transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]" />
                   </div>
                 </div>
 
@@ -255,8 +345,9 @@ export default function SettingsClient({ initialProfile }: { initialProfile: Pro
                 <button 
                   type="submit" 
                   disabled={profileLoading}
-                  className="ds-btn-primary px-8 py-3 shadow-[0_0_20px_rgba(59,130,246,0.2)]"
+                  className="ds-btn-primary px-8 py-3 shadow-[0_0_20px_rgba(59,130,246,0.2)] flex items-center gap-2"
                 >
+                  {profileLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                   {profileLoading ? 'Syncing...' : 'Update Identity Profile'}
                 </button>
               </div>
@@ -280,48 +371,21 @@ export default function SettingsClient({ initialProfile }: { initialProfile: Pro
                 <label className="block text-xs font-label-sm text-slate-400 uppercase tracking-widest mb-2 pl-1">Current Password</label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                  <input 
-                    type="password" 
-                    name="current_password" 
-                    required
-                    value={passwordForm.current_password} 
-                    onChange={handlePasswordChange}
-                    className="w-full bg-[#060816]/80 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-red-500/50 focus:border-red-500/50 transition-all" 
-                  />
+                  <input type="password" name="current_password" required value={passwordForm.current_password} onChange={handlePasswordChange} className="w-full bg-[#060816]/80 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-red-500/50 focus:border-red-500/50 transition-all" />
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-xs font-label-sm text-slate-400 uppercase tracking-widest mb-2 pl-1">New Password</label>
-                  <input 
-                    type="password" 
-                    name="new_password" 
-                    required
-                    minLength={8}
-                    value={passwordForm.new_password} 
-                    onChange={handlePasswordChange}
-                    className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-red-500/50 focus:border-red-500/50 transition-all" 
-                  />
+                  <input type="password" name="new_password" required minLength={8} value={passwordForm.new_password} onChange={handlePasswordChange} className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-red-500/50 focus:border-red-500/50 transition-all" />
                 </div>
                 <div>
                   <label className="block text-xs font-label-sm text-slate-400 uppercase tracking-widest mb-2 pl-1">Confirm New Password</label>
-                  <input 
-                    type="password" 
-                    name="confirm_password" 
-                    required
-                    minLength={8}
-                    value={passwordForm.confirm_password} 
-                    onChange={handlePasswordChange}
-                    className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-red-500/50 focus:border-red-500/50 transition-all" 
-                  />
+                  <input type="password" name="confirm_password" required minLength={8} value={passwordForm.confirm_password} onChange={handlePasswordChange} className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-red-500/50 focus:border-red-500/50 transition-all" />
                 </div>
               </div>
               <div className="pt-4 flex justify-end">
-                <button 
-                  type="submit" 
-                  disabled={passwordLoading}
-                  className="px-6 py-3 bg-surface-2 border border-red-500/30 text-red-400 font-medium rounded-xl hover:bg-red-500/10 hover:border-red-500/50 transition-all focus:outline-none focus:ring-2 focus:ring-red-500/50 disabled:opacity-50"
-                >
+                <button type="submit" disabled={passwordLoading} className="px-6 py-3 bg-surface-2 border border-red-500/30 text-red-400 font-medium rounded-xl hover:bg-red-500/10 hover:border-red-500/50 transition-all focus:outline-none focus:ring-2 focus:ring-red-500/50 disabled:opacity-50">
                   {passwordLoading ? 'Updating Security...' : 'Update Password'}
                 </button>
               </div>
@@ -367,10 +431,10 @@ export default function SettingsClient({ initialProfile }: { initialProfile: Pro
                  </div>
 
                  <div className="flex items-start gap-3">
-                   {completenessScore >= 50 ? <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" /> : <AlertCircle className="w-5 h-5 text-yellow-500 shrink-0" />}
+                   {completenessScore >= 80 ? <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" /> : <AlertCircle className="w-5 h-5 text-yellow-500 shrink-0" />}
                    <div>
                      <p className="text-sm font-medium text-slate-200">Identity Graph</p>
-                     <p className="text-xs text-slate-500 mt-0.5">{completenessScore >= 50 ? "Sufficient for Basics" : "Requires more detail"}</p>
+                     <p className="text-xs text-slate-500 mt-0.5">{completenessScore >= 80 ? "Sufficient for Deep AI" : "Requires more detail"}</p>
                    </div>
                  </div>
                </div>
@@ -382,6 +446,20 @@ export default function SettingsClient({ initialProfile }: { initialProfile: Pro
                    </p>
                  </div>
                )}
+
+               <div className="mt-6 pt-6 border-t border-white/5">
+                 <h4 className="text-sm font-medium text-slate-300 mb-3">AI Activity</h4>
+                 <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+                   View your Gemini key connection status and recent AI activity.
+                 </p>
+                 <a 
+                   href="/settings/ai-usage"
+                   className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-brand-purple/10 border border-brand-purple/30 text-brand-purple rounded-xl hover:bg-brand-purple/20 transition-all font-medium text-sm"
+                 >
+                   <Activity className="w-4 h-4" />
+                   View AI Activity
+                 </a>
+               </div>
              </div>
           </m.div>
         </div>

@@ -7,15 +7,25 @@ import { getImageUrl } from "@/lib/image-url";
 import Image from "next/image";
 import Link from "next/link";
 import { fadeUp } from "@/lib/animations";
+import { GlassPanel } from "@/components/ui/GlassPanel";
+import { WidgetSkeleton } from "@/components/ui/skeleton-loaders";
 
 export function DailyStylistWidget() {
   const { briefQuery } = useDailyStylist();
 
   if (briefQuery.isLoading) {
     return (
-      <m.div variants={fadeUp} className="bg-surface-1/70 backdrop-blur-xl border border-white/10 rounded-2xl p-6 h-40 animate-pulse flex items-center justify-center">
-        <Loader2 className="w-6 h-6 text-brand-blue animate-spin" />
-      </m.div>
+      <GlassPanel className="p-6 h-full border border-brand-blue/20">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            <CalendarDays className="w-5 h-5 text-brand-blue" />
+            Daily Stylist
+          </h2>
+        </div>
+        <div className="flex items-center justify-center py-6">
+          <WidgetSkeleton />
+        </div>
+      </GlassPanel>
     );
   }
 

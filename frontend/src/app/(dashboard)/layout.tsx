@@ -35,6 +35,7 @@ import {
 
 import { AmbientGlow } from "@/components/ui/AmbientGlow";
 import { SmartWardrobeLogo } from "@/components/branding/smart-wardrobe-logo";
+import AIAccessIntroModal from "@/components/dashboard/AIAccessIntroModal";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -81,6 +82,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <AuthGuard>
+      <AIAccessIntroModal />
       <div className="flex h-screen bg-[#02040a] font-sans overflow-hidden selection:bg-brand-blue/30 selection:text-white">
         
         {/* ═══ SECTION 6: AMBIENT VISUAL SYSTEM ═══ */}

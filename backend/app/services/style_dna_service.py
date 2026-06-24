@@ -11,6 +11,7 @@ from sqlalchemy import select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.clothing_item import ClothingItem
+from app.models.user_feedback_affinity import UserFeedbackAffinity
 from app.services.style_dna_config import (
     NEUTRAL_COLORS,
     VIBRANT_COLORS,
@@ -25,12 +26,17 @@ from app.services.style_dna_config import (
 class StyleDNAService:
     async def analyze(self, session: AsyncSession, user_id: uuid.UUID) -> Dict[str, Any]:
         """Analyze wardrobe to produce a Style DNA profile."""
+        from app.models.user import User
+        user_stmt = select(User).where(User.id == user_id)
+        user_res = await session.execute(user_stmt)
+        user = user_res.scalar_one_or_none()
+        
         stmt = select(ClothingItem).where(ClothingItem.user_id == user_id)
         result = await session.execute(stmt)
         items = result.scalars().all()
 
         if not items:
-            return self._empty_profile()
+            return self._empty_profile(user)
 
         # ── Dominant colors ──
         color_counts: Dict[str, int] = {}
@@ -109,6 +115,27 @@ class StyleDNAService:
         # ── Confidence based on data depth ──
         confidence = self._calculate_confidence(items, color_counts, cat_counts)
 
+        # ── Fetch Feedback Affinities ──
+        aff_stmt = select(UserFeedbackAffinity).where(UserFeedbackAffinity.user_id == user_id)
+        aff_res = await session.execute(aff_stmt)
+        affinities = aff_res.scalars().all()
+        
+        liked_styles = [a.value for a in affinities if a.dimension == 'style' and a.score > 0]
+        disliked_styles = [a.value for a in affinities if a.dimension == 'style' and a.score < 0]
+        liked_colors = [a.value for a in affinities if a.dimension == 'color' and a.score > 0]
+        disliked_colors = [a.value for a in affinities if a.dimension == 'color' and a.score < 0]
+        favorite_occasions = [a.value for a in affinities if a.dimension == 'occasion' and a.score > 0]
+        avoided_occasions = [a.value for a in affinities if a.dimension == 'occasion' and a.score < 0]
+        
+        feedback_insights = {
+            "liked_styles": sorted(liked_styles, key=lambda x: next((a.score for a in affinities if a.value == x and a.dimension == 'style'), 0), reverse=True),
+            "disliked_styles": sorted(disliked_styles, key=lambda x: next((a.score for a in affinities if a.value == x and a.dimension == 'style'), 0)),
+            "liked_colors": sorted(liked_colors, key=lambda x: next((a.score for a in affinities if a.value == x and a.dimension == 'color'), 0), reverse=True),
+            "disliked_colors": sorted(disliked_colors, key=lambda x: next((a.score for a in affinities if a.value == x and a.dimension == 'color'), 0)),
+            "favorite_occasions": sorted(favorite_occasions, key=lambda x: next((a.score for a in affinities if a.value == x and a.dimension == 'occasion'), 0), reverse=True),
+            "avoided_occasions": sorted(avoided_occasions, key=lambda x: next((a.score for a in affinities if a.value == x and a.dimension == 'occasion'), 0))
+        }
+
         return {
             "style_type": style.style_type,
             "confidence": confidence,
@@ -118,6 +145,13 @@ class StyleDNAService:
             "formality": formality,
             "seasonal_preference": seasonal_preference,
             "top_brand": top_brand,
+            "profile_hints": {
+                "age": user.age if user else None,
+                "gender": user.gender if user else None,
+                "primary_style": user.primary_style if user else None,
+                "fashion_experience": user.fashion_experience if user else None
+            },
+            "feedback_insights": feedback_insights
         }
 
     def _calculate_confidence(
@@ -155,9 +189,9 @@ class StyleDNAService:
 
         return min(100, score)
 
-    def _empty_profile(self) -> Dict[str, Any]:
+    def _empty_profile(self, user) -> Dict[str, Any]:
         return {
-            "style_type": "Undetermined",
+            "style_type": user.primary_style if user and user.primary_style else "Undetermined",
             "confidence": 0,
             "traits": ["Not enough data to determine style"],
             "dominant_colors": [],
@@ -165,6 +199,20 @@ class StyleDNAService:
             "formality": "unknown",
             "seasonal_preference": "unknown",
             "top_brand": None,
+            "profile_hints": {
+                "age": user.age if user else None,
+                "gender": user.gender if user else None,
+                "primary_style": user.primary_style if user else None,
+                "fashion_experience": user.fashion_experience if user else None
+            },
+            "feedback_insights": {
+                "liked_styles": [],
+                "disliked_styles": [],
+                "liked_colors": [],
+                "disliked_colors": [],
+                "favorite_occasions": [],
+                "avoided_occasions": []
+            }
         }
 
 

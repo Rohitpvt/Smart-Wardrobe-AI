@@ -17,10 +17,11 @@ asyncpg>=0.30.0
 alembic>=1.14.0
 greenlet>=3.1.0
 
-# --- Authentication ---
+# --- Authentication & Security ---
 PyJWT>=2.9.0
 bcrypt>=4.2.0
 email-validator>=2.1.0
+cryptography>=42.0.0
 
 # --- AI Providers ---
 google-genai>=1.0.0
@@ -42,3 +43,4 @@ cachetools>=5.0.0
 pytest>=8.0.0
 pytest-asyncio>=0.24.0
 httpx>=0.28.0
+google-auth>=2.29.0

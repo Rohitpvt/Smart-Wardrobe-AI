@@ -7,6 +7,7 @@ import {
   Layers, Wand2, Eye, Cpu, Network, ArrowRight, Zap, Combine, Settings2
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { api } from "@/lib/axios";
 
 import { fadeUp, staggerContainer, useCountUp } from "@/lib/animations";
 import { AmbientGlow } from "@/components/ui/AmbientGlow";
@@ -18,6 +19,24 @@ function AnimatedCounter({ value, suffix = "" }: { value: number, suffix?: strin
 }
 
 export default function LandingPage() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await api.get("/users/me");
+        if (res.status === 200) {
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch (err) {
+        setIsAuthenticated(false);
+      }
+    };
+    checkAuth();
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#02040a] font-sans selection:bg-brand-blue/30 selection:text-white overflow-x-hidden">
       
@@ -31,12 +50,22 @@ export default function LandingPage() {
             <SmartWardrobeLogo variant="full" />
           </Link>
           <div className="flex items-center gap-6">
-            <Link href="/login" className="text-sm font-medium text-slate-400 hover:text-white transition-colors hidden sm:block">
-              Sign In
-            </Link>
-            <Link href="/register" className="ds-btn-primary px-6 py-2.5 text-sm shadow-[0_0_20px_rgba(59,130,246,0.3)]">
-              Start Free
-            </Link>
+            {isAuthenticated === null ? (
+              <div className="h-10 w-24 bg-white/5 animate-pulse rounded-lg" />
+            ) : isAuthenticated ? (
+              <Link href="/dashboard" className="ds-btn-primary px-6 py-2.5 text-sm shadow-[0_0_20px_rgba(59,130,246,0.3)]">
+                Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" className="text-sm font-medium text-slate-400 hover:text-white transition-colors hidden sm:block">
+                  Sign In
+                </Link>
+                <Link href="/register" className="ds-btn-primary px-6 py-2.5 text-sm shadow-[0_0_20px_rgba(59,130,246,0.3)]">
+                  Start Free
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -63,9 +92,15 @@ export default function LandingPage() {
             </m.p>
             
             <m.div variants={fadeUp} className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-              <Link href="/register" className="ds-btn-primary px-8 py-4 text-base w-full sm:w-auto group flex items-center justify-center gap-2">
-                Get Started <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
+              {isAuthenticated ? (
+                <Link href="/dashboard" className="ds-btn-primary px-8 py-4 text-base w-full sm:w-auto group flex items-center justify-center gap-2">
+                  Go to Dashboard <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              ) : (
+                <Link href="/register" className="ds-btn-primary px-8 py-4 text-base w-full sm:w-auto group flex items-center justify-center gap-2">
+                  Get Started <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              )}
               <Link href="#features" className="ds-btn-secondary px-8 py-4 text-base w-full sm:w-auto border-white/10 hover:border-white/20 hover:bg-surface-2 transition-all">
                 Explore Features
               </Link>
@@ -285,9 +320,15 @@ export default function LandingPage() {
             <p className="text-lg md:text-xl text-slate-400 mb-10 max-w-2xl relative z-10">
               Join the platform that treats your closet like a highly structured, queryable, and dynamically styled database.
             </p>
-            <Link href="/register" className="ds-btn-primary px-10 py-5 text-lg shadow-[0_0_50px_-10px_rgba(59,130,246,0.6)] relative z-10 group/btn flex items-center gap-3">
-              Start Free Trial <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
-            </Link>
+            {isAuthenticated ? (
+              <Link href="/dashboard" className="ds-btn-primary px-10 py-5 text-lg shadow-[0_0_50px_-10px_rgba(59,130,246,0.6)] relative z-10 group/btn flex items-center gap-3">
+                Go to Dashboard <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
+              </Link>
+            ) : (
+              <Link href="/register" className="ds-btn-primary px-10 py-5 text-lg shadow-[0_0_50px_-10px_rgba(59,130,246,0.6)] relative z-10 group/btn flex items-center gap-3">
+                Start Free Trial <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
+              </Link>
+            )}
           </m.div>
         </section>
       </main>

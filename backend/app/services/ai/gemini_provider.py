@@ -21,11 +21,12 @@ from app.services.ai.prompts import CLOTHING_ANALYSIS_SYSTEM_PROMPT
 logger = logging.getLogger(__name__)
 
 
-class GeminiProvider(AIProvider):
-    """Implementation of AIProvider using Google's Gemini SDK."""
+class GeminiProvider:
+    """Implementation of AI provider backend using Google's Gemini SDK."""
 
-    def __init__(self):
-        self.client = genai.Client(api_key=settings.GEMINI_API_KEY) if settings.GEMINI_API_KEY else None
+    def __init__(self, api_key: str | None = None):
+        key = api_key or settings.GEMINI_API_KEY
+        self.client = genai.Client(api_key=key) if key else None
         self.model_name = "gemini-2.5-flash"
 
     def _calculate_backend_confidence(self, extraction: AIClothingExtraction) -> int:
@@ -57,7 +58,7 @@ class GeminiProvider(AIProvider):
         self,
         image_data: bytes,
         mime_type: str,
-    ) -> AIClothingExtraction:
+    ) -> tuple[AIClothingExtraction, dict]:
         """
         Sends the image to Gemini to extract clothing metadata.
         Uses structured outputs (Pydantic schema).
@@ -98,7 +99,13 @@ class GeminiProvider(AIProvider):
         extraction.confidence_score = final_confidence
 
         logger.info(f"Successfully analyzed image. Final confidence: {final_confidence}")
-        return extraction
+        
+        usage = {
+            "input_tokens": response.usage_metadata.prompt_token_count if response.usage_metadata else None,
+            "output_tokens": response.usage_metadata.candidates_token_count if response.usage_metadata else None,
+            "total_tokens": response.usage_metadata.total_token_count if response.usage_metadata else None,
+        }
+        return extraction, usage
 
     async def generate_text(
         self,
@@ -106,7 +113,7 @@ class GeminiProvider(AIProvider):
         system_instruction: str = "",
         temperature: float = 0.7,
         timeout: float = 5.0,
-    ) -> str:
+    ) -> tuple[str, dict]:
         """Generate plain text using Gemini."""
         if not self.client:
             raise ValueError("Gemini API key is not configured.")
@@ -119,17 +126,23 @@ class GeminiProvider(AIProvider):
             )
 
         def _generate():
-            return self.client.models.generate_content(
+            resp = self.client.models.generate_content(
                 model=self.model_name,
                 contents=prompt,
                 config=config,
-            ).text
+            )
+            return resp
 
-        result = await asyncio.wait_for(
+        response = await asyncio.wait_for(
             asyncio.to_thread(_generate),
             timeout=timeout,
         )
-        return (result or "").strip()
+        usage = {
+            "input_tokens": response.usage_metadata.prompt_token_count if response.usage_metadata else None,
+            "output_tokens": response.usage_metadata.candidates_token_count if response.usage_metadata else None,
+            "total_tokens": response.usage_metadata.total_token_count if response.usage_metadata else None,
+        }
+        return (response.text or "").strip(), usage
 
     async def generate_json(
         self,
@@ -137,7 +150,7 @@ class GeminiProvider(AIProvider):
         system_instruction: str = "",
         temperature: float = 0.7,
         timeout: float = 5.0,
-    ) -> dict:
+    ) -> tuple[dict, dict]:
         """Generate JSON using Gemini's response_mime_type."""
         if not self.client:
             raise ValueError("Gemini API key is not configured.")
@@ -154,16 +167,21 @@ class GeminiProvider(AIProvider):
                 model=self.model_name,
                 contents=prompt,
                 config=types.GenerateContentConfig(**config_kwargs),
-            ).text
+            )
 
-        result = await asyncio.wait_for(
+        response = await asyncio.wait_for(
             asyncio.to_thread(_generate),
             timeout=timeout,
         )
-        if not result:
-            return {}
-        clean_json = result.replace("```json", "").replace("```", "").strip()
-        return json.loads(clean_json)
+        usage = {
+            "input_tokens": response.usage_metadata.prompt_token_count if response.usage_metadata else None,
+            "output_tokens": response.usage_metadata.candidates_token_count if response.usage_metadata else None,
+            "total_tokens": response.usage_metadata.total_token_count if response.usage_metadata else None,
+        }
+        if not response.text:
+            return {}, usage
+        clean_json = response.text.replace("```json", "").replace("```", "").strip()
+        return json.loads(clean_json), usage
 
     async def generate_chat_response(
         self,
@@ -172,7 +190,7 @@ class GeminiProvider(AIProvider):
         tools: list[dict[str, Any]] | None = None,
         temperature: float = 0.4,
         timeout: float = 10.0,
-    ) -> dict[str, Any]:
+    ) -> tuple[dict[str, Any], dict]:
         """
         Generate a chat response with optional tool-calling using Gemini.
 
@@ -251,7 +269,12 @@ class GeminiProvider(AIProvider):
         if response.text:
             result["text"] = response.text
 
-        return result
+        usage = {
+            "input_tokens": response.usage_metadata.prompt_token_count if response.usage_metadata else None,
+            "output_tokens": response.usage_metadata.candidates_token_count if response.usage_metadata else None,
+            "total_tokens": response.usage_metadata.total_token_count if response.usage_metadata else None,
+        }
+        return result, usage
 
     async def generate_outfit_explanation(
         self,
@@ -263,7 +286,7 @@ class GeminiProvider(AIProvider):
         scores: dict | None,
         style_dna: str | None = None,
         rotation_context: str | None = None,
-    ) -> str:
+    ) -> tuple[str, dict]:
         fallback = "This combination was selected based on your wardrobe preferences and color profile."
 
         weather_str = ""
@@ -299,10 +322,10 @@ Footwear: {footwear_name}
             return await self.generate_text(prompt=prompt, temperature=0.7, timeout=1.5)
         except asyncio.TimeoutError:
             logger.warning("Gemini explanation generation timed out (1.5s). Using fallback.")
-            return fallback
+            return fallback, {"input_tokens": None, "output_tokens": None, "total_tokens": None}
         except Exception as e:
             logger.error(f"Gemini explanation generation failed: {str(e)}. Using fallback.")
-            return fallback
+            return fallback, {"input_tokens": None, "output_tokens": None, "total_tokens": None}
 
     async def generate_outfit_completion_accessories(
         self,
@@ -312,7 +335,7 @@ Footwear: {footwear_name}
         outerwear_name: str | None,
         anchor_type: str,
         styling_preference: str,
-    ) -> dict:
+    ) -> tuple[dict, dict]:
         fallback = {
             "reasoning": "This combination builds a balanced aesthetic around your chosen item.",
             "accessories": {"Style Note": "Minimal accessories recommended."},
@@ -344,7 +367,7 @@ Footwear: {footwear_name}
             return await self.generate_json(prompt=prompt, temperature=0.7, timeout=3.0)
         except Exception as e:
             logger.error(f"Gemini completion accessory generation failed: {str(e)}")
-            return fallback
+            return fallback, {"input_tokens": None, "output_tokens": None, "total_tokens": None}
 
 
 # Singleton instance

@@ -7,7 +7,7 @@ if (!apiUrl) {
 
 export const api = axios.create({
   baseURL: apiUrl,
-  timeout: 10000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -51,7 +51,7 @@ api.interceptors.response.use(
     // If it's a 401 and we haven't already retried
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       // Don't intercept auth endpoints
-      if (originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/refresh')) {
+      if (originalRequest.url?.includes('/auth/')) {
         return Promise.reject(error);
       }
 
@@ -87,7 +87,20 @@ api.interceptors.response.use(
     }
 
     // Global Error Formatting for UI mutations
-    if (!error.response) {
+    if (error.response) {
+      const data = error.response.data as any;
+      // FastAPI wraps HTTPException detail in data.detail; support both shapes
+      const detail = data?.detail ?? data;
+
+      if (
+        error.response.status === 403 && 
+        (detail?.status === 'provider_required' || detail?.action === 'quota_exceeded' || detail?.error_code === 'quota_exceeded')
+      ) {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent('ai_quota_exceeded', { detail: detail }));
+        }
+      }
+    } else {
       error.message = "Network error. Please check your connection.";
     }
 

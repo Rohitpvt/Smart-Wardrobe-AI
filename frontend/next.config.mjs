@@ -58,6 +58,18 @@ const nextConfig = {
       },
     ]
   },
+  async rewrites() {
+    return [
+      {
+        source: '/api/uploads/:path*',
+        destination: `${apiProtocol}://${apiHost}:${apiPort}/api/uploads/:path*`
+      },
+      {
+        source: '/api/:path*',
+        destination: `${apiProtocol}://${apiHost}:${apiPort}/api/:path*`
+      }
+    ]
+  },
 };
 
 export default nextConfig;

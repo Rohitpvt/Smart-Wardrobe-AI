@@ -23,7 +23,11 @@ class Settings(BaseSettings):
         ...,
         description="PostgreSQL connection string",
     )
-
+    
+    # User AI Provider Encryption
+    USER_AI_KEY_ENCRYPTION_SECRET: str | None = None
+    PLATFORM_AI_FALLBACK_ENABLED: bool = False
+    
     # --- JWT Authentication ---
     SECRET_KEY: str = Field(
         ...,
@@ -32,6 +36,13 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+
+    # --- Google OAuth ---
+    GOOGLE_CLIENT_ID: str | None = Field(
+        default=None,
+        description="Google OAuth Client ID"
+    )
+    DEBUG_GOOGLE_OAUTH: bool = False
 
     # --- Gemini AI ---
     GEMINI_API_KEY: str = Field(
@@ -53,6 +64,53 @@ class Settings(BaseSettings):
     AI_FALLBACK_PROVIDER: str = Field(
         default="nvidia",
         description="Fallback AI provider: nvidia | gemini",
+    )
+
+
+    PLATFORM_AI_FALLBACK_ENABLED: bool = Field(
+        default=True,
+        description="Whether fallback provider can be used if primary fails"
+    )
+    PLATFORM_AI_QUOTA_ENABLED: bool = Field(
+        default=True,
+        description="Whether to enforce the daily limit"
+    )
+
+    # --- AI Quota Plans ---
+    # PLATFORM_AI_FREE_DAILY_LIMIT is kept for backward compatibility for the free tier
+    PLATFORM_AI_FREE_DAILY_LIMIT: int = Field(
+        default=10,
+        description="Legacy free daily AI limit"
+    )
+    AI_QUOTA_FREE_DAILY_LIMIT: int | None = Field(
+        default=None,
+        description="Daily limit for free users"
+    )
+    AI_QUOTA_PREMIUM_DAILY_LIMIT: int | None = Field(
+        default=None,
+        description="Daily limit for premium users"
+    )
+    AI_QUOTA_PRO_DAILY_LIMIT: int | None = Field(
+        default=None,
+        description="Daily limit for pro users"
+    )
+
+    # --- AI Cost Estimation ---
+    AI_COST_GEMINI_INPUT_PER_1M_TOKENS: float | None = Field(
+        default=None,
+        description="Cost in currency per 1M input tokens for Gemini"
+    )
+    AI_COST_GEMINI_OUTPUT_PER_1M_TOKENS: float | None = Field(
+        default=None,
+        description="Cost in currency per 1M output tokens for Gemini"
+    )
+    AI_COST_NVIDIA_INPUT_PER_1M_TOKENS: float | None = Field(
+        default=None,
+        description="Cost in currency per 1M input tokens for NVIDIA"
+    )
+    AI_COST_NVIDIA_OUTPUT_PER_1M_TOKENS: float | None = Field(
+        default=None,
+        description="Cost in currency per 1M output tokens for NVIDIA"
     )
 
     # --- OpenWeather ---

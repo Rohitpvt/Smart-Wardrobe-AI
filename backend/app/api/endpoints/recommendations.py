@@ -26,8 +26,9 @@ from app.services.recommendation_reranker import recommendation_reranker
 from app.services.recommendations.completion_engine import outfit_completion_engine
 from app.models.user_preference import UserPreference
 from app.models.clothing_item import ClothingItem
-from app.schemas.recommendation import FeedbackRequest, FeedbackRead, FeedbackHistoryResponse
+from app.schemas.recommendation import FeedbackRequest, FeedbackRead, FeedbackHistoryResponse, FeedbackInsightsResponse
 from app.schemas.completion import CompletionBuildRequest, OutfitCompletionResponse
+from app.services.recommendation_feedback_service import recommendation_feedback_service
 from app.services.recommendations.recommendation_service import recommendation_service
 from app.schemas.recommendation_explanation import (
     ExplainableRecommendationRequest,
@@ -77,6 +78,9 @@ async def generate_recommendation(
     
     # 4. AI Explanation Generation
     ai_explanation = await ai_provider.generate_outfit_explanation(
+        db=db,
+        user_id=current_user.id,
+        feature_name="recommendation_explanation",
         top_name=top.name,
         bottom_name=bottom.name,
         footwear_name=shoes.name,
@@ -231,6 +235,9 @@ async def build_around_anchor(
         
     # 5. Gemini Accessories & Reasoning
     gemini_resp = await ai_provider.generate_outfit_completion_accessories(
+        db=db,
+        user_id=current_user.id,
+        feature_name="outfit_completion",
         top_name=top.name,
         bottom_name=bottom.name,
         footwear_name=shoes.name,
@@ -384,14 +391,27 @@ async def submit_feedback(
     if not rec:
         raise HTTPException(status_code=404, detail="Recommendation not found")
 
-    fb = await feedback_service.record_feedback(
+    fb = await recommendation_feedback_service.record_feedback(
         session=db,
         user_id=current_user.id,
-        outfit_id=id,
-        feedback_type=body.feedback_type,
-        source="manual"
+        recommendation_id=id,
+        rating=body.rating or (body.feedback_type if body.feedback_type else "NEUTRAL")
     )
     return fb
+
+@router.get("/feedback/insights", response_model=FeedbackInsightsResponse)
+async def get_feedback_insights(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get user feedback insights and cumulative affinities.
+    """
+    insights = await recommendation_feedback_service.get_feedback_insights(
+        session=db,
+        user_id=current_user.id
+    )
+    return FeedbackInsightsResponse(success=True, **insights)
 
 @router.get("/feedback/history", response_model=FeedbackHistoryResponse)
 async def get_feedback_history(
@@ -402,9 +422,14 @@ async def get_feedback_history(
     """
     Get recent feedback history.
     """
-    history = await feedback_service.get_feedback_history(
+    history = await recommendation_feedback_service.get_feedback_insights(
         session=db,
-        user_id=current_user.id,
-        limit=limit
+        user_id=current_user.id
     )
-    return FeedbackHistoryResponse(success=True, data=history)
+    # the existing feedback_service.py might still have get_feedback_history, let's keep it using feedback_service for history
+    # wait, feedback_service is being bypassed. Let's just do a manual query here.
+    query = select(OutfitFeedback).where(OutfitFeedback.user_id == current_user.id).order_by(desc(OutfitFeedback.created_at)).limit(limit)
+    result = await db.execute(query)
+    history_items = result.scalars().all()
+    
+    return FeedbackHistoryResponse(success=True, data=history_items)

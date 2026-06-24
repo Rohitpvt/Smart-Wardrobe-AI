@@ -25,8 +25,8 @@ logger = logging.getLogger(__name__)
 NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"
 
 
-class NvidiaProvider(AIProvider):
-    """Implementation of AIProvider using NVIDIA NIM (OpenAI-compatible API)."""
+class NvidiaProvider:
+    """Implementation of AI provider backend using NVIDIA NIM."""
 
     def __init__(self):
         self.client = None
@@ -47,7 +47,7 @@ class NvidiaProvider(AIProvider):
         self,
         image_data: bytes,
         mime_type: str,
-    ) -> AIClothingExtraction:
+    ) -> tuple[AIClothingExtraction, dict]:
         """
         Analyze a clothing image using NVIDIA's VLM (phi-4-multimodal-instruct).
         Encodes the image as base64 and sends via OpenAI-compatible chat completion.
@@ -69,8 +69,9 @@ class NvidiaProvider(AIProvider):
             '"brand": str|null, "confidence_score": int (0-100)}'
         )
 
-        def _call():
-            return self.client.chat.completions.create(
+        response = await asyncio.wait_for(
+            asyncio.to_thread(
+                self.client.chat.completions.create,
                 model=self.vision_model,
                 messages=[
                     {"role": "system", "content": CLOTHING_ANALYSIS_SYSTEM_PROMPT},
@@ -84,17 +85,17 @@ class NvidiaProvider(AIProvider):
                 ],
                 max_tokens=512,
                 temperature=0.1,
-            )
-
-        response = await asyncio.wait_for(
-            asyncio.to_thread(_call),
+            ),
             timeout=15.0,
         )
 
-        text = response.choices[0].message.content or ""
-        # Strip markdown wrappers
-        clean = text.replace("```json", "").replace("```", "").strip()
-        extraction = AIClothingExtraction.model_validate_json(clean)
+        json_content = response.choices[0].message.content or ""
+        try:
+            clean = json_content.replace("```json", "").replace("```", "").strip()
+            extraction = AIClothingExtraction.model_validate_json(clean)
+        except Exception as e:
+            logger.error(f"NVIDIA vision parsing failed: {str(e)}. Body: {json_content}")
+            raise
 
         # Apply backend confidence adjustment
         score = 100
@@ -107,8 +108,14 @@ class NvidiaProvider(AIProvider):
         score = max(0, score)
         extraction.confidence_score = (extraction.confidence_score + score) // 2
 
-        logger.info(f"[NVIDIA] Image analysis complete. Confidence: {extraction.confidence_score}")
-        return extraction
+        logger.info(f"Successfully analyzed image with NVIDIA. Confidence: {extraction.confidence_score}")
+        
+        usage = {
+            "input_tokens": response.usage.prompt_tokens if getattr(response, "usage", None) else None,
+            "output_tokens": response.usage.completion_tokens if getattr(response, "usage", None) else None,
+            "total_tokens": response.usage.total_tokens if getattr(response, "usage", None) else None,
+        }
+        return extraction, usage
 
     async def generate_text(
         self,
@@ -116,7 +123,7 @@ class NvidiaProvider(AIProvider):
         system_instruction: str = "",
         temperature: float = 0.7,
         timeout: float = 5.0,
-    ) -> str:
+    ) -> tuple[str, dict]:
         """Generate plain text using NVIDIA NIM."""
         if not self.client:
             raise ValueError("NVIDIA API key is not configured.")
@@ -126,19 +133,23 @@ class NvidiaProvider(AIProvider):
             messages.append({"role": "system", "content": system_instruction})
         messages.append({"role": "user", "content": prompt})
 
-        def _call():
-            return self.client.chat.completions.create(
+        response = await asyncio.wait_for(
+            asyncio.to_thread(
+                self.client.chat.completions.create,
                 model=self.text_model,
                 messages=messages,
                 temperature=temperature,
                 max_tokens=1024,
-            )
-
-        response = await asyncio.wait_for(
-            asyncio.to_thread(_call),
+            ),
             timeout=timeout,
         )
-        return (response.choices[0].message.content or "").strip()
+        
+        usage = {
+            "input_tokens": response.usage.prompt_tokens if getattr(response, "usage", None) else None,
+            "output_tokens": response.usage.completion_tokens if getattr(response, "usage", None) else None,
+            "total_tokens": response.usage.total_tokens if getattr(response, "usage", None) else None,
+        }
+        return (response.choices[0].message.content or "").strip(), usage
 
     async def generate_json(
         self,
@@ -146,7 +157,7 @@ class NvidiaProvider(AIProvider):
         system_instruction: str = "",
         temperature: float = 0.7,
         timeout: float = 5.0,
-    ) -> dict:
+    ) -> tuple[dict, dict]:
         """Generate JSON using NVIDIA NIM with JSON-mode prompting."""
         if not self.client:
             raise ValueError("NVIDIA API key is not configured.")
@@ -156,24 +167,30 @@ class NvidiaProvider(AIProvider):
         messages.append({"role": "system", "content": sys_msg.strip()})
         messages.append({"role": "user", "content": prompt})
 
-        def _call():
-            return self.client.chat.completions.create(
+        response = await asyncio.wait_for(
+            asyncio.to_thread(
+                self.client.chat.completions.create,
                 model=self.text_model,
                 messages=messages,
                 temperature=temperature,
                 max_tokens=1024,
-            )
-
-        response = await asyncio.wait_for(
-            asyncio.to_thread(_call),
+                response_format={"type": "json_object"}
+            ),
             timeout=timeout,
         )
+        
+        usage = {
+            "input_tokens": response.usage.prompt_tokens if getattr(response, "usage", None) else None,
+            "output_tokens": response.usage.completion_tokens if getattr(response, "usage", None) else None,
+            "total_tokens": response.usage.total_tokens if getattr(response, "usage", None) else None,
+        }
 
-        text = (response.choices[0].message.content or "").strip()
-        if not text:
-            return {}
-        clean = text.replace("```json", "").replace("```", "").strip()
-        return json.loads(clean)
+        content = response.choices[0].message.content
+        if not content:
+            return {}, usage
+
+        clean_json = content.replace("```json", "").replace("```", "").strip()
+        return json.loads(clean_json), usage
 
     async def generate_chat_response(
         self,
@@ -182,14 +199,8 @@ class NvidiaProvider(AIProvider):
         tools: list[dict[str, Any]] | None = None,
         temperature: float = 0.4,
         timeout: float = 10.0,
-    ) -> dict[str, Any]:
-        """
-        Generate a chat response with optional tool-calling using NVIDIA NIM.
-
-        Uses the OpenAI-compatible tools parameter.
-
-        Returns normalized: {"text": str|None, "function_calls": [{"name": ..., "args": ...}]|None}
-        """
+    ) -> tuple[dict[str, Any], dict]:
+        """Generate a chat response with optional tool-calling using NVIDIA NIM."""
         if not self.client:
             raise ValueError("NVIDIA API key is not configured.")
 
@@ -208,36 +219,26 @@ class NvidiaProvider(AIProvider):
             call_kwargs["tools"] = tools
             call_kwargs["tool_choice"] = "auto"
 
-        def _call():
-            return self.client.chat.completions.create(**call_kwargs)
-
         response = await asyncio.wait_for(
-            asyncio.to_thread(_call),
+            asyncio.to_thread(self.client.chat.completions.create, **call_kwargs),
             timeout=timeout,
         )
 
-        choice = response.choices[0]
-        result: dict[str, Any] = {"text": None, "function_calls": None}
+        msg = response.choices[0].message
+        result: dict[str, Any] = {"text": msg.content if msg.content else None, "function_calls": None}
 
-        # Parse tool calls
-        if choice.message.tool_calls:
-            result["function_calls"] = []
-            for tc in choice.message.tool_calls:
-                args = {}
-                if tc.function.arguments:
-                    try:
-                        args = json.loads(tc.function.arguments)
-                    except json.JSONDecodeError:
-                        args = {"raw": tc.function.arguments}
-                result["function_calls"].append({
-                    "name": tc.function.name,
-                    "args": args,
-                })
+        if msg.tool_calls:
+            result["function_calls"] = [
+                {"name": tc.function.name, "args": json.loads(tc.function.arguments)}
+                for tc in msg.tool_calls
+            ]
 
-        if choice.message.content:
-            result["text"] = choice.message.content
-
-        return result
+        usage = {
+            "input_tokens": response.usage.prompt_tokens if getattr(response, "usage", None) else None,
+            "output_tokens": response.usage.completion_tokens if getattr(response, "usage", None) else None,
+            "total_tokens": response.usage.total_tokens if getattr(response, "usage", None) else None,
+        }
+        return result, usage
 
     async def generate_outfit_explanation(
         self,
@@ -249,7 +250,7 @@ class NvidiaProvider(AIProvider):
         scores: dict | None,
         style_dna: str | None = None,
         rotation_context: str | None = None,
-    ) -> str:
+    ) -> tuple[str, dict]:
         fallback = "This combination was selected based on your wardrobe preferences and color profile."
 
         weather_str = ""
@@ -282,10 +283,13 @@ Bottom: {bottom_name}
 Footwear: {footwear_name}
 """
         try:
-            return await self.generate_text(prompt=prompt, temperature=0.7, timeout=5.0)
+            return await self.generate_text(prompt=prompt, temperature=0.7, timeout=1.5)
+        except asyncio.TimeoutError:
+            logger.warning("NVIDIA explanation generation timed out (1.5s). Using fallback.")
+            return fallback, {"input_tokens": None, "output_tokens": None, "total_tokens": None}
         except Exception as e:
-            logger.error(f"[NVIDIA] Explanation generation failed: {e}")
-            return fallback
+            logger.error(f"NVIDIA explanation generation failed: {str(e)}. Using fallback.")
+            return fallback, {"input_tokens": None, "output_tokens": None, "total_tokens": None}
 
     async def generate_outfit_completion_accessories(
         self,
@@ -295,11 +299,14 @@ Footwear: {footwear_name}
         outerwear_name: str | None,
         anchor_type: str,
         styling_preference: str,
-    ) -> dict:
-        fallback = {
-            "reasoning": "This combination builds a balanced aesthetic around your chosen item.",
-            "accessories": {"Style Note": "Minimal accessories recommended."},
-        }
+    ) -> tuple[dict, dict]:
+        fallback = (
+            {
+                "reasoning": "This combination builds a balanced aesthetic around your chosen item.",
+                "accessories": {"Style Note": "Minimal accessories recommended."},
+            },
+            {"input_tokens": None, "output_tokens": None, "total_tokens": None}
+        )
 
         outer_str = f"Outerwear: {outerwear_name}\n" if outerwear_name else ""
 
@@ -324,9 +331,9 @@ Footwear: {footwear_name}
         Respond with ONLY a valid JSON object matching the requested structure.
         """
         try:
-            return await self.generate_json(prompt=prompt, temperature=0.7, timeout=5.0)
+            return await self.generate_json(prompt=prompt, temperature=0.7, timeout=3.0)
         except Exception as e:
-            logger.error(f"[NVIDIA] Accessory generation failed: {e}")
+            logger.error(f"NVIDIA completion accessory generation failed: {str(e)}")
             return fallback
 
 

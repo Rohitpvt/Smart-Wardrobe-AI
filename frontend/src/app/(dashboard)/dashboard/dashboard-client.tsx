@@ -4,6 +4,7 @@ import { DashboardSummary, DashboardTrend, RecentWardrobeItem } from "@/types/da
 import { useDashboard } from "@/hooks/use-dashboard";
 import { getImageUrl } from "@/lib/image-url";
 import Link from "next/link";
+import { PageHeaderSkeleton, StatsGridSkeleton, ChartSkeleton } from "@/components/ui/skeleton-loaders";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import { useState } from "react";
@@ -56,22 +57,12 @@ export default function DashboardClient() {
   /* ─── LOADING STATE ─── */
   if (isLoading) {
     return (
-      <div className="space-y-8 animate-pulse">
-        {/* Welcome banner skeleton */}
-        <GlassPanel className="p-10 md:p-12">
-          <div className="h-10 w-64 bg-surface-3/50 rounded mb-3" />
-          <div className="h-5 w-96 bg-surface-3/30 rounded" />
-        </GlassPanel>
-        {/* KPI skeleton */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <GlassPanel key={i} className="p-6 h-36" />
-          ))}
-        </div>
-        {/* Charts skeleton */}
+      <div className="space-y-8">
+        <PageHeaderSkeleton />
+        <StatsGridSkeleton count={4} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <GlassPanel className="p-6 h-80" />
-          <GlassPanel className="p-6 h-80" />
+          <ChartSkeleton />
+          <ChartSkeleton />
         </div>
       </div>
     );

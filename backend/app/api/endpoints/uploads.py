@@ -78,6 +78,7 @@ async def analyze_upload(
     request: Request,
     image: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Analyze an uploaded image using Gemini AI.
@@ -91,6 +92,9 @@ async def analyze_upload(
     try:
         # Analyze with Gemini
         extraction = await ai_provider.analyze_clothing_image(
+            db=db,
+            user_id=current_user.id,
+            feature_name="analyze_clothing_image",
             image_data=content,
             mime_type=image.content_type or "image/jpeg"
         )

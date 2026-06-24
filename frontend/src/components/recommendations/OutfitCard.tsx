@@ -8,6 +8,7 @@ import Image from "next/image";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/axios";
 import { toast } from "sonner";
+import { useState, useRef, useEffect } from "react";
 
 interface OutfitCardProps {
   recommendation: OutfitRecommendation;
@@ -17,21 +18,65 @@ interface OutfitCardProps {
 
 export function OutfitCard({ recommendation, onDelete, isDeleting }: OutfitCardProps) {
   const queryClient = useQueryClient();
+  const [ratingState, setRatingState] = useState<"IDLE" | "PENDING_UNDO" | "SUBMITTED">("IDLE");
+  const [selectedRating, setSelectedRating] = useState<string | null>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      // Clear timeout on unmount. If they navigate away before 10s, we should ideally submit it immediately, but for simplicity we'll just clear it or let it fire.
+      // Actually, if we let it fire, the mutation might fail if queryClient is unmounted. Let's just submit if unmounting.
+      if (timerRef.current && ratingState === "PENDING_UNDO" && selectedRating) {
+        clearTimeout(timerRef.current);
+        feedbackMutation.mutate(selectedRating);
+      }
+    };
+  }, [ratingState, selectedRating]);
 
   const feedbackMutation = useMutation({
-    mutationFn: async (feedback_type: string) => {
-      const res = await api.post(`/recommendations/${recommendation.id}/feedback`, { feedback_type });
+    mutationFn: async (rating: string) => {
+      const res = await api.post(`/recommendations/${recommendation.id}/feedback`, { rating });
       return res.data;
     },
     onSuccess: () => {
-      toast.success("Feedback recorded. Your personal stylist is learning!");
+      setRatingState("SUBMITTED");
       queryClient.invalidateQueries({ queryKey: ["dashboard-taste-profile"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-predictive"] });
     },
     onError: () => {
       toast.error("Failed to record feedback.");
+      setRatingState("IDLE");
+      setSelectedRating(null);
     }
   });
+
+  const handleRate = (rating: string) => {
+    setSelectedRating(rating);
+    setRatingState("PENDING_UNDO");
+    
+    toast.success(`Rated as ${rating.replace("_", " ")}`, {
+      description: "Your personal stylist is learning. You can undo this for 10 seconds.",
+      action: {
+        label: "Undo",
+        onClick: handleUndo
+      },
+      duration: 10000,
+    });
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      if (ratingState !== "SUBMITTED") {
+        feedbackMutation.mutate(rating);
+      }
+    }, 10000);
+  };
+
+  const handleUndo = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setRatingState("IDLE");
+    setSelectedRating(null);
+    toast("Feedback cancelled.");
+  };
 
   const renderItem = (item: ClothingItemMinimal, label: string) => (
     <div className="flex flex-col group">
@@ -115,44 +160,55 @@ export function OutfitCard({ recommendation, onDelete, isDeleting }: OutfitCardP
           {renderItem(recommendation.footwear_item, "Footwear")}
         </div>
 
-        {/* ── Phase 7A: Feedback Controls ── */}
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          <button 
-            onClick={() => feedbackMutation.mutate("like")}
-            disabled={feedbackMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-surface-2 border border-white/10 hover:border-blue-500/50 hover:bg-blue-500/10 hover:text-blue-400 transition-all text-sm font-medium text-slate-300"
-          >
-            <ThumbsUp className="w-4 h-4" /> Like
-          </button>
-          <button 
-            onClick={() => feedbackMutation.mutate("love")}
-            disabled={feedbackMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-surface-2 border border-white/10 hover:border-pink-500/50 hover:bg-pink-500/10 hover:text-pink-400 transition-all text-sm font-medium text-slate-300"
-          >
-            <Heart className="w-4 h-4" /> Love
-          </button>
-          <button 
-            onClick={() => feedbackMutation.mutate("dislike")}
-            disabled={feedbackMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-surface-2 border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 transition-all text-sm font-medium text-slate-300"
-          >
-            <ThumbsDown className="w-4 h-4" /> Dislike
-          </button>
-          <div className="w-px h-6 bg-white/10 mx-2 hidden sm:block" />
-          <button 
-            onClick={() => feedbackMutation.mutate("wore_it")}
-            disabled={feedbackMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-surface-2 border border-white/10 hover:border-emerald-500/50 hover:bg-emerald-500/10 hover:text-emerald-400 transition-all text-sm font-medium text-slate-300"
-          >
-            <Shirt className="w-4 h-4" /> Wore It
-          </button>
-          <button 
-            onClick={() => feedbackMutation.mutate("save_for_later")}
-            disabled={feedbackMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-surface-2 border border-white/10 hover:border-amber-500/50 hover:bg-amber-500/10 hover:text-amber-400 transition-all text-sm font-medium text-slate-300"
-          >
-            <Bookmark className="w-4 h-4" /> Save
-          </button>
+        {/* ── Phase 9.11A: Feedback Controls ── */}
+        <div className="mt-6 flex flex-col items-center justify-center gap-3">
+          {ratingState === "IDLE" ? (
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <button 
+                onClick={() => handleRate("LOVE")}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-surface-2 border border-white/10 hover:border-pink-500/50 hover:bg-pink-500/10 hover:text-pink-400 transition-all text-sm font-medium text-slate-300"
+              >
+                <Heart className="w-4 h-4" /> Love It
+              </button>
+              <button 
+                onClick={() => handleRate("LIKE")}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-surface-2 border border-white/10 hover:border-blue-500/50 hover:bg-blue-500/10 hover:text-blue-400 transition-all text-sm font-medium text-slate-300"
+              >
+                <ThumbsUp className="w-4 h-4" /> Like It
+              </button>
+              <button 
+                onClick={() => handleRate("NEUTRAL")}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-surface-2 border border-white/10 hover:border-slate-500/50 hover:bg-slate-500/10 hover:text-slate-400 transition-all text-sm font-medium text-slate-300"
+              >
+                <span className="text-base leading-none">😐</span> Neutral
+              </button>
+              <button 
+                onClick={() => handleRate("DISLIKE")}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-surface-2 border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 transition-all text-sm font-medium text-slate-300"
+              >
+                <ThumbsDown className="w-4 h-4" /> Not My Style
+              </button>
+            </div>
+          ) : (
+            <m.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex items-center gap-4 bg-surface-2/50 px-6 py-3 rounded-full border border-white/5"
+            >
+              <span className="text-sm font-medium text-slate-300">
+                {ratingState === "PENDING_UNDO" ? "Feedback recorded." : "Thanks for your feedback!"}
+              </span>
+              
+              {ratingState === "PENDING_UNDO" && (
+                <button 
+                  onClick={handleUndo}
+                  className="text-xs font-semibold text-brand-blue hover:text-blue-400 uppercase tracking-wider"
+                >
+                  Undo
+                </button>
+              )}
+            </m.div>
+          )}
         </div>
 
         <div className="mt-8 bg-surface-2/80 backdrop-blur-md border border-brand-purple/20 rounded-2xl p-6 lg:p-8 relative overflow-hidden group/notes">

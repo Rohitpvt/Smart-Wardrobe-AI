@@ -88,7 +88,7 @@ app.add_middleware(
 
 
 from app import models
-from app.api.endpoints import auth, users, wardrobe, uploads, dashboard, recommendations, chat, intelligence, style_memory, daily_stylist, predictive_stylist, shopping_intelligence, wear_tracking
+from app.api.endpoints import auth, users, wardrobe, uploads, dashboard, recommendations, chat, intelligence, style_memory, daily_stylist, predictive_stylist, shopping_intelligence, wear_tracking, ai_usage, admin_ai_usage, user_ai_keys
 
 # --- Routers ---
 app.include_router(auth.router, prefix=f"{settings.API_PREFIX}/auth", tags=["Auth"])
@@ -104,6 +104,9 @@ app.include_router(daily_stylist.router, prefix=f"{settings.API_PREFIX}", tags=[
 app.include_router(predictive_stylist.router, prefix=f"{settings.API_PREFIX}", tags=["Predictive Stylist"])
 app.include_router(shopping_intelligence.router, prefix=f"{settings.API_PREFIX}", tags=["Shopping Intelligence"])
 app.include_router(wear_tracking.router, prefix=f"{settings.API_PREFIX}", tags=["Wear Tracking"])
+app.include_router(ai_usage.router, prefix=f"{settings.API_PREFIX}")
+app.include_router(admin_ai_usage.router, prefix=f"{settings.API_PREFIX}/admin/ai-usage", tags=["Admin AI Usage"])
+app.include_router(user_ai_keys.router, prefix=f"{settings.API_PREFIX}")
 
 # --- Health Check ---
 

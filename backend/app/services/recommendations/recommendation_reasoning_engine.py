@@ -16,10 +16,15 @@ class RecommendationReasoningEngine:
         rotation_benefit: int
     ) -> Dict[str, Any]:
         
-        dominant_style = style_dna.get("dominant_style", "preferred")
+        dominant_style = style_dna.get("dominant_style", style_dna.get("style_type", "preferred"))
+        feedback_insights = style_dna.get("feedback_insights", {})
+        liked_styles = feedback_insights.get("liked_styles", [])
+        liked_colors = feedback_insights.get("liked_colors", [])
         
         # 1. Primary Reason (Max 1 sentence)
-        if style_alignment >= 80:
+        if dominant_style in liked_styles:
+            primary_reason = f"You have consistently responded positively to similar {dominant_style} outfits, so this recommendation received a higher ranking."
+        elif style_alignment >= 80:
             primary_reason = f"This outfit closely matches your preferred {dominant_style} style."
         elif weather_compatibility >= 80:
             primary_reason = "This outfit is optimally suited for today's weather conditions."
@@ -30,7 +35,9 @@ class RecommendationReasoningEngine:
 
         # 2. Supporting Reasons (Max 4 items)
         supporting_reasons = []
-        if style_alignment >= 70:
+        if liked_colors and style_alignment >= 70:
+            supporting_reasons.append(f"Features your preferred color affinities (like {liked_colors[0]})")
+        elif style_alignment >= 70:
             supporting_reasons.append("Aligns well with your color affinities")
         if weather_compatibility >= 70:
             season = seasonal_readiness.get("season", "current season")
@@ -58,6 +65,13 @@ class RecommendationReasoningEngine:
 
         if not improvement_suggestions and confidence_score < 80:
             improvement_suggestions.append("Add a statement accessory to elevate the look")
+            
+        profile_hints = style_dna.get("profile_hints", {})
+        if profile_hints.get("primary_style") and profile_hints.get("primary_style").lower() != dominant_style.lower():
+            improvement_suggestions.append(f"To better match your goal of {profile_hints.get('primary_style')} style, consider incorporating more statement pieces.")
+
+        if profile_hints.get("fashion_experience") and profile_hints.get("fashion_experience").lower() == "beginner":
+            improvement_suggestions.append("This is a safe, foundational outfit. Don't be afraid to experiment with layering.")
 
         # Limit to 3
         improvement_suggestions = improvement_suggestions[:3]

@@ -90,3 +90,20 @@
     @apply inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold tracking-wide uppercase bg-red-500/10 text-red-400;
   }
 }
+
+/* ── Premium Skeleton Shimmer ── */
+@keyframes skeleton-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(224 71% 10% / 0.6) 25%,
+    hsl(224 71% 18% / 0.8) 50%,
+    hsl(224 71% 10% / 0.6) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.8s ease-in-out infinite;
+}

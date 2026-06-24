@@ -1,89 +1,125 @@
 "use client";
 
-import { useStyleMemory } from "@/hooks/use-style-memory";
-import { FeedbackType } from "@/types/style-memory";
-import { ThumbsUp, Heart, ThumbsDown, Bookmark, Shirt, FastForward, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { api } from "@/lib/axios";
+import { ThumbsUp, Heart, ThumbsDown, Loader2 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { toast } from "sonner";
+import { m } from "framer-motion";
 
 interface Props {
   outfitId: string;
 }
 
 export function RecommendationFeedbackBar({ outfitId }: Props) {
-  const { feedbackMutation } = useStyleMemory();
-  const [activeAction, setActiveAction] = useState<FeedbackType | null>(null);
+  const queryClient = useQueryClient();
+  const [ratingState, setRatingState] = useState<"IDLE" | "PENDING_UNDO" | "SUBMITTED">("IDLE");
+  const [selectedRating, setSelectedRating] = useState<string | null>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleFeedback = (type: FeedbackType) => {
-    setActiveAction(type);
-    feedbackMutation.mutate(
-      { outfit_id: outfitId, feedback_type: type },
-      {
-        onSettled: () => setActiveAction(null)
+  useEffect(() => {
+    return () => {
+      if (timerRef.current && ratingState === "PENDING_UNDO" && selectedRating) {
+        clearTimeout(timerRef.current);
+        feedbackMutation.mutate(selectedRating);
       }
-    );
+    };
+  }, [ratingState, selectedRating]);
+
+  const feedbackMutation = useMutation({
+    mutationFn: async (rating: string) => {
+      const res = await api.post(`/recommendations/${outfitId}/feedback`, { rating });
+      return res.data;
+    },
+    onSuccess: () => {
+      setRatingState("SUBMITTED");
+      queryClient.invalidateQueries({ queryKey: ["dashboard-taste-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-predictive"] });
+    },
+    onError: () => {
+      toast.error("Failed to record feedback.");
+      setRatingState("IDLE");
+      setSelectedRating(null);
+    }
+  });
+
+  const handleRate = (rating: string) => {
+    setSelectedRating(rating);
+    setRatingState("PENDING_UNDO");
+    
+    toast.success(`Rated as ${rating.replace("_", " ")}`, {
+      description: "Your personal stylist is learning. You can undo this for 10 seconds.",
+      action: {
+        label: "Undo",
+        onClick: handleUndo
+      },
+      duration: 10000,
+    });
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      if (ratingState !== "SUBMITTED") {
+        feedbackMutation.mutate(rating);
+      }
+    }, 10000);
   };
 
-  const isPending = feedbackMutation.isPending;
+  const handleUndo = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setRatingState("IDLE");
+    setSelectedRating(null);
+    toast("Feedback cancelled.");
+  };
 
   return (
     <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-white/5">
-      <button
-        onClick={() => handleFeedback('like')}
-        disabled={isPending}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-xs font-medium text-slate-300 transition-colors disabled:opacity-50"
-      >
-        {activeAction === 'like' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ThumbsUp className="w-3.5 h-3.5" />}
-        Like
-      </button>
-
-      <button
-        onClick={() => handleFeedback('love')}
-        disabled={isPending}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-500/10 hover:bg-rose-500/20 text-xs font-medium text-rose-400 border border-rose-500/20 transition-colors disabled:opacity-50"
-      >
-        {activeAction === 'love' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Heart className="w-3.5 h-3.5" />}
-        Love
-      </button>
-
-      <button
-        onClick={() => handleFeedback('wore_it')}
-        disabled={isPending}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-purple/10 hover:bg-brand-purple/20 text-xs font-medium text-brand-purple border border-brand-purple/20 transition-colors disabled:opacity-50"
-      >
-        {activeAction === 'wore_it' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Shirt className="w-3.5 h-3.5" />}
-        Wore This
-      </button>
-
-      <div className="w-px h-4 bg-white/10 mx-1"></div>
-
-      <button
-        onClick={() => handleFeedback('save_for_later')}
-        disabled={isPending}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-xs font-medium text-slate-300 transition-colors disabled:opacity-50"
-      >
-        {activeAction === 'save_for_later' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bookmark className="w-3.5 h-3.5" />}
-        Save
-      </button>
-
-      <div className="flex-1"></div>
-
-      <button
-        onClick={() => handleFeedback('skip')}
-        disabled={isPending}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-xs font-medium text-slate-400 transition-colors disabled:opacity-50"
-      >
-        {activeAction === 'skip' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FastForward className="w-3.5 h-3.5" />}
-        Skip
-      </button>
-
-      <button
-        onClick={() => handleFeedback('dislike')}
-        disabled={isPending}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/10 hover:bg-red-500/20 text-xs font-medium text-red-400 transition-colors disabled:opacity-50"
-      >
-        {activeAction === 'dislike' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ThumbsDown className="w-3.5 h-3.5" />}
-        Dislike
-      </button>
+      {ratingState === "IDLE" ? (
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <button 
+            onClick={() => handleRate("LOVE")}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-2 border border-white/10 hover:border-pink-500/50 hover:bg-pink-500/10 hover:text-pink-400 transition-all text-xs font-medium text-slate-300"
+          >
+            <Heart className="w-3.5 h-3.5" /> Love It
+          </button>
+          <button 
+            onClick={() => handleRate("LIKE")}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-2 border border-white/10 hover:border-blue-500/50 hover:bg-blue-500/10 hover:text-blue-400 transition-all text-xs font-medium text-slate-300"
+          >
+            <ThumbsUp className="w-3.5 h-3.5" /> Like It
+          </button>
+          <button 
+            onClick={() => handleRate("NEUTRAL")}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-2 border border-white/10 hover:border-slate-500/50 hover:bg-slate-500/10 hover:text-slate-400 transition-all text-xs font-medium text-slate-300"
+          >
+            😐 Neutral
+          </button>
+          <button 
+            onClick={() => handleRate("DISLIKE")}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-2 border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 transition-all text-xs font-medium text-slate-300"
+          >
+            <ThumbsDown className="w-3.5 h-3.5" /> Not My Style
+          </button>
+        </div>
+      ) : (
+        <m.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex items-center gap-4 bg-surface-2/50 px-4 py-2 rounded-full border border-white/5"
+        >
+          <span className="text-xs font-medium text-slate-300">
+            {ratingState === "PENDING_UNDO" ? "Feedback recorded." : "Thanks for your feedback!"}
+          </span>
+          
+          {ratingState === "PENDING_UNDO" && (
+            <button 
+              onClick={handleUndo}
+              className="text-[10px] font-semibold text-brand-blue hover:text-blue-400 uppercase tracking-wider"
+            >
+              Undo
+            </button>
+          )}
+        </m.div>
+      )}
     </div>
   );
 }

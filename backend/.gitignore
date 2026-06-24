@@ -1,0 +1,6 @@
+artifacts/GOOGLE_LATEST_TOKEN_ERROR.json
+*.db
+__pycache__/
+*.pyc
+.env
+.pytest_cache/

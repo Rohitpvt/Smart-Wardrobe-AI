@@ -2,6 +2,8 @@ import { m } from "framer-motion";
 import { staggerContainer } from "@/lib/animations";
 import { useIntelligenceDashboard } from "@/hooks/use-intelligence";
 import { IntelligenceFeedCard } from "./IntelligenceFeedCard";
+import { GlassPanel } from "@/components/ui/GlassPanel";
+import { WidgetSkeleton } from "@/components/ui/skeleton-loaders";
 import { OpportunityCard } from "./OpportunityCard";
 import { WeeklyReportCard } from "./WeeklyReportCard";
 import { GoalsProgressCard } from "./GoalsProgressCard";
@@ -12,10 +14,11 @@ export function WardrobeIntelligenceCenter() {
 
   if (isLoading) {
     return (
-      <div className="w-full h-48 flex flex-col items-center justify-center border border-white/5 bg-white/5 rounded-3xl mb-12">
-        <Loader2 className="w-8 h-8 text-brand-blue animate-spin mb-4" />
-        <p className="text-white/50 text-sm">Generating autonomous intelligence...</p>
-      </div>
+      <GlassPanel className="p-8 border border-brand-purple/20 relative overflow-hidden group">
+        <div className="flex items-center justify-center py-6">
+          <WidgetSkeleton />
+        </div>
+      </GlassPanel>
     );
   }
 

@@ -23,9 +23,22 @@ export default function DailyStylistClient() {
 
   if (briefQuery.isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <Loader2 className="w-8 h-8 animate-spin text-brand-blue" />
-        <p className="text-slate-400 animate-pulse">Generating your personalized daily brief...</p>
+      <div className="space-y-8">
+        <div className="rounded-2xl bg-surface-1/70 backdrop-blur-xl border border-white/[0.06] p-8 md:p-10">
+          <div className="h-8 w-56 mb-3 rounded-lg skeleton-shimmer" />
+          <div className="h-4 w-80 rounded skeleton-shimmer" />
+        </div>
+        <div className="rounded-2xl bg-surface-1/70 border border-white/[0.06] p-6 h-64">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-xl skeleton-shimmer" />
+            <div className="h-4 w-32 rounded skeleton-shimmer" />
+          </div>
+          <div className="space-y-3">
+            <div className="h-3 w-full rounded skeleton-shimmer" />
+            <div className="h-3 w-5/6 rounded skeleton-shimmer" />
+            <div className="h-3 w-4/6 rounded skeleton-shimmer" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -98,13 +111,17 @@ export default function DailyStylistClient() {
                 <div key={idx} className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden group/item hover:bg-white/10 transition-colors">
                   <div className="aspect-square relative bg-white/5">
                     {item?.image_url ? (
-                      {getImageUrl(item.image_url) ? <Image 
-                        src={getImageUrl(item.image_url) as string} 
-                        alt={item?.name || "Item"} 
-                        fill 
-                        className="object-cover mix-blend-screen opacity-90 group-hover/item:scale-105 transition-transform duration-500"
-                        unoptimized
-                      /> : <div className="w-full h-full flex items-center justify-center bg-surface-2 opacity-50"><Shirt className="w-1/2 h-1/2 text-white/30"/></div>}
+                      getImageUrl(item.image_url) ? (
+                        <Image 
+                          src={getImageUrl(item.image_url) as string} 
+                          alt={item?.name || "Item"} 
+                          fill 
+                          className="object-cover mix-blend-screen opacity-90 group-hover/item:scale-105 transition-transform duration-500"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-surface-2 opacity-50"><Shirt className="w-1/2 h-1/2 text-white/30"/></div>
+                      )
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center">
                         <Shirt className="w-8 h-8 text-white/20" />

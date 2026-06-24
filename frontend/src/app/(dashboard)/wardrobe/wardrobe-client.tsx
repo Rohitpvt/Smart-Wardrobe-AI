@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { WardrobeGridSkeleton } from "@/components/ui/skeleton-loaders";
 import { PaginatedResponse, ClothingItem, WardrobeListParams } from "@/types/wardrobe";
 import { useWardrobe } from "@/hooks/use-wardrobe";
 import { useDashboard } from "@/hooks/use-dashboard";
@@ -123,17 +124,7 @@ export default function WardrobeClient() {
       {/* ═══ SECTION 4: CLOTHING GRID ═══ */}
       <m.div variants={fadeUp} className="min-h-[500px]">
         {isLoading ? (
-          <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-6 space-y-6">
-            {[...Array(10)].map((_, i) => (
-              <div key={i} className="rounded-2xl border border-white/10 bg-surface-1/70 overflow-hidden shadow-sm animate-pulse break-inside-avoid">
-                <div className="aspect-[3/4] bg-surface-2"></div>
-                <div className="p-4 space-y-3">
-                  <div className="h-4 bg-white/10 rounded w-3/4"></div>
-                  <div className="h-3 bg-white/10 rounded w-1/2"></div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <WardrobeGridSkeleton count={10} />
         ) : error ? (
           <div className="flex flex-col items-center justify-center py-24 text-center rounded-2xl bg-surface-1/70 border border-white/10 backdrop-blur-xl">
              <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mb-4">

@@ -164,7 +164,12 @@ class StylistChatService:
         prompt = f"Generate a short 3-5 word title for a fashion conversation that starts with: '{first_message}'. Do not use quotes."
         try:
             title = await ai_provider.generate_text(
-                prompt=prompt, temperature=0.3, timeout=2.0
+                db=session,
+                user_id=conversation.user_id,
+                feature_name="stylist_chat_title",
+                prompt=prompt, 
+                temperature=0.3, 
+                timeout=2.0
             )
             if title:
                 conversation.title = title.strip()
@@ -238,6 +243,9 @@ Even if the user just says "hello", return valid JSON with empty reasons.
 
         # 6. Call AI Provider (provider-agnostic)
         response = await ai_provider.generate_chat_response(
+            db=session,
+            user_id=user_id,
+            feature_name="stylist_chat",
             messages=messages,
             system_instruction=system_instruction,
             tools=STYLIST_TOOLS,
@@ -308,12 +316,15 @@ Even if the user just says "hello", return valid JSON with empty reasons.
                                     weather_ctx,
                                 )
                                 gem_resp = await ai_provider.generate_outfit_completion_accessories(
-                                    top.name,
-                                    bottom.name,
-                                    shoes.name,
-                                    outerwear.name if outerwear else None,
-                                    anchor_item.category,
-                                    styling_preference,
+                                    db=session,
+                                    user_id=user_id,
+                                    feature_name="stylist_chat_accessories",
+                                    top_name=top.name,
+                                    bottom_name=bottom.name,
+                                    footwear_name=shoes.name,
+                                    outerwear_name=outerwear.name if outerwear else None,
+                                    anchor_type=anchor_item.category,
+                                    styling_preference=styling_preference,
                                 )
                                 action_data["params"]["outfit_data"] = {
                                     "anchor_item": ClothingItemRead.model_validate(
@@ -353,10 +364,21 @@ Even if the user just says "hello", return valid JSON with empty reasons.
 
                 actions.append(action_data)
 
+        def clean_json_markdown(raw_text: str) -> str:
+            text = raw_text.strip()
+            if text.startswith("```json"):
+                text = text[len("```json"):].strip()
+            elif text.startswith("```"):
+                text = text[len("```"):].strip()
+            if text.endswith("```"):
+                text = text[:-3].strip()
+            return text
+
         # Process text response
         if response.get("text"):
             try:
-                parsed = json.loads(response["text"])
+                cleaned_text = clean_json_markdown(response["text"])
+                parsed = json.loads(cleaned_text)
                 response_text = parsed.get("recommendation", "")
                 reasons = parsed.get("reasons", [])
             except json.JSONDecodeError:

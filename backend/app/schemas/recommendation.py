@@ -57,16 +57,23 @@ class OutfitRecommendationListResponse(BaseModel):
 # ── Phase 7A: Feedback Schemas ──
 
 FeedbackTypeEnum = Literal["like", "dislike", "love", "wore_it", "save_for_later", "removed_from_saved"]
+RatingEnum = Literal["LOVE", "LIKE", "NEUTRAL", "DISLIKE"]
 
 class FeedbackRequest(BaseModel):
-    feedback_type: FeedbackTypeEnum
+    rating: RatingEnum | None = None
+    feedback_type: FeedbackTypeEnum | None = None
 
 class FeedbackRead(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
-    outfit_id: uuid.UUID
-    feedback_type: str
-    feedback_source: str
+    recommendation_id: uuid.UUID | None = None
+    rating: str | None = None
+    feedback_weight: int | None = None
+    
+    # DEPRECATED fields
+    outfit_id: uuid.UUID | None = None
+    feedback_type: str | None = None
+    feedback_source: str | None = None
     created_at: datetime
     
     model_config = ConfigDict(from_attributes=True)
@@ -74,3 +81,14 @@ class FeedbackRead(BaseModel):
 class FeedbackHistoryResponse(BaseModel):
     success: bool = True
     data: list[FeedbackRead]
+
+class FeedbackInsightsResponse(BaseModel):
+    success: bool = True
+    favorite_styles: list[str]
+    least_preferred_styles: list[str]
+    favorite_colors: list[str]
+    least_preferred_colors: list[str]
+    favorite_occasions: list[str]
+    feedback_trend: str
+    total_ratings: int
+    positive_ratio: float

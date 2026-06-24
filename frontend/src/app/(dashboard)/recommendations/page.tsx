@@ -1,6 +1,7 @@
 import RecommendationsClient from "./recommendations-client";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import { fetchRecommendationsServer } from "@/lib/server-api";
+import AIFeatureLock from "@/components/ui/AIFeatureLock";
 
 export const metadata = {
   title: "AI Stylist | Wardrobe AI",
@@ -17,7 +18,9 @@ export default async function RecommendationsPage() {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <RecommendationsClient />
+      <AIFeatureLock>
+        <RecommendationsClient />
+      </AIFeatureLock>
     </HydrationBoundary>
   );
 }

@@ -77,3 +77,42 @@ async def change_password(
         
     await db.commit()
     return {"message": "Password updated successfully"}
+
+from fastapi import File, UploadFile
+from app.services.storage import local as storage_service
+
+@router.post("/profile-picture", response_model=UserRead)
+async def upload_profile_picture(
+    image: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    storage_service.validate_upload(image)
+    file_path = await storage_service.save_upload(image, current_user.id)
+    
+    # URL is generated via the uploads endpoint, e.g. /api/uploads/users/{user_id}/{filename}
+    # But wait, storage_service.save_file usually returns the relative path "uploads/users/{user_id}/xxx.jpg"
+    # Or just the filename. Let's assume it returns relative path and we construct the URL.
+    # We can just store the relative path or the full URL.
+    # Usually in this codebase it stores relative path or URL. Let's store the URL format.
+    # Wait, the frontend might expect a specific format. Let's just store the file_path directly.
+    # Actually, let's look at how ClothingItem stores image_url.
+    
+    current_user.profile_image_url = f"/api/{file_path}" if not file_path.startswith("/api/") else file_path
+    
+    db.add(current_user)
+    await db.commit()
+    await db.refresh(current_user)
+    return current_user
+
+@router.delete("/profile-picture", response_model=UserRead)
+async def delete_profile_picture(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    # Optional: Delete file from storage service here.
+    current_user.profile_image_url = None
+    db.add(current_user)
+    await db.commit()
+    await db.refresh(current_user)
+    return current_user

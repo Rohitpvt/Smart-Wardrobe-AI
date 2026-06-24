@@ -91,15 +91,23 @@ export function useChat(sessionId: string | null) {
       }
       return { previousSession };
     },
-    onError: (err, newMsg, context) => {
-      if (context?.previousSession) {
-        queryClient.setQueryData(["chat-session", sessionId], context.previousSession);
+    onError: (err: any, newMsg, context) => {
+      // Keep optimistic message in UI so the user sees their message.
+      const detail = err?.response?.data?.detail;
+      if (detail?.status === "user_ai_quota_exceeded") {
+        toast.error("Gemini quota reached. Please wait or check Google AI Studio.");
+      } else if (detail?.status === "user_ai_key_invalid") {
+        toast.error("Your Gemini key is invalid. Please replace it in AI Access settings.");
+      } else if (detail?.status === "gemini_temporarily_unavailable") {
+        toast.error("Gemini is temporarily busy. Please try again shortly.");
+      } else if (err?.code === "ECONNABORTED" || err?.message?.includes("timeout")) {
+        toast.error("Request timed out. Gemini may be slow — please try again.");
+      } else {
+        toast.error(detail?.message || "Failed to send message. Please try again.");
       }
-      toast.error("Failed to send message. Please try again.");
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["chat-session", sessionId] });
-      // Invalidate list to get updated titles/timestamps
       queryClient.invalidateQueries({ queryKey: ["chat-sessions"] });
     },
   });
@@ -107,5 +115,6 @@ export function useChat(sessionId: string | null) {
   return {
     sessionQuery,
     sendMessageMutation,
+    error: sendMessageMutation.error,
   };
 }

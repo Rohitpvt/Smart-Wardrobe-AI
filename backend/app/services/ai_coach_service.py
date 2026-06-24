@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class AICoachService:
-    async def generate_coaching_insight(self, context_dict: Dict[str, Any]) -> str:
+    async def generate_coaching_insight(self, db: Any, user_id: Any, context_dict: Dict[str, Any]) -> str:
         """
         Generates a 3-part coaching insight (Observation, Metric, Recommendation)
         using the AI provider router with automatic failover.
@@ -40,6 +40,9 @@ Recommendation:
 """
         try:
             return await ai_provider.generate_text(
+                db=db,
+                user_id=user_id,
+                feature_name="weekly_coach_insight",
                 prompt=prompt,
                 temperature=0.3,
                 timeout=5.0,

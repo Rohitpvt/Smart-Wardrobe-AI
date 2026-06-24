@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Literal
 
 class RecommendationSignals(BaseModel):
     style_alignment: int = Field(..., ge=0, le=100)
@@ -33,7 +33,7 @@ class ExplainableRecommendationItem(BaseModel):
 
 class ExplainableRecommendationRequest(BaseModel):
     occasion: str = Field(..., description="The occasion for the outfit")
-    generation_mode: str = Field(..., description="'standard' or 'anchor'")
+    generation_mode: Literal["standard", "anchor"] = Field(default="standard", description="'standard' or 'anchor'")
     anchor_item_id: Optional[str] = None
 
 class ExplainableRecommendationResponse(BaseModel):
