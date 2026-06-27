@@ -85,6 +85,9 @@ Logout
     ├── AI Assistant
     │
     └── Settings
+        ├── Profile & Security
+        ├── AI Access (BYOK)
+        └── AI Activity
 ```
 
 ---
@@ -470,7 +473,9 @@ Flow:
 ```
 Open Recommendations
         ↓
-Fetch Weather
+Check Weather Targeting Status
+        ↓
+Fetch Weather via Geolocation Coordinates (or City fallback)
         ↓
 Apply Weather Rules
         ↓
@@ -573,9 +578,11 @@ Allow user account management.
 
 Functions:
 
-* Update Profile
+* Update Profile (Identity Graph)
 * Change Password
-* Set City and Country (for weather)
+* Weather Targeting (Use My Current Location via Geolocation API)
+* AI Access (Bring Your Own Key for Gemini AI)
+* AI Activity (View recent AI generation logs)
 * Logout
 
 Flow:

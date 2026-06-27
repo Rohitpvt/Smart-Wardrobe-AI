@@ -11,8 +11,14 @@ Before deploying, ensure the production environment contains securely injected s
 **Critical Variables:**
 - `DATABASE_URL`: Must point to the production PostgreSQL instance.
 - `SECRET_KEY`: Must be a cryptographically secure, randomly generated hash (min 64 chars). **Never reuse the local dev secret.**
-- `GEMINI_API_KEY`: Required for the primary AI logic.
+- `USER_AI_KEY_ENCRYPTION_SECRET`: Must be a secure Fernet key to safely encrypt user API keys.
 - `FRONTEND_URLS`: A comma-separated list of exact domains allowed to communicate with the backend (e.g., `https://mywardrobe.app`). This secures CORS.
+
+**BYOK Architecture Notice:**
+Smart Wardrobe AI uses a Bring Your Own Key model for Gemini AI.
+Users must add their own Gemini API key in /settings/ai-access.
+Google login is only for authentication and does not provide Gemini API tokens.
+The user’s Gemini quota is managed by Google AI Studio, not by Smart Wardrobe AI.
 
 Run the verification script in your CI pipeline if possible:
 ```bash
@@ -79,4 +85,4 @@ Once deployed, manually verify the following against the live domains:
 2. Hit the backend `/api/health` (if implemented) or root docs `/docs` to verify the server is responding.
 3. Register a test user.
 4. Upload an image to verify static file serving permissions are correct.
-5. Generate an outfit recommendation to verify AI Provider keys are active.
+5. Generate an outfit recommendation after providing a personal Gemini Key to verify AI connection.

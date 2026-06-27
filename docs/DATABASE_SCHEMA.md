@@ -123,15 +123,20 @@ Columns
 
 | Column        | Type         | Nullable |
 | ------------- | ------------ | -------- |
-| id            | UUID         | No       |
-| email         | VARCHAR(255) | No       |
-| password_hash | VARCHAR(255) | No       |
-| first_name    | VARCHAR(100) | No       |
-| last_name     | VARCHAR(100) | No       |
-| city          | VARCHAR(100) | Yes      |
-| country_code  | VARCHAR(10)  | Yes      |
-| created_at    | TIMESTAMP    | No       |
-| updated_at    | TIMESTAMP    | No       |
+| id                       | UUID         | No       |
+| email                    | VARCHAR(255) | No       |
+| password_hash            | VARCHAR(255) | No       |
+| first_name               | VARCHAR(100) | No       |
+| last_name                | VARCHAR(100) | No       |
+| city                     | VARCHAR(100) | Yes      |
+| country_code             | VARCHAR(10)  | Yes      |
+| weather_city             | VARCHAR(100) | Yes      |
+| weather_country          | VARCHAR(10)  | Yes      |
+| weather_latitude         | FLOAT        | Yes      |
+| weather_longitude        | FLOAT        | Yes      |
+| weather_location_enabled | BOOLEAN      | No       |
+| created_at               | TIMESTAMP    | No       |
+| updated_at               | TIMESTAMP    | No       |
 
 Constraints
 

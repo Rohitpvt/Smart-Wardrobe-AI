@@ -105,7 +105,8 @@ Authentication
 
 AI Services
 
-* Multi-Provider AI Architecture (Gemini 2.5 Flash Primary, NVIDIA NIM Fallback)
+* Bring Your Own Key (BYOK) Architecture (User provides Gemini Key)
+* Multi-Provider AI Architecture (Platform Fallback if enabled)
 * Intelligent Provider Router for failover
 * Explainable Recommendation System
 
@@ -323,9 +324,10 @@ Data Source
 
 Location Source
 
-User profile fields: city, country_code
+* Browser Geolocation API
+* User profile fields: weather_latitude, weather_longitude, weather_city, weather_country
 
-User sets city during profile setup or in settings.
+User explicitly clicks 'Use My Current Location' or sets city manually in settings.
 
 Example
 
@@ -399,7 +401,9 @@ Allow users to manage their account information.
 Functions
 
 * View Profile
-* Update Profile (first name, last name)
+* Update Profile (Identity Graph)
+* AI Access (Bring Your Own Key for Gemini AI)
+* Weather Targeting (Geolocation enabled)
 * Change Password
 * Logout
 

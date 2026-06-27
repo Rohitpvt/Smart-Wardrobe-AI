@@ -16,6 +16,13 @@ class UserBase(BaseModel):
     avatar_url: str | None = Field(None, max_length=500)
     onboarding_completed: bool = False
     
+    # Weather Targeting
+    weather_city: str | None = Field(None, max_length=100)
+    weather_country: str | None = Field(None, max_length=10)
+    weather_latitude: float | None = Field(None, ge=-90, le=90)
+    weather_longitude: float | None = Field(None, ge=-180, le=180)
+    weather_location_enabled: bool = True
+    
     # Extended Profile Fields
     age: int | None = Field(None, ge=13, le=100)
     gender: str | None = Field(None, max_length=50)
@@ -64,6 +71,13 @@ class UserUpdate(BaseModel):
     city: str | None = Field(None, max_length=100)
     country_code: str | None = Field(None, max_length=10)
     styling_preference: str | None = Field(None, max_length=20)
+    
+    # Weather Targeting
+    weather_city: str | None = Field(None, max_length=100)
+    weather_country: str | None = Field(None, max_length=10)
+    weather_latitude: float | None = Field(None, ge=-90, le=90)
+    weather_longitude: float | None = Field(None, ge=-180, le=180)
+    weather_location_enabled: bool | None = None
     
     # Extended Profile Fields
     age: int | None = Field(None, ge=13, le=100)

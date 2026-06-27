@@ -14,7 +14,7 @@ Smart Wardrobe AI is a full-stack web application that allows users to:
 
 * Create accounts
 * Upload clothing images
-* Analyze clothing using Vision AI (Primary: Gemini, Fallback: NVIDIA NIM Phi-4)
+* Analyze clothing using Vision AI (Primary: BYOK Gemini, Fallback: Platform if enabled)
 * Manage a digital wardrobe
 * Receive outfit recommendations
 * Receive weather-aware suggestions
@@ -55,6 +55,8 @@ Frontend
 * TypeScript
 * Tailwind CSS
 * Shadcn/UI
+* Design System V2
+* Premium Skeleton Loaders
 * TanStack Query
 * Axios
 
@@ -73,7 +75,8 @@ Database
 
 AI
 
-* AI Provider Router (Gemini 2.5 Flash Primary, NVIDIA NIM Fallback)
+* Bring Your Own Key (BYOK) Architecture
+* AI Provider Router (Gemini Primary, Fallback if enabled)
 
 External Services
 
@@ -172,10 +175,15 @@ Table: users
 | id            | UUID      |
 | email         | VARCHAR   |
 | password_hash | VARCHAR   |
-| first_name    | VARCHAR   |
-| last_name     | VARCHAR   |
-| created_at    | TIMESTAMP |
-| updated_at    | TIMESTAMP |
+| first_name               | VARCHAR   |
+| last_name                | VARCHAR   |
+| weather_latitude         | FLOAT     |
+| weather_longitude        | FLOAT     |
+| weather_city             | VARCHAR   |
+| weather_country          | VARCHAR   |
+| weather_location_enabled | BOOLEAN   |
+| created_at               | TIMESTAMP |
+| updated_at               | TIMESTAMP |
 
 ---
 

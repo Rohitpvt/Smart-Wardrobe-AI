@@ -41,6 +41,13 @@ class User(Base, UUIDMixin, TimestampMixin):
     body_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
     fashion_experience: Mapped[str | None] = mapped_column(String(50), nullable=True)
     primary_style: Mapped[str | None] = mapped_column(String(50), nullable=True)
+
+    # Weather Targeting (Phase 9.13.X)
+    weather_city: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    weather_country: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    weather_latitude: Mapped[float | None] = mapped_column(nullable=True)
+    weather_longitude: Mapped[float | None] = mapped_column(nullable=True)
+    weather_location_enabled: Mapped[bool] = mapped_column(default=True, server_default="true", nullable=False)
     profile_image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     occupation: Mapped[str | None] = mapped_column(String(100), nullable=True)
     climate_region: Mapped[str | None] = mapped_column(String(100), nullable=True)

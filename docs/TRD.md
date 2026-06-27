@@ -103,7 +103,8 @@ Mandatory:
 
 Mandatory:
 
-* AI Provider Router (Gemini 2.5 Flash Primary, NVIDIA NIM Fallback)
+* Bring Your Own Key (BYOK) Architecture
+* AI Provider Router (Gemini Primary, Fallback if enabled)
 
 Permitted Usage:
 
@@ -128,11 +129,11 @@ Mandatory:
 
 Weather Location Source
 
-User profile fields: city, country_code
+User profile fields: weather_latitude, weather_longitude, weather_city, weather_country
 
-User sets city during profile setup or settings.
+User sets location via Browser Geolocation API ("Use My Current Location") or manually in settings.
 
-Weather API called using stored profile location.
+Weather API called using stored precise coordinates.
 
 ---
 

@@ -36,17 +36,31 @@ class OpenWeatherService:
             except Exception as e:
                 logger.warning(f"Failed to initialize Redis for weather cache: {e}")
 
-    async def get_current_weather(self, city: str | None, country_code: str | None) -> WeatherContext:
+    async def get_current_weather(
+        self, 
+        city: str | None, 
+        country_code: str | None,
+        lat: float | None = None,
+        lon: float | None = None,
+        weather_location_enabled: bool = True
+    ) -> WeatherContext:
         """
-        Fetch current weather for a specific city and country code.
+        Fetch current weather for a specific location.
         Returns a WeatherContext. Never raises exceptions (graceful fallback).
         """
-        if not city:
+        if not weather_location_enabled:
+            return WeatherContext(weather_used=False)
+            
+        if not lat and not lon and not city:
             return WeatherContext(weather_used=False)
 
         # Build cache key
         country_str = country_code or ""
-        cache_key = f"weather:{city.lower().strip()}:{country_str.lower().strip()}"
+        if lat and lon:
+            cache_key = f"weather:coords:{round(lat, 2)}:{round(lon, 2)}"
+        else:
+            cache_key = f"weather:{city.lower().strip()}:{country_str.lower().strip()}"
+        
         
         # 1. Try Redis
         if self.redis_client:
@@ -65,19 +79,24 @@ class OpenWeatherService:
             logger.warning("OpenWeather API key not configured. Skipping weather lookup.")
             return WeatherContext(weather_used=False)
 
-        q = city
-        if country_code:
-            q = f"{city},{country_code}"
+        params = {
+            "appid": self.api_key,
+            "units": "metric"
+        }
+        if lat and lon:
+            params["lat"] = lat
+            params["lon"] = lon
+        else:
+            q = city
+            if country_code:
+                q = f"{city},{country_code}"
+            params["q"] = q
 
         try:
             async with httpx.AsyncClient(timeout=3.0) as client:
                 response = await client.get(
                     self.base_url,
-                    params={
-                        "q": q,
-                        "appid": self.api_key,
-                        "units": "metric"
-                    }
+                    params=params
                 )
                 
                 if response.status_code == 200:

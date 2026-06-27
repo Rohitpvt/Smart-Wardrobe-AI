@@ -213,7 +213,7 @@ class StylistChatService:
 
         # 3. Build Context
         ctx_dict = await context_builder.build_context(
-            session, user_id, include_weather=True, city="Local", country_code="US"
+            session, user_id, include_weather=True
         )
         ctx_str = json.dumps(ctx_dict, indent=2)
 

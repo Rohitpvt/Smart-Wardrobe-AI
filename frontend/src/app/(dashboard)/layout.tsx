@@ -36,6 +36,8 @@ import {
 import { AmbientGlow } from "@/components/ui/AmbientGlow";
 import { SmartWardrobeLogo } from "@/components/branding/smart-wardrobe-logo";
 import AIAccessIntroModal from "@/components/dashboard/AIAccessIntroModal";
+import { HeaderProfileDropdown } from "@/components/dashboard/HeaderProfileDropdown";
+import { HeaderNotificationDropdown } from "@/components/dashboard/HeaderNotificationDropdown";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -259,19 +261,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               </div>
 
               {/* Notifications */}
-              <button aria-label="View notifications" className="relative p-2.5 text-slate-400 hover:text-white bg-surface-2 border border-white/5 rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-brand-purple rounded-full border border-surface-2" />
-              </button>
+              <HeaderNotificationDropdown />
 
-              {/* Profile Dropdown Placeholder */}
-              <button aria-label="User profile" className="w-10 h-10 rounded-xl bg-surface-2 border border-white/10 flex items-center justify-center text-slate-300 hover:border-brand-blue/50 cursor-pointer transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue">
-                {profileData?.first_name ? (
-                  <span className="font-bold text-sm uppercase">{profileData.first_name[0]}{profileData.last_name?.[0]}</span>
-                ) : (
-                  <User className="w-5 h-5" />
-                )}
-              </button>
+              {/* Profile Dropdown */}
+              <HeaderProfileDropdown profileData={profileData} onLogout={handleLogout} />
 
             </div>
           </header>

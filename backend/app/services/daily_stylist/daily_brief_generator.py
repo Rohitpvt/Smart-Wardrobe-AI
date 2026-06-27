@@ -48,8 +48,14 @@ class DailyBriefGenerator:
     async def generate_outfit(self, session: AsyncSession, current_user: User):
         occasion = await self.determine_occasion(session, current_user.id)
         
+        city = current_user.weather_city or current_user.city
+        country = current_user.weather_country or current_user.country_code
         weather_ctx = await weather_service.get_current_weather(
-            current_user.city, current_user.country_code
+            city=city,
+            country_code=country,
+            lat=current_user.weather_latitude,
+            lon=current_user.weather_longitude,
+            weather_location_enabled=current_user.weather_location_enabled
         )
 
         recommendations = await recommendation_service.generate_explainable_recommendations(

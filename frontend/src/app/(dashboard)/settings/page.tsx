@@ -31,6 +31,11 @@ export default async function SettingsPage() {
     fashion_experience: profileData?.fashion_experience || null,
     primary_style: profileData?.primary_style || null,
     profile_image_url: profileData?.profile_image_url || null,
+    weather_city: profileData?.weather_city || null,
+    weather_country: profileData?.weather_country || null,
+    weather_latitude: profileData?.weather_latitude || null,
+    weather_longitude: profileData?.weather_longitude || null,
+    weather_location_enabled: profileData?.weather_location_enabled ?? true,
   };
 
   return <SettingsClient initialProfile={initialProfile} />;

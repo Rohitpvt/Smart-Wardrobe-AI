@@ -8,8 +8,17 @@ An intelligent, AI-powered wardrobe management and styling platform.
 - **Style Memory:** An interactive feedback engine that remembers what you like, adjusting future recommendations accordingly.
 - **Shopping Intelligence:** Upload items you're considering buying and receive immediate compatibility scores with your existing closet.
 - **Predictive Stylist:** AI gracefully falls back (Gemini to NVIDIA NIM) for maximum uptime.
-- **Admin Dashboard & Quotas:** Comprehensive tracking of AI token usage, costs, and plan-based quotas (Free, Premium, Pro) natively built-in.
+- **Admin Dashboard & BYOK Architecture:** Comprehensive tracking of AI usage and errors. Built securely with a Bring Your Own Key (BYOK) model.
 - **Google OAuth Integration:** Secure, seamless one-click login via Google.
+
+---
+
+## 🔑 AI Access (Bring Your Own Key)
+
+Smart Wardrobe AI uses a Bring Your Own Key model for Gemini AI.
+Users must add their own Gemini API key in /settings/ai-access.
+Google login is only for authentication and does not provide Gemini API tokens.
+The user’s Gemini quota is managed by Google AI Studio, not by Smart Wardrobe AI.
 
 ## Tech Stack
 - **Backend:** Python, FastAPI, SQLAlchemy (Async), PostgreSQL (Neon), Alembic

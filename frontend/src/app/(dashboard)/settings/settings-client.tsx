@@ -27,6 +27,11 @@ interface ProfileData {
   fashion_experience?: string | null;
   primary_style?: string | null;
   profile_image_url?: string | null;
+  weather_city?: string | null;
+  weather_country?: string | null;
+  weather_latitude?: number | null;
+  weather_longitude?: number | null;
+  weather_location_enabled?: boolean | null;
 }
 
 export default function SettingsClient({ initialProfile }: { initialProfile: ProfileData }) {
@@ -147,7 +152,39 @@ export default function SettingsClient({ initialProfile }: { initialProfile: Pro
   const filledFields = fields.filter(Boolean).length;
   const completenessScore = Math.round((filledFields / fields.length) * 100) || 0;
   
-  const hasLocation = Boolean(profile.city && profile.country_code);
+  const hasLocation = Boolean(
+    profile.weather_location_enabled !== false &&
+    ((profile.weather_latitude && profile.weather_longitude) || profile.weather_city || profile.city)
+  );
+
+  const [locationStatus, setLocationStatus] = useState<"MISSING" | "ACTIVE" | "DENIED">(hasLocation ? "ACTIVE" : "MISSING");
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+    
+    toast.loading("Finding your location...");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        toast.dismiss();
+        setProfile({
+          ...profile,
+          weather_latitude: position.coords.latitude,
+          weather_longitude: position.coords.longitude,
+          weather_location_enabled: true
+        });
+        setLocationStatus("ACTIVE");
+        toast.success("Location acquired! Don't forget to save your profile.");
+      },
+      (error) => {
+        toast.dismiss();
+        setLocationStatus("DENIED");
+        toast.error("Location access denied.");
+      }
+    );
+  };
 
   return (
     <m.div 
@@ -319,25 +356,41 @@ export default function SettingsClient({ initialProfile }: { initialProfile: Pro
                 </div>
               </div>
 
-              {/* ═══ SECTION 4: WEATHER & LOCATION ═══ */}
+              {/* ═══ SECTION 4: WEATHER TARGETING ═══ */}
               <div className="pt-6">
-                <h3 className="text-sm font-bold text-slate-300 border-b border-white/5 pb-2 mb-6">Environmental Targeting</h3>
+                <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-6">
+                  <h3 className="text-sm font-bold text-slate-300">Weather Targeting</h3>
+                  {locationStatus === "ACTIVE" && <span className="text-xs font-semibold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full flex items-center gap-1"><CheckCircle2 className="w-3 h-3"/> Active</span>}
+                  {locationStatus === "MISSING" && <span className="text-xs font-semibold text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-full flex items-center gap-1"><AlertCircle className="w-3 h-3"/> Missing</span>}
+                  {locationStatus === "DENIED" && <span className="text-xs font-semibold text-red-400 bg-red-400/10 px-2 py-0.5 rounded-full flex items-center gap-1"><AlertCircle className="w-3 h-3"/> Denied</span>}
+                </div>
+                
+                <p className="text-sm text-slate-400 mb-6">Add your location so Smart Wardrobe AI can consider weather when creating outfits.</p>
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
                   <div>
                     <label className="block text-xs font-label-sm text-slate-400 uppercase tracking-widest mb-2 pl-1">City</label>
-                    <input type="text" name="city" placeholder="e.g. London" value={profile.city} onChange={handleProfileChange} className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-brand-blue/50 focus:border-brand-blue/50 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]" />
+                    <input type="text" name="weather_city" placeholder={profile.city || "e.g. London"} value={profile.weather_city || ""} onChange={handleProfileChange} className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-brand-blue/50 focus:border-brand-blue/50 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]" />
                   </div>
                   <div>
-                    <label className="block text-xs font-label-sm text-slate-400 uppercase tracking-widest mb-2 pl-1">Country Code</label>
-                    <input type="text" name="country_code" placeholder="e.g. UK" maxLength={2} value={profile.country_code} onChange={handleProfileChange} className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-brand-blue/50 focus:border-brand-blue/50 uppercase transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]" />
+                    <label className="block text-xs font-label-sm text-slate-400 uppercase tracking-widest mb-2 pl-1">Country</label>
+                    <input type="text" name="weather_country" placeholder={profile.country_code || "e.g. UK"} value={profile.weather_country || ""} onChange={handleProfileChange} className="w-full bg-[#060816]/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-brand-blue/50 focus:border-brand-blue/50 uppercase transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]" />
                   </div>
                 </div>
 
-                <div className="mt-4 bg-brand-blue/5 border border-brand-blue/10 rounded-xl p-4 flex gap-3">
+                <div className="mt-6 flex justify-start">
+                  <button type="button" onClick={handleUseCurrentLocation} className="px-4 py-2 bg-surface-2 border border-brand-blue/30 text-brand-blue font-medium rounded-xl hover:bg-brand-blue/10 hover:border-brand-blue/50 transition-all focus:outline-none focus:ring-2 focus:ring-brand-blue/50 flex items-center gap-2 text-sm">
+                    <MapPin className="w-4 h-4" /> Use My Current Location
+                  </button>
+                </div>
+
+                <div className="mt-6 bg-brand-blue/5 border border-brand-blue/10 rounded-xl p-4 flex gap-3">
                   <CloudSun className="w-5 h-5 text-brand-blue shrink-0" />
-                  <p className="text-sm text-slate-300 leading-relaxed">
-                    Location data enables our styling engine to pull real-time weather forecasts when generating outfit recommendations. Without this, the AI defaults to season-agnostic styling.
-                  </p>
+                  <div className="text-sm text-slate-300 leading-relaxed flex-1">
+                    {locationStatus === "ACTIVE" && "Using weather data for your saved location."}
+                    {locationStatus === "MISSING" && "Add your city or use current location to enable weather-aware outfit suggestions."}
+                    {locationStatus === "DENIED" && "Location Permission Denied. You can still enter your city manually."}
+                  </div>
                 </div>
               </div>
 
@@ -426,7 +479,7 @@ export default function SettingsClient({ initialProfile }: { initialProfile: Pro
                    {hasLocation ? <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" /> : <AlertCircle className="w-5 h-5 text-yellow-500 shrink-0" />}
                    <div>
                      <p className="text-sm font-medium text-slate-200">Weather Targeting</p>
-                     <p className="text-xs text-slate-500 mt-0.5">{hasLocation ? "Active & Calibrated" : "Missing Location Data"}</p>
+                     <p className="text-xs text-slate-500 mt-0.5">{hasLocation ? "Weather Targeting Active" : "Missing Location Data"}</p>
                    </div>
                  </div>
 

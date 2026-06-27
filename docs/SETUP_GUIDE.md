@@ -42,7 +42,7 @@ pip install -r requirements.txt
 2. Open `.env` and fill in:
    - `DATABASE_URL`
    - `SECRET_KEY` (use any string for local dev)
-   - `GEMINI_API_KEY` (Required for AI features)
+   - `USER_AI_KEY_ENCRYPTION_SECRET` (Required to securely store user API keys)
 
 ### Run Database Migrations
 ```bash
@@ -96,13 +96,11 @@ In your backend terminal, run the bootstrap script:
 python scripts/promote_admin.py --email your_registered_email@example.com
 ```
 
-### Change AI Plan Quota (Optional)
-To test different quota tiers (free, premium, pro):
-```bash
-python scripts/set_user_ai_plan.py --email your_registered_email@example.com --plan premium
-```
-
----
+### Setup Your Gemini API Key (BYOK)
+Smart Wardrobe AI uses a Bring Your Own Key model for Gemini AI.
+Users must add their own Gemini API key in /settings/ai-access.
+Google login is only for authentication and does not provide Gemini API tokens.
+The user’s Gemini quota is managed by Google AI Studio, not by Smart Wardrobe AI.
 
 ## 5. Verification
 

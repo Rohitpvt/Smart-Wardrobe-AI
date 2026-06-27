@@ -46,7 +46,7 @@ function ShoppingOpportunityCard({ opp }: { opp: ShoppingOpportunity }) {
         <OpportunityTypeBadge type={opp.opportunity_type} />
         <div className="flex items-center gap-1 bg-white/5 border border-white/10 px-2 py-1 rounded text-xs font-semibold text-white">
           <Sparkles className="w-3 h-3 text-brand-blue" />
-          AI Upgrade
+          AI Style Pick
         </div>
       </div>
 

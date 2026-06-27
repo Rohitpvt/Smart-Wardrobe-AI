@@ -14,6 +14,7 @@ from app.services.dashboard import (
     get_purchase_recommendations
 )
 from app.services.weather.provider import weather_service
+from app.models.user import User
 
 
 class ContextBuilderService:
@@ -21,9 +22,7 @@ class ContextBuilderService:
         self, 
         session: AsyncSession, 
         user_id: uuid.UUID,
-        include_weather: bool = False,
-        city: str | None = None,
-        country_code: str | None = None
+        include_weather: bool = False
     ) -> Dict[str, Any]:
         """
         Gathers all intelligence layers for the stylist prompt.
@@ -45,10 +44,20 @@ class ContextBuilderService:
         
         # 5. Weather Context (Optional)
         weather_ctx = None
-        if include_weather and city and country_code:
-            weather = await weather_service.get_current_weather(city, country_code)
-            if weather.weather_used:
-                weather_ctx = weather.model_dump()
+        if include_weather:
+            user = await session.get(User, user_id)
+            if user:
+                city = user.weather_city or user.city
+                country = user.weather_country or user.country_code
+                weather = await weather_service.get_current_weather(
+                    city=city, 
+                    country_code=country,
+                    lat=user.weather_latitude,
+                    lon=user.weather_longitude,
+                    weather_location_enabled=user.weather_location_enabled
+                )
+                if weather.weather_used:
+                    weather_ctx = weather.model_dump()
 
         return {
             "taste_profile": {

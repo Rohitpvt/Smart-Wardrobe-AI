@@ -25,16 +25,14 @@ Before signing off on a production release, manually execute the following flows
 - [ ] **Feedback Engine:** Provide a thumbs up / thumbs down on the outfit. Verify the feedback is acknowledged.
 - [ ] **Anchor Item:** Select a specific wardrobe item and request the AI to build an outfit around it.
 
-## 5. Quota Engine Validation
-- [ ] **Free Quota Exhaustion:** Using a test account, rapidly generate outfits until the limit is reached (default 10).
-- [ ] **Modal Verification:** Verify the "Daily AI limit reached" modal pops up automatically on the 11th request.
-- [ ] **Plan Check:** Ensure the modal says "free daily AI limit" and "Premium plans are coming soon".
-- [ ] **Admin Immunity:** Log into an admin account and verify no quota modal appears even after significant usage.
+## 5. BYOK AI Validation
+- [ ] **Provide Gemini Key:** Navigate to `/settings/ai-access` and save a valid Gemini API Key. Verify status turns to 'Connected'.
+- [ ] **Quota Exhaustion (429):** Using a test key with no quota, attempt an AI generation. Verify the inline 'Gemini quota reached' error card appears without a generic 500 crash.
+- [ ] **Invalid Key (400/403):** Enter an invalid key and verify the 'Key invalid' error card appears gracefully.
+- [ ] **Weather Geolocation:** Navigate to `/settings` and click 'Use My Current Location'. Grant permission and verify Weather Targeting becomes 'Active' without showing raw coordinates.
 
 ## 6. Dashboards
-- [ ] **AI Usage User Dashboard:** Navigate to `/settings/ai-usage`. Verify the progress bar and recent activity log.
-- [ ] **Admin Dashboard:** Navigate to `/admin/ai-usage`.
-- [ ] **Admin Auth:** Attempt to load `/admin/ai-usage` as a non-admin. Verify you receive the red Access Denied screen.
+- [ ] **AI Activity Log:** Navigate to `/settings/ai-usage`. Verify the recent AI generation activity logs appear correctly without any quota or plan wording.
 
 ## 7. Responsive Design
 Resize your browser window or use Chrome DevTools Device Mode:
