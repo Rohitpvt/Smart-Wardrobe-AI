@@ -1,23 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@clerk/nextjs";
 import { api } from "@/lib/axios";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const { isLoaded, isSignedIn, getToken } = useAuth();
   const [mounted, setMounted] = useState(false);
 
-  // Use TanStack query to validate session against the backend
-  const { data: user, isLoading, isError } = useQuery({
-    queryKey: ["validate-session"],
+  // We need to fetch the local user profile to check onboarding_completed
+  const { data: user, isLoading: isUserLoading, isError, failureCount } = useQuery({
+    queryKey: ["validate-session", isSignedIn],
     queryFn: async () => {
+      // Ensure we have a token before making the request
+      const token = await getToken();
+      if (!token) throw new Error("No token");
       const response = await api.get("/users/me");
       return response.data;
     },
-    // Don't retry, because if it's 401, axios will either refresh or redirect.
-    retry: false,
+    enabled: isLoaded && isSignedIn,
+    retry: 2,            // Retry up to 2 times to handle race conditions
+    retryDelay: 1000,    // Wait 1s between retries
     refetchOnWindowFocus: true,
     staleTime: 5 * 60 * 1000,
   });
@@ -27,17 +34,25 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (mounted && !isLoading) {
-      if (isError) {
-        router.replace("/login");
-      } else if (user && user.onboarding_completed === false) {
+    if (mounted && isLoaded) {
+      if (!isSignedIn) {
+        // Clerk confirms user is not signed in — redirect
+        router.replace("/sign-in");
+      } else if (!isUserLoading && isError && failureCount >= 2) {
+        // Only redirect to sign-in if API failed multiple times AND Clerk says we're signed in
+        // This prevents redirect loops during initialization
+        // The user IS authenticated via Clerk but the backend can't be reached
+        console.warn("[AuthGuard] Backend /users/me failed after retries. User is Clerk-authenticated but backend sync failed.");
+        // Don't redirect to sign-in — that would cause a loop since Clerk says user IS signed in
+        // Instead, show a degraded state or just let the page render
+      } else if (user && user.onboarding_completed === false && !pathname.startsWith("/onboarding")) {
         router.replace("/onboarding/profile");
       }
     }
-  }, [mounted, isLoading, isError, user, router]);
+  }, [mounted, isLoaded, isSignedIn, isUserLoading, isError, failureCount, user, router, pathname]);
 
   // Handle loading state
-  if (!mounted || isLoading) {
+  if (!mounted || !isLoaded || (isSignedIn && isUserLoading)) {
     return (
       <div className="flex flex-col h-screen w-full items-center justify-center bg-[#02040a] relative overflow-hidden">
         {/* Ambient background effect */}
@@ -63,11 +78,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If there's an error, Axios interceptor will handle the redirect. We just prevent rendering children.
-  if (isError) {
+  if (!isSignedIn) {
     return null;
   }
 
-  // Session is valid
+  // Session is valid — render children even if backend sync had transient errors
   return <>{children}</>;
 }
+

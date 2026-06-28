@@ -116,10 +116,20 @@ async def update_opportunity_status(
     session: AsyncSession = Depends(get_db)
 ):
     """Update opportunity status (e.g. dismissed or completed)."""
-    stmt = update(WardrobeOpportunity).where(
-        WardrobeOpportunity.id == opportunity_id,
-        WardrobeOpportunity.user_id == current_user.id
-    ).values(status=update_data.status)
-    await session.execute(stmt)
+    stmt = (
+        update(WardrobeOpportunity)
+        .where(
+            WardrobeOpportunity.id == opportunity_id,
+            WardrobeOpportunity.user_id == current_user.id
+        )
+        .values(status=update_data.status)
+        .returning(WardrobeOpportunity.id)
+    )
+    result = await session.execute(stmt)
+    updated_id = result.scalar_one_or_none()
+    
+    if not updated_id:
+        raise HTTPException(status_code=404, detail="Resource not found")
+        
     await session.commit()
-    return {"success": True, "id": opportunity_id, "status": update_data.status}
+    return {"success": True, "id": str(updated_id), "status": update_data.status}

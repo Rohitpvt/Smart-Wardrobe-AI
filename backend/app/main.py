@@ -88,9 +88,10 @@ app.add_middleware(
 
 
 from app import models
-from app.api.endpoints import auth, users, wardrobe, uploads, dashboard, recommendations, chat, intelligence, style_memory, daily_stylist, predictive_stylist, shopping_intelligence, wear_tracking, ai_usage, admin_ai_usage, user_ai_keys
+from app.api.endpoints import auth, users, wardrobe, uploads, dashboard, recommendations, chat, intelligence, style_memory, daily_stylist, predictive_stylist, shopping_intelligence, wear_tracking, ai_usage, admin_ai_usage, user_ai_keys, webhooks
 
 # --- Routers ---
+app.include_router(webhooks.router, prefix=f"{settings.API_PREFIX}", tags=["Webhooks"])
 app.include_router(auth.router, prefix=f"{settings.API_PREFIX}/auth", tags=["Auth"])
 app.include_router(users.router, prefix=f"{settings.API_PREFIX}/users", tags=["Users"])
 app.include_router(wardrobe.router, prefix=f"{settings.API_PREFIX}/wardrobe", tags=["Wardrobe"])

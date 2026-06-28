@@ -5,7 +5,6 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useState } from 'react';
 
 import { MotionConfig, LazyMotion, domAnimation } from 'framer-motion';
-import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AiQuotaProvider } from '@/components/providers/ai-quota-provider';
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -23,8 +22,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
         <LazyMotion features={domAnimation} strict>
           <MotionConfig reducedMotion="user">
             <AiQuotaProvider>
@@ -33,7 +31,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <ReactQueryDevtools initialIsOpen={false} />
           </MotionConfig>
         </LazyMotion>
-      </QueryClientProvider>
-    </GoogleOAuthProvider>
+    </QueryClientProvider>
   );
 }

@@ -14,3 +14,8 @@ class AIFeature(str, Enum):
     PREDICTIVE_STYLIST = "predictive_stylist"
     STYLE_DNA_EXPLANATION = "style_dna_explanation"
     AI_COACH = "ai_coach"
+
+# Auth Error Messages (Standardized to prevent enumeration)
+AUTH_LOGIN_ERROR = "Incorrect email or password"
+AUTH_REGISTER_ERROR = "Unable to create account with the provided information"
+AUTH_RESET_REQUEST_MESSAGE = "If that email is registered, you'll receive a reset link"

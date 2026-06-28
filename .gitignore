@@ -31,3 +31,8 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# Agent
+scratch/
+artifacts/
+

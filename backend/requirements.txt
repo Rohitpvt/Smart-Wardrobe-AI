@@ -22,6 +22,7 @@ PyJWT>=2.9.0
 bcrypt>=4.2.0
 email-validator>=2.1.0
 cryptography>=42.0.0
+svix>=1.24.0
 
 # --- AI Providers ---
 google-genai>=1.0.0
@@ -38,6 +39,7 @@ Pillow>=10.0.0
 
 # --- Caching ---
 cachetools>=5.0.0
+redis>=5.0.30
 
 # --- Testing ---
 pytest>=8.0.0

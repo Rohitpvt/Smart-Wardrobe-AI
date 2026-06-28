@@ -7,12 +7,14 @@ from sqlalchemy.future import select
 from app.models import User, RefreshToken
 from app.core import security
 from app.core.config import settings
-from app.core.lockout import failed_login_cache
+from app.services.auth_lockout_service import auth_lockout_service
 from app.core.rate_limit import limiter
 
 @pytest.fixture(autouse=True)
 def clear_lockout_cache():
-    failed_login_cache.clear()
+    if not auth_lockout_service.use_redis:
+        auth_lockout_service.failures_cache.clear()
+        auth_lockout_service.lockouts_cache.clear()
     limiter._storage.storage.clear()
     limiter._storage.expirations.clear()
 

@@ -20,56 +20,83 @@ from app.core.rate_limit import limiter
 router = APIRouter()
 
 
-from app.core import security
+import jwt as pyjwt
+from datetime import datetime, timedelta, timezone
+from app.core.config import settings
 from app.core.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from pydantic import BaseModel
 
-@router.get("/users/{user_id}/{filename}")
-async def serve_upload(
-    user_id: uuid.UUID,
-    filename: str,
-    request: Request,
+class MediaTokenResponse(BaseModel):
+    media_token: str
+    expires_in: int
+
+def _create_media_token(user_id: str, file_path: str) -> str:
+    expires = datetime.now(timezone.utc) + timedelta(seconds=300)
+    payload = {
+        "sub": str(user_id),
+        "path": file_path,
+        "exp": expires,
+        "type": "media_access"
+    }
+    return pyjwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
+
+def _verify_media_access_token(token: str) -> dict:
+    try:
+        payload = pyjwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+        if payload.get("type") != "media_access":
+            raise HTTPException(status_code=403, detail="Invalid token type")
+        return payload
+    except pyjwt.ExpiredSignatureError:
+        raise HTTPException(status_code=403, detail="Media token expired")
+    except pyjwt.InvalidTokenError:
+        raise HTTPException(status_code=403, detail="Invalid media token")
+
+@router.get("/media-token", response_model=MediaTokenResponse)
+async def generate_media_token(
+    path: str,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Generate a short-lived media token for a specific file.
+    """
+    # Prevent path traversal
+    if ".." in path or path.startswith("/"):
+        raise HTTPException(status_code=400, detail="Invalid path")
+        
+    # Verify the path belongs to the user
+    expected_prefix = f"uploads/users/{current_user.id}/"
+    if not path.startswith(expected_prefix):
+        # Return generic 403 or 404 to not leak info
+        raise HTTPException(status_code=404, detail="Resource not found")
+        
+    token = _create_media_token(str(current_user.id), path)
+    return MediaTokenResponse(media_token=token, expires_in=300)
+
+@router.get("/serve/{path:path}")
+async def serve_media(
+    path: str,
+    media_token: str,
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Serve an uploaded image file.
-    Accepts token via query parameter for <img> tags or Authorization header.
+    Serve a media file using a short-lived media token.
     """
-    token = request.query_params.get("token")
-    if not token:
-        token = request.cookies.get("access_token")
-    if not token:
-        auth_header = request.headers.get("Authorization")
-        if not auth_header or not auth_header.startswith("Bearer "):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-        token = auth_header.split(" ")[1]
-
-    try:
-        payload = security.decode_token(token)
-        email = payload.get("sub")
-        if not email:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing email in token")
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Token decode failed: {str(e)}")
-
-    result = await db.execute(select(User).where(User.email == email))
-    current_user = result.scalar_one_or_none()
-    if not current_user or str(current_user.id) != str(user_id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="File not found",
-        )
-
-    relative_path = f"uploads/users/{user_id}/{filename}"
-    absolute_path = storage_service.get_absolute_path(relative_path)
-
+    payload = _verify_media_access_token(media_token)
+    
+    if payload.get("path") != path:
+        raise HTTPException(status_code=403, detail="Token not valid for this path")
+        
+    user_id = payload.get("sub")
+    
+    # Path traversal check
+    if ".." in path or path.startswith("/"):
+        raise HTTPException(status_code=400, detail="Invalid path")
+        
+    absolute_path = storage_service.get_absolute_path(path)
     if not absolute_path:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="File not found",
-        )
-
+        raise HTTPException(status_code=404, detail="Resource not found")
+        
     return FileResponse(str(absolute_path))
 
 @router.post("/analyze", response_model=AIClothingExtraction)

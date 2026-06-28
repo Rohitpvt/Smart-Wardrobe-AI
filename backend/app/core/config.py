@@ -44,6 +44,13 @@ class Settings(BaseSettings):
     )
     DEBUG_GOOGLE_OAUTH: bool = False
 
+    # --- Clerk Auth ---
+    CLERK_SECRET_KEY: str = Field(default="", description="Clerk secret key (backend only)")
+    CLERK_WEBHOOK_SECRET: str = Field(default="", description="Clerk webhook signing secret")
+    CLERK_JWKS_URL: str = Field(default="", description="Clerk JWKS endpoint URL")
+    CLERK_ISSUER: str = Field(default="", description="Clerk issuer URL")
+    CLERK_AUDIENCE: str = Field(default="", description="Clerk audience (optional)")
+
     # --- Gemini AI ---
     GEMINI_API_KEY: str = Field(
         default="",

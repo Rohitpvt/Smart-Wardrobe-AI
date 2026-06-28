@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { auth } from "@clerk/nextjs/server";
 import {
   DashboardSummary,
   DashboardTrend,
@@ -12,8 +12,8 @@ import {
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
 
 async function fetchWithAuth(endpoint: string) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("access_token")?.value;
+  const { getToken } = await auth();
+  const token = await getToken();
 
   const res = await fetch(`${API_URL}${endpoint}`, {
     headers: {

@@ -7,6 +7,7 @@ import { AuthGuard } from "@/components/auth/auth-guard";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import { api } from "@/lib/axios";
 import { useQueryClient } from "@tanstack/react-query";
+import { useClerk } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { m, AnimatePresence } from "framer-motion";
 import { 
@@ -43,6 +44,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { signOut } = useClerk();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [profileData, setProfileData] = useState<{ first_name: string; last_name: string } | null>(null);
@@ -71,12 +73,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   const handleLogout = async () => {
     try {
-      await api.post("/auth/logout");
+      await signOut(() => router.replace("/sign-in"));
     } catch (e) {
-      console.error("Logout API failed", e);
+      console.error("Logout failed", e);
     } finally {
       queryClient.clear();
-      router.replace("/login");
     }
   };
 

@@ -3,7 +3,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError
 import secrets
-from pydantic import BaseModel
+import logging
+import json
+from pydantic import BaseModel, ValidationError
+
+logger = logging.getLogger(__name__)
 
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
@@ -11,7 +15,9 @@ from google.auth.transport import requests as google_requests
 from app.core.database import get_db
 from app.core import security
 from app.core.config import settings
-from app.core.lockout import record_failed_attempt, is_locked_out, reset_failed_attempts
+from app.services.auth_lockout_service import auth_lockout_service
+import asyncio
+from app.core.constants import AUTH_LOGIN_ERROR, AUTH_REGISTER_ERROR, AUTH_RESET_REQUEST_MESSAGE
 from app.core.rate_limit import limiter
 from app.models import User, RefreshToken
 from app.schemas import UserCreate, UserRead, Token, LoginData
@@ -75,7 +81,21 @@ def clear_csrf_cookie(response: Response):
 
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 @limiter.limit("3/minute")
-async def register(request: Request, user_in: UserCreate, db: AsyncSession = Depends(get_db)):
+async def register(request: Request, db: AsyncSession = Depends(get_db)):
+    raise HTTPException(status_code=410, detail="Custom registration is disabled. Please use Clerk sign-up.")
+    try:
+        body = await request.json()
+    except json.JSONDecodeError:
+        logger.warning("[AUTH_VALIDATION] signup rejected | reason=malformed_json")
+        raise HTTPException(status_code=400, detail=AUTH_REGISTER_ERROR)
+        
+    try:
+        user_in = UserCreate.model_validate(body)
+    except ValidationError as e:
+        error_types = [err.get("type", "unknown") for err in e.errors()]
+        logger.warning(f"[AUTH_VALIDATION] signup rejected | reason={','.join(error_types)}")
+        raise HTTPException(status_code=400, detail=AUTH_REGISTER_ERROR)
+        
     email_clean = user_in.email.strip().lower()
     # Check if user exists
     stmt = select(User).where(User.email == email_clean)
@@ -83,7 +103,7 @@ async def register(request: Request, user_in: UserCreate, db: AsyncSession = Dep
     if result.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User with this email already exists."
+            detail=AUTH_REGISTER_ERROR
         )
 
     user = User(
@@ -110,24 +130,45 @@ async def register(request: Request, user_in: UserCreate, db: AsyncSession = Dep
         return user
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=400, detail="Registration failed.")
+        raise HTTPException(status_code=400, detail=AUTH_REGISTER_ERROR)
 
 @router.get("/check-email")
 async def check_email(email: str, db: AsyncSession = Depends(get_db)):
-    stmt = select(User).where(User.email == email.strip().lower())
-    result = await db.execute(stmt)
-    if result.scalar_one_or_none():
-        return {"available": False}
+    raise HTTPException(status_code=410, detail="Custom email check is disabled. Please use Clerk.")
+    # Always return true to prevent enumeration
     return {"available": True}
 
 @router.post("/login", response_model=Token)
-@limiter.limit("5/minute")
-async def login(request: Request, login_data: LoginData, response: Response, db: AsyncSession = Depends(get_db)):
-    email = login_data.email.strip().lower()
-    if is_locked_out(email):
+@limiter.limit("10/minute")
+async def login(request: Request, response: Response, db: AsyncSession = Depends(get_db)):
+    raise HTTPException(status_code=410, detail="Custom login is disabled. Please use Clerk sign-in.")
+    try:
+        body = await request.json()
+    except json.JSONDecodeError:
+        logger.warning("[AUTH_VALIDATION] login rejected | reason=malformed_json")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password", # Generic error per TRD
+            detail=AUTH_LOGIN_ERROR,
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+        
+    try:
+        login_data = LoginData.model_validate(body)
+    except ValidationError as e:
+        error_types = [err.get('type', 'unknown') for err in e.errors()]
+        logger.warning(f"[AUTH_VALIDATION] login rejected | reason={','.join(error_types)}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=AUTH_LOGIN_ERROR,
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+        
+    email = login_data.email.strip().lower()
+    
+    if await auth_lockout_service.is_locked_out(email):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=AUTH_LOGIN_ERROR,
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -138,19 +179,26 @@ async def login(request: Request, login_data: LoginData, response: Response, db:
     if user and user.auth_provider == 'google' and user.password_hash is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="This account uses Google Sign-In. Please continue with Google.",
+            detail=AUTH_LOGIN_ERROR,
         )
 
-    if not user or not user.password_hash or not security.verify_password(login_data.password, user.password_hash):
-        record_failed_attempt(email)
+    if not user or not await security.verify_and_upgrade_password(login_data.password, user, db):
+        count = await auth_lockout_service.record_failed_attempt(email)
+        delay = auth_lockout_service.calculate_progressive_delay(count)
+        if delay > 0:
+            await asyncio.sleep(delay)
+            
+        if count >= auth_lockout_service.max_attempts:
+            await auth_lockout_service.trigger_lockout(email)
+            
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
+            detail=AUTH_LOGIN_ERROR,
             headers={"WWW-Authenticate": "Bearer"},
         )
 
     # Success: reset failed attempts
-    reset_failed_attempts(email)
+    await auth_lockout_service.clear_failures(email)
 
     access_token = security.create_access_token(data={"sub": user.email})
     
@@ -187,6 +235,7 @@ async def login(request: Request, login_data: LoginData, response: Response, db:
 
 @router.post("/refresh", response_model=Token)
 async def refresh_token(request: Request, response: Response, db: AsyncSession = Depends(get_db)):
+    raise HTTPException(status_code=410, detail="Custom refresh is disabled. Clerk handles sessions.")
     token = request.cookies.get("refresh_token")
     if not token:
         raise HTTPException(status_code=401, detail="Refresh token missing")
@@ -254,6 +303,7 @@ async def refresh_token(request: Request, response: Response, db: AsyncSession =
 
 @router.post("/logout")
 async def logout(request: Request, response: Response, db: AsyncSession = Depends(get_db)):
+    raise HTTPException(status_code=410, detail="Custom logout is disabled. Please use Clerk sign-out.")
     csrf_cookie = request.cookies.get("csrf_token")
     csrf_header = request.headers.get("x-csrf-token")
     if not csrf_cookie or not csrf_header or csrf_cookie != csrf_header:
@@ -385,6 +435,7 @@ async def google_register_start(request: Request, login_data: GoogleLoginData, r
     Does NOT create a user or issue login cookies.
     Sets a short-lived HttpOnly pending registration cookie for new users.
     """
+    raise HTTPException(status_code=410, detail="Custom Google Auth is disabled. Please use Clerk.")
     idinfo = _verify_google_token(login_data.credential, endpoint_context="google/register-start")
 
     email = idinfo.get("email", "").strip().lower()
@@ -436,6 +487,7 @@ async def get_google_pending_registration(request: Request):
     """
     Phase 9.11G-C: Allows /register to resume Google registration after redirect from /login.
     """
+    raise HTTPException(status_code=410, detail="Custom Google Auth is disabled. Please use Clerk.")
     token = request.cookies.get("google_pending_registration")
     if not token:
         return {"status": "none"}
@@ -461,6 +513,7 @@ async def google_register_cancel(response: Response):
     """
     Cancel a pending Google registration by clearing the cookie.
     """
+    raise HTTPException(status_code=410, detail="Custom Google Auth is disabled. Please use Clerk.")
     response.delete_cookie(
         key="google_pending_registration",
         httponly=True,
@@ -476,6 +529,7 @@ async def google_register_complete(request: Request, data: GoogleRegisterComplet
     Phase 9.11G-C: Create a Google-backed user after Step 2 & Step 3 profile data is collected.
     Uses HttpOnly cookie. Does NOT auto-login. Frontend must redirect to /login.
     """
+    raise HTTPException(status_code=410, detail="Custom Google Auth is disabled. Please use Clerk.")
     token = request.cookies.get("google_pending_registration")
     if not token:
         raise HTTPException(status_code=400, detail="Pending registration session not found or expired")
@@ -501,7 +555,7 @@ async def google_register_complete(request: Request, data: GoogleRegisterComplet
     stmt = select(User).where(User.email == email)
     result = await db.execute(stmt)
     if result.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="An account with this email already exists.")
+        raise HTTPException(status_code=400, detail=AUTH_REGISTER_ERROR)
 
     user = User(
         email=email,
@@ -528,7 +582,7 @@ async def google_register_complete(request: Request, data: GoogleRegisterComplet
         await db.refresh(user)
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=400, detail="Registration failed. Please try again.")
+        raise HTTPException(status_code=400, detail=AUTH_REGISTER_ERROR)
 
     response.delete_cookie(
         key="google_pending_registration",
@@ -592,7 +646,7 @@ async def google_login(request: Request, login_data: GoogleLoginData, response: 
     if user.auth_provider == "local" and not user.google_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="This email is registered with a password. Please sign in with your email and password."
+            detail=AUTH_LOGIN_ERROR
         )
 
     # Account linking: link Google ID if not yet linked

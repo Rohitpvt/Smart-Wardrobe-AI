@@ -2,11 +2,13 @@ import uuid
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
 import re
+from typing import Any
+from app.schemas.auth_validation import sanitize_email, sanitize_name, validate_password_security
 
 class UserBase(BaseModel):
     email: EmailStr
-    first_name: str = Field(..., max_length=100)
-    last_name: str = Field(..., max_length=100)
+    first_name: str = Field("User", max_length=100)
+    last_name: str | None = Field(None, max_length=100)
     city: str | None = Field(None, max_length=100)
     country_code: str | None = Field(None, max_length=10)
     styling_preference: str | None = Field(None, max_length=20)
@@ -38,25 +40,27 @@ class UserBase(BaseModel):
     preferred_fit: str | None = Field(None, max_length=50)
     budget_preference: str | None = Field(None, max_length=50)
 
+    @field_validator("email", mode="before")
+    @classmethod
+    def validate_email_field(cls, v: Any) -> Any:
+        return sanitize_email(v)
+
+    @field_validator("first_name", "last_name", mode="before")
+    @classmethod
+    def validate_name_fields(cls, v: Any) -> Any:
+        return sanitize_name(v)
+
 class UserCreate(UserBase):
     password: str | None = Field(None, min_length=8, max_length=100)
     age: int = Field(..., ge=13, le=100)
     gender: str = Field(..., max_length=50)
     
-    @field_validator("password")
+    @field_validator("password", mode="before")
     @classmethod
     def validate_password(cls, v: str | None) -> str | None:
         if v is None:
             return v
-        if not re.search(r"[A-Z]", v):
-            raise ValueError("Password must contain at least one uppercase letter")
-        if not re.search(r"[a-z]", v):
-            raise ValueError("Password must contain at least one lowercase letter")
-        if not re.search(r"[0-9]", v):
-            raise ValueError("Password must contain at least one number")
-        if not re.search(r"[^a-zA-Z0-9]", v):
-            raise ValueError("Password must contain at least one special character")
-        return v
+        return validate_password_security(v)
 
 class UserRead(UserBase):
     id: uuid.UUID
@@ -95,6 +99,16 @@ class UserUpdate(BaseModel):
     budget_preference: str | None = Field(None, max_length=50)
     onboarding_completed: bool | None = None
 
+    @field_validator("first_name", "last_name", mode="before")
+    @classmethod
+    def validate_name_fields(cls, v: Any) -> Any:
+        return sanitize_name(v)
+
 class UserChangePassword(BaseModel):
     current_password: str
     new_password: str = Field(..., min_length=8, max_length=100)
+
+    @field_validator("new_password", mode="before")
+    @classmethod
+    def validate_new_pwd(cls, v: str) -> str:
+        return validate_password_security(v)

@@ -11,79 +11,55 @@ export const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true,
+  // withCredentials is no longer needed since we use Bearer tokens via Clerk, not cookies
 });
 
-// Request interceptor for CSRF token
-api.interceptors.request.use((config) => {
-  if (typeof window !== "undefined") {
-    if (config.method && ['post', 'put', 'patch', 'delete'].includes(config.method.toLowerCase())) {
-      const match = document.cookie.match(new RegExp('(^| )csrf_token=([^;]+)'));
-      if (match) {
-        config.headers['X-CSRF-Token'] = match[2];
-      }
+/**
+ * Helper to get the Clerk session token.
+ * Waits briefly for Clerk to initialize on first load to avoid race conditions.
+ */
+async function getClerkToken(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+
+  const clerk = (window as any).Clerk;
+  if (!clerk) return null;
+
+  // If Clerk is loaded but session isn't ready yet, wait briefly
+  if (!clerk.session && clerk.loaded !== false) {
+    // Clerk may still be initializing — wait up to 2s
+    for (let i = 0; i < 20; i++) {
+      await new Promise(r => setTimeout(r, 100));
+      if ((window as any).Clerk?.session) break;
     }
+  }
+
+  const session = (window as any).Clerk?.session;
+  if (!session) return null;
+
+  try {
+    return await session.getToken();
+  } catch {
+    return null;
+  }
+}
+
+// Request interceptor for Clerk token
+api.interceptors.request.use(async (config) => {
+  const token = await getClerkToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-// Avoid infinite refresh loops
-let isRefreshing = false;
-let failedQueue: { resolve: (value?: unknown) => void; reject: (reason?: unknown) => void }[] = [];
-
-const processQueue = (error: unknown) => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve();
-    }
-  });
-  failedQueue = [];
-};
-
-// Response interceptor for handling token refresh
+// Response interceptor for handling 401s and AI Quota errors
 api.interceptors.response.use(
   (response) => response,
-  async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
-
-    // If it's a 401 and we haven't already retried
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
-      // Don't intercept auth endpoints
-      if (originalRequest.url?.includes('/auth/')) {
-        return Promise.reject(error);
-      }
-
-      if (isRefreshing) {
-        return new Promise(function (resolve, reject) {
-          failedQueue.push({ resolve, reject });
-        })
-          .then(() => {
-            return api(originalRequest);
-          })
-          .catch((err) => {
-            return Promise.reject(err);
-          });
-      }
-
-      originalRequest._retry = true;
-      isRefreshing = true;
-
-      try {
-        await axios.post(`${apiUrl}/auth/refresh`, {}, { withCredentials: true });
-        
-        processQueue(null);
-        return api(originalRequest);
-      } catch (refreshError) {
-        processQueue(refreshError);
-        if (typeof window !== "undefined") {
-          window.location.href = '/login';
-        }
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
-      }
+  (error: AxiosError) => {
+    // Clerk middleware and AuthGuard handle unauthenticated redirects.
+    // We just pass the 401 error down so React Query can handle it or fail gracefully.
+    if (error.response?.status === 401) {
+      return Promise.reject(error);
     }
 
     // Global Error Formatting for UI mutations
