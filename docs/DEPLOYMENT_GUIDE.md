@@ -8,22 +8,22 @@ This guide provides a platform-neutral checklist for deploying Smart Wardrobe AI
 
 Before deploying, ensure the production environment contains securely injected secrets. Never commit a `.env` file to version control.
 
-**Critical Variables:**
+**Critical Variables (Backend):**
 - `DATABASE_URL`: Must point to the production PostgreSQL instance.
-- `SECRET_KEY`: Must be a cryptographically secure, randomly generated hash (min 64 chars). **Never reuse the local dev secret.**
 - `USER_AI_KEY_ENCRYPTION_SECRET`: Must be a secure Fernet key to safely encrypt user API keys.
+- `CLERK_SECRET_KEY`: Your production Clerk secret key.
+- `CLERK_WEBHOOK_SECRET`: The signing secret from your Clerk Webhook dashboard.
 - `FRONTEND_URLS`: A comma-separated list of exact domains allowed to communicate with the backend (e.g., `https://mywardrobe.app`). This secures CORS.
+
+**Critical Variables (Frontend):**
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`: Your production Clerk publishable key.
+- `NEXT_PUBLIC_API_URL`: Points directly to the production backend (e.g., `https://api.mywardrobe.app/api`).
 
 **BYOK Architecture Notice:**
 Smart Wardrobe AI uses a Bring Your Own Key model for Gemini AI.
-Users must add their own Gemini API key in /settings/ai-access.
-Google login is only for authentication and does not provide Gemini API tokens.
+Users must add their own Gemini API key in `/settings/ai-access`.
+Clerk login is only for authentication and does not provide Gemini API tokens.
 The user’s Gemini quota is managed by Google AI Studio, not by Smart Wardrobe AI.
-
-Run the verification script in your CI pipeline if possible:
-```bash
-python scripts/verify_env_health.py
-```
 
 ---
 
@@ -63,18 +63,21 @@ alembic upgrade head
   ```bash
   npm start
   ```
-- Ensure `NEXT_PUBLIC_API_URL` points directly to the production backend (e.g., `https://api.mywardrobe.app/api`).
+- Ensure `NEXT_PUBLIC_API_URL` points directly to the production backend.
 
 ---
 
-## 5. Google OAuth Setup (Phase 2)
+## 5. Clerk Authentication Setup
 
-If utilizing Google OAuth for sign-in:
-1. Navigate to the Google Cloud Console.
-2. Select your project and go to API & Services > Credentials.
-3. Update the **Authorized JavaScript origins** to match your production frontend URL.
-4. Update the **Authorized redirect URIs** to match your production frontend redirect paths (e.g., `https://mywardrobe.app/auth/callback`).
-5. Ensure `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are injected into your production backend environment.
+Smart Wardrobe AI uses Clerk for authentication and user management.
+
+1. Navigate to the Clerk Dashboard for your production instance.
+2. Ensure your domain is set up correctly in Clerk.
+3. Configure **Webhooks** in Clerk:
+   - Endpoint URL: `https://api.mywardrobe.app/api/webhooks/clerk`
+   - Subscribe to events: `user.created`, `user.updated`, `user.deleted`
+4. Copy the Webhook Signing Secret into your backend `CLERK_WEBHOOK_SECRET` environment variable.
+5. Without this webhook, new users will not be synced to the Smart Wardrobe AI database, preventing them from uploading clothes or using AI features.
 
 ---
 
@@ -83,6 +86,6 @@ If utilizing Google OAuth for sign-in:
 Once deployed, manually verify the following against the live domains:
 1. Load the frontend URL; verify no React hydration errors occur in the console.
 2. Hit the backend `/api/health` (if implemented) or root docs `/docs` to verify the server is responding.
-3. Register a test user.
-4. Upload an image to verify static file serving permissions are correct.
-5. Generate an outfit recommendation after providing a personal Gemini Key to verify AI connection.
+3. Register a test user via Clerk and verify the user appears in the local PostgreSQL database (testing webhook synchronization).
+4. Upload an image to verify static file serving permissions and media token generation are correct.
+5. Generate an outfit recommendation or chat after providing a personal Gemini Key to verify the BYOK flow and AI connection.

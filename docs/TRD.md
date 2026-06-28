@@ -2,7 +2,7 @@
 
 # Smart Wardrobe AI
 
-Version: 1.0
+Version: 1.1
 
 Status: Approved
 
@@ -22,6 +22,7 @@ Build a production-quality AI-powered wardrobe management platform that allows u
 * Generate outfit recommendations
 * Receive weather-aware suggestions
 * Interact with an AI wardrobe assistant
+* Understand their Style DNA and Wardrobe Health
 
 The system must prioritize:
 
@@ -39,12 +40,13 @@ The system must prioritize:
 
 Mandatory:
 
-* Next.js 15
+* Next.js 14/15
 * TypeScript
 * Tailwind CSS
 * Shadcn/UI
 * TanStack Query
 * Axios
+* Clerk `@clerk/nextjs`
 
 Prohibited:
 
@@ -65,6 +67,7 @@ Mandatory:
 * SQLAlchemy 2.x
 * Alembic
 * Pydantic v2
+* Clerk `@clerk/backend`
 
 Prohibited:
 
@@ -93,9 +96,13 @@ Prohibited:
 
 Mandatory:
 
-* JWT Authentication
-* Refresh Tokens
-* bcrypt Password Hashing
+* Clerk (OAuth, Magic Links, Passwords)
+* Short-Lived Media Tokens (JWT signed by Backend for IDOR-free image access)
+* Webhook User Synchronization
+
+Prohibited:
+* Legacy custom JWT Auth
+* Storing plaintext passwords
 
 ---
 
@@ -105,11 +112,14 @@ Mandatory:
 
 * Bring Your Own Key (BYOK) Architecture
 * AI Provider Router (Gemini Primary, Fallback if enabled)
+* AES/Fernet Encryption for User API Keys
 
 Permitted Usage:
 
 * Clothing Analysis
 * AI Wardrobe Chat Assistant
+* Intelligence Center Analytics
+* Accessory Recommendations and Rationale
 
 Prohibited Usage:
 
@@ -117,7 +127,7 @@ Prohibited Usage:
 * Search
 * Filtering
 * Dashboard Statistics
-* Outfit Recommendation Logic
+* Core Outfit Recommendation Logic (Must remain rule-based)
 
 ---
 
@@ -153,9 +163,9 @@ Reason:
 
 Mandatory Structure:
 
-Frontend
+Frontend (Clerk UI)
 ↓
-FastAPI Backend
+FastAPI Backend (Webhook Sync & JWT Validation)
 ↓
 PostgreSQL Database
 
@@ -163,15 +173,7 @@ External Services
 
 * Gemini API
 * OpenWeather API
-
----
-
-Prohibited:
-
-* Microservices
-* Service Meshes
-* Event-Driven Architecture
-* Distributed Systems
+* Clerk API
 
 ---
 
@@ -180,38 +182,28 @@ Prohibited:
 Required Structure
 
 backend/
-
 app/
-
-api/
-
-auth/
-users/
-wardrobe/
-recommendations/
-weather/
-chat/
-
-models/
-
-schemas/
-
-services/
-
-ai/
-
-weather/
-
-storage/
-
-core/
-
-config.py
-database.py
-security.py
-
-main.py
-
+  api/
+    endpoints/
+      users.py
+      wardrobe.py
+      recommendations.py
+      weather.py
+      chat.py
+      intelligence.py
+      webhooks.py
+  models/
+  schemas/
+  services/
+    ai/
+    weather/
+    storage/
+  core/
+    config.py
+    database.py
+    security.py
+    lockout.py (Deprecated)
+  main.py
 tests/
 
 Any deviation requires approval.
@@ -223,34 +215,25 @@ Any deviation requires approval.
 Required Structure
 
 frontend/
-
 src/
-
-app/
-
-(auth)
-(dashboard)
-
-dashboard/
-wardrobe/
-recommendations/
-chat/
-settings/
-
-components/
-
-ui/
-dashboard/
-wardrobe/
-chat/
-
-hooks/
-
-services/
-
-lib/
-
-types/
+  app/
+    (auth)/
+    (dashboard)/
+      dashboard/
+      wardrobe/
+      recommendations/
+      chat/
+      settings/
+      intelligence/
+  components/
+    ui/
+    dashboard/
+    wardrobe/
+    chat/
+  hooks/
+  services/
+  lib/
+  types/
 
 ---
 
@@ -287,16 +270,12 @@ Indexes
 Required on:
 
 users.email
-
+users.clerk_user_id
 clothing_items.user_id
-
 chat_conversations.user_id
-
 chat_messages.conversation_id
-
-refresh_tokens.user_id
-
-refresh_tokens.token_hash
+wardrobe_opportunities.user_id
+wardrobe_goals.user_id
 
 ---
 
@@ -366,41 +345,13 @@ Paginated Endpoints
 
 # 8. Authentication Standards
 
-Access Token
+Identity Provider
 
-15 minutes
-
-Refresh Token
-
-7 days
-
-Password Hashing
-
-bcrypt
+Clerk
 
 Protected Routes
 
-Require valid JWT.
-
----
-
-Refresh Token Storage
-
-Refresh tokens stored in database table: refresh_tokens
-
-Tokens stored as bcrypt hashes.
-
-Revocation
-
-On logout:
-Delete user's refresh token from database.
-
-On password change:
-Delete all user's refresh tokens.
-
-Token Rotation
-
-Each refresh request issues a new refresh token and invalidates the old one.
+Require valid Clerk session, verified by backend using `clerk.verify_token()`.
 
 ---
 
@@ -408,13 +359,8 @@ User Profile Management
 
 Users may:
 
-* Update first name and last name
-* Change password
-
-Password Change Requirements
-
-* Verify current password before accepting new password
-* Invalidate all existing refresh tokens on password change
+* Update profile details via Clerk Profile components.
+* Update their BYOK Gemini key via custom backend endpoints.
 
 ---
 
@@ -442,12 +388,10 @@ Validation Required
 Storage
 
 Development:
-
 Local File Storage
 
 Production:
-
-Cloud Storage Ready
+Cloud Storage Ready (S3/GCS)
 
 ---
 
@@ -464,16 +408,13 @@ Filename Format
 
 {uuid}.{original_extension}
 
-Example:
-
-a1b2c3d4-e5f6-7890-abcd-ef1234567890.jpg
-
 Requirements
 
 * UUID-based filenames to prevent collisions
 * Preserve original file extension
 * One directory per user
-* Serve images via dedicated API endpoint: GET /api/uploads/{user_id}/{filename}
+* Serve images via dedicated API endpoint: `GET /api/uploads/{user_id}/{filename}?token={media_token}`
+* `media_token` must be cryptographically signed by backend and expire in a short time.
 * Strip EXIF metadata on upload for privacy
 
 ---
@@ -484,7 +425,7 @@ Clothing Analysis Workflow
 
 Upload Image
 ↓
-AI Analysis
+AI Analysis (User Key -> Fallback System Key)
 ↓
 Structured JSON
 ↓
@@ -492,34 +433,10 @@ Database Storage
 
 ---
 
-Required AI Fields
-
-{
-"type": "",
-"category": "",
-"color": "",
-"pattern": "",
-"material": "",
-"season": ""
-}
-
----
-
-Requirements
-
-* JSON output only
-* No markdown
-* No explanations
-* No free-text paragraphs
-
----
-
 Optimization Rule
 
 Clothing analysis occurs once.
-
 Metadata must be stored permanently.
-
 Never re-analyze existing clothing items unless image changes.
 
 ---
@@ -539,38 +456,9 @@ Recommendation Inputs
 * Occasion
 * Season
 
-Supported Occasions
-
-* Casual
-* College
-* Office
-* Party
-* Formal
-
 Target Response Time
 
 Less than 500ms
-
----
-
-Color Compatibility Matrix
-
-Minimum supported colors and their compatible pairings:
-
-| Color  | Compatible With                    |
-| ------ | ---------------------------------- |
-| Black  | White, Grey, Blue, Beige, Red      |
-| White  | Black, Blue, Grey, Beige, Brown    |
-| Blue   | White, Black, Grey, Beige, Brown   |
-| Grey   | Black, White, Blue, Beige          |
-| Beige  | Black, White, Blue, Grey, Brown    |
-| Brown  | White, Blue, Beige                 |
-
-Usage Rule
-
-Recommendation engine must validate color compatibility before suggesting outfit combinations.
-
-Colors not in the matrix default to compatible with Black, White, and Grey.
 
 ---
 
@@ -647,23 +535,15 @@ Prohibited
 
 Mandatory
 
-* JWT Authentication
-* Password Hashing
+* Clerk Authentication (OAuth, JWKS)
+* Object Ownership validation (`user_id == current_user.id`)
+* Media Tokens (IDOR prevention on static files)
+* AES/Fernet Encryption for BYOK Keys
 * Input Validation
 * SQL Injection Protection
 * XSS Protection
 * CORS Configuration
 * Environment Variable Protection
-
----
-
-Account Lockout Policy
-
-* Maximum failed login attempts: 5
-* Lockout duration: 15 minutes
-* Reset failed attempt counter on successful login
-* Lockout tracked per email address
-* Return generic error message (do not reveal lockout status)
 
 ---
 
@@ -678,6 +558,7 @@ Never hardcode:
 * API Keys
 * Database Credentials
 * JWT Secrets
+* Clerk Secrets
 
 ---
 
@@ -686,12 +567,6 @@ Never hardcode:
 Framework
 
 Python standard logging module
-
-Prohibited:
-
-* loguru
-* structlog
-* Third-party logging libraries
 
 Configuration
 
@@ -709,16 +584,6 @@ Log Levels
 * ERROR: API errors, database errors, AI errors, weather errors
 * CRITICAL: System failures
 
-Log:
-
-* Authentication Events
-* API Errors
-* Database Errors
-* AI Errors
-* Weather API Errors
-
----
-
 Do Not Log
 
 * Passwords
@@ -730,24 +595,19 @@ Do Not Log
 
 # 17. Performance Requirements
 
-Dashboard
-
+Dashboard:
 < 2 seconds
 
-API Response
-
+API Response:
 < 2 seconds
 
-Recommendation Engine
-
+Recommendation Engine:
 < 500 ms
 
-Image Upload
-
+Image Upload:
 < 10 seconds
 
-AI Analysis
-
+AI Analysis:
 < 10 seconds
 
 ---
@@ -785,8 +645,6 @@ localhost:8000
 Database:
 localhost:5432
 
----
-
 Production Ready Targets
 
 Frontend:
@@ -800,68 +658,17 @@ Managed PostgreSQL
 
 ---
 
-# 20. Prohibited Technologies
+# 20. Definition of Done
 
-The following technologies are prohibited unless explicitly approved:
+The system is complete when:
 
-* Kubernetes
-* Docker Swarm
-* Redis
-* Kafka
-* RabbitMQ
-* Elasticsearch
-* MongoDB
-* Firebase Firestore
-* Microservices
-* GraphQL
-* RAG Pipelines
-* Vector Databases
-* Multi-Agent Systems
-
----
-
-# 21. AI Development Rules
-
-All AI coding agents must:
-
-* Follow PRD strictly
-* Follow SDD strictly
-* Follow TRD strictly
-* Ask before introducing new technologies
-* Ask before changing architecture
-
-Agents must not:
-
-* Overengineer solutions
-* Replace approved libraries
-* Introduce unnecessary dependencies
-
----
-
-# 22. Definition of Technical Completion
-
-The system is technically complete when:
-
-✓ Authentication works
-
-✓ Wardrobe CRUD works
-
-✓ Clothing upload works
-
-✓ Gemini analysis works
-
-✓ Dashboard works
-
-✓ Recommendations work
-
-✓ Weather integration works
-
-✓ AI assistant works
-
-✓ User profile management works
-
-✓ Tests pass
-
-✓ Documentation is updated
-
-✓ No critical security issues exist
+✓ Clerk Authentication works
+✓ Clothing upload works with secure media tokens
+✓ AI analysis works via BYOK
+✓ Wardrobe CRUD works with strict ownership checks
+✓ Dashboard and Intelligence Center works
+✓ Outfit recommendations work
+✓ Weather suggestions work
+✓ AI chat assistant works
+✓ All APIs documented
+✓ All tests pass

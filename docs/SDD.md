@@ -2,7 +2,7 @@
 
 # Smart Wardrobe AI
 
-Version: 1.0
+Version: 1.1
 Status: Approved
 Owner: Rohit Ghosh
 
@@ -19,6 +19,7 @@ Smart Wardrobe AI is a full-stack web application that allows users to:
 * Receive outfit recommendations
 * Receive weather-aware suggestions
 * Interact with an AI wardrobe assistant
+* Access advanced wardrobe intelligence and analytics
 
 Architecture Style:
 
@@ -38,12 +39,12 @@ Reason:
 Frontend (Next.js)
 │
 ▼
-FastAPI Backend
-│
-┌──────┼──────┐
-▼      ▼      ▼
-PostgreSQL Gemini OpenWeather
-Database    API      API
+Clerk (Identity & Session Management)  ──▶  FastAPI Backend (Webhook Sync & JWT Validation)
+                                      │
+                         ┌────────────┼────────────┐
+                         ▼            ▼            ▼
+                   PostgreSQL      Gemini     OpenWeather
+                    Database        API          API
 
 ---
 
@@ -51,7 +52,7 @@ Database    API      API
 
 Frontend
 
-* Next.js 15
+* Next.js 14/15
 * TypeScript
 * Tailwind CSS
 * Shadcn/UI
@@ -59,6 +60,7 @@ Frontend
 * Premium Skeleton Loaders
 * TanStack Query
 * Axios
+* Clerk `@clerk/nextjs`
 
 Backend
 
@@ -66,7 +68,7 @@ Backend
 * SQLAlchemy
 * Alembic
 * Pydantic
-* JWT Authentication
+* Clerk `@clerk/backend` for Authentication
 * Python logging (rotating file handler)
 
 Database
@@ -76,11 +78,13 @@ Database
 AI
 
 * Bring Your Own Key (BYOK) Architecture
-* AI Provider Router (Gemini Primary, Fallback if enabled)
+* AI Provider Router (Gemini Primary, NVIDIA NIM Fallback)
+* Fernet AES Encryption for API Keys
 
 External Services
 
 * OpenWeather API
+* Geolocation API
 
 ---
 
@@ -101,32 +105,24 @@ Backend
 backend/
 
 app/
+  api/
+    endpoints/
+      users.py
+      wardrobe.py
+      intelligence.py
+      webhooks.py
+  models/
+  schemas/
+  services/
+    ai/
+    weather/
+    storage/
+  core/
+    config.py
+    security.py
+    database.py
 
-api/
-auth/
-users/
-wardrobe/
-recommendations/
-weather/
-chat/
-
-models/
-
-schemas/
-
-services/
-
-ai/
-weather/
-storage/
-
-core/
-
-config.py
-security.py
-database.py
-
-main.py
+  main.py
 
 tests/
 
@@ -137,32 +133,25 @@ Frontend
 frontend/
 
 src/
+  app/
+    (auth)/
+    (dashboard)/
+      dashboard/
+      wardrobe/
+      recommendations/
+      chat/
+      settings/
+      intelligence/
 
-app/
+  components/
+    ui/
+    dashboard/
+    wardrobe/
+    chat/
 
-(auth)
-(dashboard)
-
-dashboard/
-wardrobe/
-recommendations/
-chat/
-settings/
-
-components/
-
-ui/
-dashboard/
-wardrobe/
-chat/
-
-hooks/
-
-lib/
-
-services/
-
-types/
+  lib/
+  services/
+  types/
 
 ---
 
@@ -170,20 +159,22 @@ types/
 
 Table: users
 
-| Column        | Type      |
-| ------------- | --------- |
-| id            | UUID      |
-| email         | VARCHAR   |
-| password_hash | VARCHAR   |
-| first_name               | VARCHAR   |
-| last_name                | VARCHAR   |
-| weather_latitude         | FLOAT     |
-| weather_longitude        | FLOAT     |
-| weather_city             | VARCHAR   |
-| weather_country          | VARCHAR   |
-| weather_location_enabled | BOOLEAN   |
-| created_at               | TIMESTAMP |
-| updated_at               | TIMESTAMP |
+| Column                       | Type      | Notes |
+| ---------------------------- | --------- | ----- |
+| id                           | UUID      |       |
+| clerk_user_id                | VARCHAR   | Synced from Clerk |
+| email                        | VARCHAR   |       |
+| is_active                    | BOOLEAN   |       |
+| first_name                   | VARCHAR   |       |
+| last_name                    | VARCHAR   |       |
+| weather_latitude             | FLOAT     |       |
+| weather_longitude            | FLOAT     |       |
+| weather_city                 | VARCHAR   |       |
+| weather_country              | VARCHAR   |       |
+| weather_location_enabled     | BOOLEAN   |       |
+| gemini_api_key_encrypted     | BYTEA     | BYOK Feature |
+| created_at                   | TIMESTAMP |       |
+| updated_at                   | TIMESTAMP |       |
 
 ---
 
@@ -221,41 +212,15 @@ Table: outfit_recommendations
 
 ---
 
-Table: chat_conversations
+Table: chat_conversations & chat_messages
 
-| Column     | Type      |
-| ---------- | --------- |
-| id         | UUID      |
-| user_id    | UUID      |
-| title      | VARCHAR   |
-| created_at | TIMESTAMP |
-| updated_at | TIMESTAMP |
+*(Standard chat history storage referencing user_id)*
 
 ---
 
-Table: chat_messages
+Table: wardrobe_opportunities & wardrobe_goals
 
-| Column          | Type      |
-| --------------- | --------- |
-| id              | UUID      |
-| conversation_id | UUID      |
-| role            | VARCHAR   |
-| content         | TEXT      |
-| created_at      | TIMESTAMP |
-| updated_at      | TIMESTAMP |
-
----
-
-Table: refresh_tokens
-
-| Column     | Type      |
-| ---------- | --------- |
-| id         | UUID      |
-| user_id    | UUID      |
-| token_hash | TEXT      |
-| expires_at | TIMESTAMP |
-| created_at | TIMESTAMP |
-| updated_at | TIMESTAMP |
+*(Intelligence Center tables tracking styling goals and purchasing gaps)*
 
 ---
 
@@ -263,87 +228,46 @@ Table: refresh_tokens
 
 Authentication Type
 
-JWT
+Clerk (OAuth, Email/Password, Magic Links)
 
 Flow
 
-Register
+Register/Login via Clerk UI
 ↓
-Login
+Clerk issues HttpOnly Session Cookies & short-lived JWTs
 ↓
-Access Token
+Frontend includes session in API requests
 ↓
-Refresh Token
+Backend validates request using `clerk.verify_token` (JWKS validation)
 ↓
-Protected APIs
+Protected APIs execute with `current_user` injected
 
-Token Lifetimes
+User Synchronization
 
-Access Token:
-15 Minutes
+Clerk Webhook (`user.created`, `user.updated`) -> Backend `/api/webhooks/clerk` -> PostgreSQL `users` table
 
-Refresh Token:
-7 Days
+Media Access Security
 
-Refresh Token Storage
-
-Database (refresh_tokens table)
-
-Token Rotation
-
-New token issued on each refresh.
-Old token invalidated.
-
-Password Security
-
-bcrypt hashing
+Frontend requests a short-lived, cryptographically signed token from Backend -> Token appended to Image URL -> `uploads.py` validates token before serving file (prevents IDOR on images).
 
 ---
 
 # 7. Clothing Upload Workflow
 
 Step 1
-
 User uploads image.
 
 Step 2
-
-Backend validates:
-
-* File type
-* File size
-
-Allowed Types
-
-* JPG
-* PNG
-* WEBP
-
-Maximum Size
-
-10 MB
+Backend validates file type (JPG, PNG, WEBP) and size (10 MB).
 
 Step 3
-
-Image stored locally.
-
-Storage Path:
-
-uploads/users/{user_id}/{uuid}.{extension}
-
-Filenames are UUID-based to prevent collisions.
+Image stored locally `uploads/users/{user_id}/{uuid}.{extension}`.
 
 Step 4
-
-Gemini analysis triggered.
+Gemini analysis triggered via User's BYOK Key.
 
 Step 5
-
-Metadata extracted.
-
-Step 6
-
-Results stored in PostgreSQL.
+Metadata extracted and stored in PostgreSQL.
 
 ---
 
@@ -351,384 +275,109 @@ Results stored in PostgreSQL.
 
 All list endpoints return paginated responses.
 
-Request:
-
-* page (default: 1)
-* page_size (default: 20, max: 100)
-
-Response:
-
-{
-"success": true,
-"data": [],
-"pagination": {
-"page": 1,
-"page_size": 20,
-"total_items": 0,
-"total_pages": 0
-}
-}
-
-Applies To:
-
-* GET /api/wardrobe
-* GET /api/chat/history
-* GET /api/recommendations
+Request: `page`, `page_size`
+Response: `{ success: true, data: [], pagination: {...} }`
 
 ---
 
-# 8. AI Analysis Workflow
+# 9. AI Analysis Workflow
 
 Gemini receives image.
-
-Expected Output:
-
-{
-"type": "",
-"category": "",
-"color": "",
-"pattern": "",
-"material": "",
-"season": ""
-}
-
-Important Rules
-
-* JSON only response
-* No markdown
-* No explanations
-* Store result permanently
+Expected Output: structured JSON matching Wardrobe schemas.
 
 Re-analysis only if image changes.
 
 ---
 
-# 9. Outfit Recommendation Engine
+# 10. Outfit Recommendation Engine
 
-Version 1
+Hybrid System
+Rule-Based System (Color matrix, Season, Weather, Occasion) for deterministic combination.
+AI Generation strictly for styling rationale, explanations, and accessories.
 
-Rule-Based System
-
-No AI generation.
-
-Rules:
-
-Topwear
-+
-Bottomwear
-+
-Footwear
-
-Filter By:
-
-* Color Compatibility
-* Season
-* Occasion
-
-Occasions:
-
-* Casual
-* College
-* Office
-* Party
-* Formal
-
-Response Time Goal
-
-< 500ms
+Response Time Goal: < 500ms for rules, < 2s for AI reasoning.
 
 ---
 
-# 10. Weather Recommendation Workflow
+# 11. Weather Recommendation Workflow
 
-Frontend
-↓
-Backend
-↓
-OpenWeather API
-↓
-Current Weather
-↓
-Recommendation Engine
-
-Examples
-
-Hot Weather
-
-Suggest:
-
-* T-Shirts
-* Shorts
-
-Cold Weather
-
-Suggest:
-
-* Jackets
-* Hoodies
-
-Rainy Weather
-
-Suggest:
-
-* Waterproof Items
+Frontend -> Backend -> OpenWeather API -> Recommendation Engine
 
 ---
 
-# 11. AI Chat Assistant
+# 12. AI Chat Assistant
 
-Purpose
-
-Natural language wardrobe assistant.
-
-Example Queries
-
-"What should I wear today?"
-
-"Show my black shirts."
-
-"Suggest an outfit for college."
-
-Workflow
-
-User Query
-↓
-Fetch User Wardrobe
-↓
-Build Context
-↓
-Send to Gemini
-↓
-Generate Response
-
-Important
-
-Gemini must receive wardrobe data as context.
-
-Never allow hallucinated clothing items.
-
-Only recommend existing wardrobe items.
+Purpose: Natural language wardrobe assistant.
+Important: Gemini must receive wardrobe data as context. Never allow hallucinated clothing items.
 
 ---
 
-# 12. API Design
+# 13. API Design
 
-Authentication
-
-POST /api/auth/register
-
-POST /api/auth/login
-
-POST /api/auth/refresh
-
-POST /api/auth/logout
-
----
+Authentication (Clerk Webhooks)
+POST /api/webhooks/clerk
 
 Users
-
 GET /api/users/profile
-
 PUT /api/users/profile
-
-PUT /api/users/password
-
----
+POST /api/users/ai-key (BYOK)
 
 Wardrobe
-
 POST /api/wardrobe/upload
-
 GET /api/wardrobe
-
 GET /api/wardrobe/{id}
-
 PUT /api/wardrobe/{id}
-
 DELETE /api/wardrobe/{id}
 
----
-
-Recommendations
-
+Recommendations & Intelligence
 GET /api/recommendations
-
-GET /api/recommendations/weather
-
----
+GET /api/intelligence/dashboard
 
 Chat
-
 POST /api/chat
 
-GET /api/chat/history
+---
+
+# 14. Frontend Pages
+
+Public: `/`, `/sign-in`, `/sign-up`
+Protected: `/dashboard`, `/wardrobe`, `/recommendations`, `/chat`, `/settings`, `/intelligence`
 
 ---
 
-Dashboard
+# 15. Error Handling
 
-GET /api/dashboard/stats
-
----
-
-# 13. Frontend Pages
-
-Public
-
-/ (Landing Page)
-
-/login
-
-/register
+Standard Response Format: `{ success: false, message: "", error_code: "" }`
 
 ---
 
-Protected
+# 16. Security Requirements
 
-/dashboard
-
-/wardrobe
-
-/wardrobe/upload
-
-/recommendations
-
-/chat
-
-/settings
-
----
-
-# 14. Error Handling
-
-Standard Response Format
-
-{
-"success": false,
-"message": "",
-"error_code": ""
-}
-
-Logging
-
-* API errors
-* Database errors
-* AI errors
-* Weather API errors
-
----
-
-# 15. Security Requirements
-
-JWT Authentication
-
-Password Hashing
-
+Clerk JWT Authentication
+Short-Lived Media Tokens (IDOR Prevention)
+BYOK AES/Fernet Encryption
 Input Validation
-
-File Type Validation
-
-File Size Validation
-
+File Type/Size Validation
 SQL Injection Protection
-
 CORS Protection
-
-Rate Limiting
-
-Secure Environment Variables
+Rate Limiting (via Clerk)
 
 ---
 
-# 16. Performance Requirements
+# 17. Performance Requirements
 
-Dashboard:
-< 2 seconds
-
-API Response:
-< 2 seconds
-
-Recommendation Engine:
-< 500 ms
-
-Image Analysis:
-< 10 seconds
+Dashboard: < 2 seconds
+API Response: < 2 seconds
+Recommendation Engine: < 500 ms
+Image Analysis: < 10 seconds
 
 ---
 
-# 17. Deployment Architecture
+# 18. Deployment Architecture
 
-Development
-
-Frontend:
-localhost:3000
-
-Backend:
-localhost:8000
-
-Database:
-localhost:5432
-
-Production (Future)
-
-Frontend:
-Vercel
-
-Backend:
-Railway or Render
-
-Database:
-PostgreSQL Managed Instance
-
----
-
-# 18. Development Order
-
-Phase 1
-
-Project Setup
-
-Database
-
-Authentication
-
----
-
-Phase 2
-
-Wardrobe CRUD
-
-Image Upload
-
-AI Analysis
-
----
-
-Phase 3
-
-Dashboard
-
-Filters
-
-Search
-
----
-
-Phase 4
-
-Recommendation Engine
-
-Weather Integration
-
----
-
-Phase 5
-
-AI Chat Assistant
-
-Testing
-
-Optimization
+Frontend: Vercel
+Backend: Railway or Render
+Database: PostgreSQL Managed Instance
 
 ---
 
@@ -736,22 +385,12 @@ Optimization
 
 The system is complete when:
 
-✓ Authentication works
-
-✓ Clothing upload works
-
-✓ AI analysis works
-
-✓ Wardrobe CRUD works
-
-✓ Dashboard works
-
+✓ Clerk Authentication and Webhooks work
+✓ Clothing upload works with secure media tokens
+✓ AI analysis works via BYOK
+✓ Wardrobe CRUD works with strict ownership checks
+✓ Dashboard and Intelligence Center work
 ✓ Outfit recommendations work
-
 ✓ Weather suggestions work
-
 ✓ AI chat assistant works
-
-✓ All APIs documented
-
 ✓ All tests pass

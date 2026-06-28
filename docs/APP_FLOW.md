@@ -2,7 +2,7 @@
 
 # Smart Wardrobe AI
 
-Version: 1.0
+Version: 1.1
 
 Status: Approved
 
@@ -36,9 +36,9 @@ This document describes how users interact with the application from entry to ex
 ```
 Landing Page
       ↓
-Register
+Register/Login (Clerk UI)
       ↓
-Login
+Onboarding (Optional, if new)
       ↓
 Dashboard
       ↓
@@ -48,7 +48,7 @@ AI Analysis
       ↓
 Digital Wardrobe
       ↓
-Recommendations
+Recommendations & Intelligence Center
       ↓
 AI Assistant
       ↓
@@ -63,11 +63,9 @@ Logout
 /
 ├── Landing Page
 │
-├── Login
+├── Sign In / Sign Up (Clerk Hosted)
 │
-├── Register
-│
-└── Protected Area
+└── Protected Area (Clerk @clerk/nextjs middleware)
     │
     ├── Dashboard
     │
@@ -86,7 +84,7 @@ Logout
     │
     └── Settings
         ├── Profile & Security
-        ├── AI Access (BYOK)
+        ├── AI Access (BYOK - API Keys)
         └── AI Activity
 ```
 
@@ -111,91 +109,36 @@ User Actions:
 ```
 Visit Landing Page
         ↓
-Click Register
+Click Register/Login
         ↓
-Register Page
-```
-
-or
-
-```
-Visit Landing Page
-        ↓
-Click Login
-        ↓
-Login Page
+Clerk Auth Flow
 ```
 
 ---
 
-# 5. Registration Flow
+# 5. Registration & Login Flow (Clerk)
 
 Purpose:
 
-Create a new user account.
-
-Required Fields:
-
-* First Name
-* Last Name
-* Email
-* Password
-* Confirm Password
+Authenticate users securely via a trusted identity provider.
 
 Flow:
 
 ```
-Register Form
+User Clicks Login / Register
       ↓
-Validation
+Clerk UI Components (Email, Google OAuth)
       ↓
-Create Account
+Authentication Successful
       ↓
-Success
+Clerk Webhook Triggers Backend Sync (creates User in DB)
       ↓
-Login Page
+Dashboard
 ```
 
 Validation Rules:
 
-* Email must be unique
-* Password minimum 8 characters
-* Passwords must match
-
----
-
-# 6. Login Flow
-
-Purpose:
-
-Authenticate users.
-
-Required Fields:
-
-* Email
-* Password
-
-Flow:
-
-```
-Login
-    ↓
-Authentication
-    ↓
-JWT Issued
-    ↓
-Dashboard
-```
-
-Failure Flow:
-
-```
-Login
-    ↓
-Invalid Credentials
-    ↓
-Error Message
-```
+* Email verification, password complexity, and social auth logic are natively handled by Clerk.
 
 ---
 
@@ -213,21 +156,7 @@ Components:
 * Category Breakdown
 * Quick Actions
 * Weather Summary
-
-Displayed Information:
-
-* Total Clothing Items
-* Topwear Count
-* Bottomwear Count
-* Footwear Count
-* Recent Additions
-
-Quick Actions:
-
-* Upload Clothing
-* View Wardrobe
-* View Recommendations
-* Open AI Assistant
+* Intelligence Feed (Tips & Insights)
 
 Flow:
 
@@ -261,35 +190,14 @@ Select Image
       ↓
 Image Preview
       ↓
-Upload
+Upload (Authenticated with secure short-lived media token)
       ↓
-Backend Validation
+AI Analysis (Gemini/Fallback)
       ↓
-AI Analysis
-      ↓
-Metadata Generated
-      ↓
-Save To Database
+Metadata Generated & Saved
       ↓
 Wardrobe Page
 ```
-
-Accepted Formats:
-
-* JPG
-* JPEG
-* PNG
-* WEBP
-
-Maximum File Size:
-
-10 MB
-
-Image Storage Path:
-
-uploads/users/{user_id}/{uuid}.{extension}
-
-Filenames are UUID-based to prevent collisions.
 
 ---
 
@@ -308,7 +216,7 @@ Flow:
 ```
 Image Upload
       ↓
-Vision AI (Primary: Gemini, Fallback: NVIDIA NIM Phi-4)
+Vision AI (Primary: User's Gemini Key, Fallback: System Gemini/NVIDIA)
       ↓
 Structured Analysis
       ↓
@@ -317,18 +225,7 @@ Database Storage
 
 Expected Output:
 
-* Clothing Type
-* Category
-* Color
-* Pattern
-* Material
-* Season
-
-Important Rule:
-
-Analysis occurs only once.
-
-Previously analyzed items must never be re-analyzed unless the image changes.
+* Clothing Type, Category, Color, Pattern, Material, Season
 
 ---
 
@@ -340,59 +237,9 @@ Manage uploaded clothing items.
 
 Components:
 
-* Search Bar
-* Filter Panel
-* Sort Dropdown
-* Clothing Grid
+* Search Bar, Filter Panel, Sort Dropdown
+* Clothing Grid (Protected media rendering)
 * Upload Button
-
-User Actions:
-
-* View Item
-* Edit Item
-* Delete Item
-* Search Item
-* Filter Item
-
-Flow:
-
-```
-Wardrobe Page
-      ↓
-Select Item
-      ↓
-Item Details
-      ↓
-Edit or Delete
-```
-
----
-
-# 11. Clothing Details Flow
-
-Purpose:
-
-Display complete information about a clothing item.
-
-Displayed Information:
-
-* Image
-* Name
-* Type
-* Category
-* Color
-* Pattern
-* Material
-* Season
-* Brand
-* Notes
-* Date Added
-
-Actions:
-
-* Edit
-* Delete
-* Return To Wardrobe
 
 ---
 
@@ -404,60 +251,20 @@ Generate outfit recommendations.
 
 Inputs:
 
-* Wardrobe Data
-* Occasion
-* Weather Conditions
-
-Supported Occasions:
-
-* Casual
-* College
-* Office
-* Party
-* Formal
+* Wardrobe Data, Occasion, Weather Conditions
 
 Flow:
 
 ```
 Recommendations Page
         ↓
-Select Occasion
+Select Occasion & Weather Context
         ↓
 Rule Engine
         ↓
 Outfit Generated
         ↓
 Display Result
-```
-
-Output:
-
-* Topwear
-* Bottomwear
-* Footwear
-
-Important Rule:
-
-Version 1 uses a rule-based engine only.
-
-No AI model may generate outfits.
-
----
-
-# 12.5 Build Around Item Flow
-
-Purpose:
-Generate a complete outfit utilizing a specific anchor item.
-
-Flow:
-```
-Select Anchor Item
-        ↓
-Rule Engine Compiles Outfit
-        ↓
-AI Generates Accessories & Rationale
-        ↓
-Display Complete Look
 ```
 
 ---
@@ -482,64 +289,29 @@ Apply Weather Rules
 Generate Outfit
 ```
 
-Examples:
-
-Hot Weather:
-
-* T-Shirt
-* Shorts
-
-Cold Weather:
-
-* Jacket
-* Hoodie
-
-Rainy Weather:
-
-* Waterproof Clothing
-
 ---
 
 # 14. AI Assistant Flow
 
 Purpose:
 
-Allow natural-language interaction.
-
-Example Queries:
-
-* What should I wear today?
-* Show my black shirts.
-* Suggest an outfit for college.
-* What matches with blue jeans?
+Allow natural-language interaction using AI Context.
 
 Flow:
 
 ```
 User Message
       ↓
-Fetch Wardrobe Data
+Fetch Wardrobe Data & Preferences
       ↓
 Build Context
       ↓
-Gemini
+AI Provider Router (User Key -> System Key)
       ↓
 Generate Response
       ↓
 Display Message
 ```
-
-Important Rules:
-
-Assistant must:
-
-* Use actual wardrobe data
-* Use weather context when relevant
-
-Assistant must not:
-
-* Invent clothing items
-* Recommend unavailable items
 
 ---
 
@@ -563,74 +335,62 @@ Flow (Intelligence Center):
 ```
 Open Intelligence
         ↓
-Fetch Style DNA & Health
+Fetch Style DNA, Goals, Opportunities
         ↓
 Display Insights
 ```
 
 ---
 
-# 15. Settings Flow
+# 15. Settings Flow (BYOK & Profile)
 
 Purpose:
 
-Allow user account management.
+Allow user account and preferences management.
 
 Functions:
 
-* Update Profile (Identity Graph)
-* Change Password
-* Weather Targeting (Use My Current Location via Geolocation API)
-* AI Access (Bring Your Own Key for Gemini AI)
+* Profile (handled via Clerk settings mostly)
+* Weather Targeting
+* AI Access (Bring Your Own Key for Gemini AI) - Users can securely input and validate their own Gemini key.
 * AI Activity (View recent AI generation logs)
-* Logout
 
-Flow:
+Flow (BYOK Key Setup):
 
 ```
-Settings
-     ↓
-Update Information
-     ↓
-Save Changes
+Settings -> AI Access
+      ↓
+Input Gemini Key
+      ↓
+Backend Validates Key against Google AI
+      ↓
+If Valid -> Encrypt with Fernet & Save
+      ↓
+Subsequent AI calls use User Key
 ```
 
 ---
 
 # 16. Error Flows
 
-Upload Error
-
-```
-Upload
-   ↓
-Failure
-   ↓
-Display Error
-   ↓
-Retry
-```
-
 AI Analysis Error
 
 ```
 Upload Success
       ↓
-AI Failure
+AI Failure (Key invalid or quota reached)
       ↓
 Mark Analysis Pending
       ↓
-Allow Retry
+Allow Retry / Prompt user to update BYOK key
 ```
 
 Authentication Error
 
 ```
-Login
-   ↓
-Failure
-   ↓
-Error Message
+Protected Route accessed without Clerk Session
+    ↓
+Redirect to /sign-in
 ```
 
 ---
@@ -640,125 +400,57 @@ Error Message
 Allowed AI Calls
 
 ✓ Clothing Upload Analysis
-
 ✓ AI Assistant Chat
-
 ✓ Outfit Explanation and Reasoning
-
 ✓ Accessory Recommendations
-
-✓ AI Provider Router Fallback/Failover (Gemini <-> NVIDIA NIM)
+✓ BYOK Key Validation
 
 ---
 
-# 18. AI Provider Router Flow
+# 18. AI Provider Router Flow (BYOK)
 
 Purpose:
-Ensure high availability for AI operations via automatic failover.
+Ensure user costs are prioritized to their own keys, with fallback logic.
 
 Flow:
 ```
 AI Request Initiated
         ↓
-Attempt Primary Provider (Gemini 2.5 Flash)
+Does User Have Custom Gemini Key?
+        ↓ (Yes) -> Use User Key
+        ↓ (No)  -> Use System Key (Subject to global quotas)
         ↓
-If Success -> Return Response
-        ↓
-If Failure/Rate Limit -> Attempt Fallback Provider (NVIDIA NIM Phi-4)
+If Failure (Rate Limit) -> Attempt Fallback Provider (NVIDIA NIM)
         ↓
 Return Response
 ```
 
-Forbidden AI Calls
-
-✗ Dashboard Statistics
-
-✗ Search
-
-✗ Filtering
-
-✗ Wardrobe Browsing
-
-✗ Recommendation Engine
-
-✗ Weather Logic
-
-These features must use local application logic.
-
 ---
 
-# 18. Authorization Flow
+# 19. Authorization & Session Flow (Clerk)
 
 Public Routes
 
 * /
-* /login
-* /register
+* /sign-in
+* /sign-up
 
 Protected Routes
 
-* /dashboard
-* /wardrobe
-* /recommendations
-* /chat
-* /settings
+* /dashboard, /wardrobe, /recommendations, /chat, /settings, /intelligence
 
-Unauthorized Access Flow
+Session Flow:
 
 ```
-Protected Page
-      ↓
-No Token
-      ↓
-Redirect To Login
-```
-
----
-
-# 19. Session Flow
-
-```
-Login
+Login via Clerk
    ↓
-Access Token (15 min)
+Clerk sets secure Session Cookies
    ↓
-Refresh Token (stored in database)
+Frontend reads session via ClerkProvider
    ↓
-Use Application
+Backend validates request via @clerk/backend `require_auth`
    ↓
-Token Expired
-   ↓
-Send Refresh Token
-   ↓
-New Access Token + New Refresh Token
-   ↓
-Old Refresh Token Invalidated
-   ↓
-Continue Session
-```
-
-If refresh fails:
-
-```
-Refresh Failed
-       ↓
-Delete Refresh Token
-       ↓
-Logout
-       ↓
-Login Page
-```
-
-Logout Flow:
-
-```
-Click Logout
-      ↓
-Delete Refresh Token from Database
-      ↓
-Clear Client Tokens
-      ↓
-Login Page
+Logout triggers session destruction via Clerk
 ```
 
 ---
@@ -767,15 +459,12 @@ Login Page
 
 The application flow is considered complete when a user can:
 
-1. Register
-2. Login
-3. Upload clothing
-4. Receive AI analysis
-5. Manage wardrobe items
-6. Search wardrobe items
-7. Receive recommendations
-8. Receive weather-aware suggestions
-9. Chat with the AI assistant
-10. Logout successfully
-
-All flows must function without requiring manual database modifications or administrative intervention.
+1. Register / Login (Clerk)
+2. Upload clothing
+3. Receive AI analysis
+4. Manage wardrobe items
+5. Receive weather-aware suggestions
+6. Chat with the AI assistant
+7. Set up BYOK AI Keys
+8. View Intelligence insights
+9. Logout successfully
